@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("EMPLOYEE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TankDefinition {
+  tankNo   String @id
+  fuelType String
+}
+
+model CostCentre {
+  voteNo     String @id
+  division   String
+  department String
+}
+
+model FuelTransaction {
+  id           String   @id @default(cuid())
+  storeNo      String
+  pumpNo       String?
+  transDate    DateTime
+  transRefNo   String?
+  issueTime    String?
+  transVoteNo  String?
+  transQty     Float
+  transAmt     Float?
+  vehicleId    String?
+  fleetUnit    String?
+  fleetEI      String?
+  fleetReading String?
+  jobNo        String?
+  activity     String?
+  itemCat      String?
+  transType    String?
+  fuelType     String
+  isIssue      Boolean
+  createdAt    DateTime @default(now())
+
+  @@unique([transDate, transRefNo, vehicleId, issueTime])
+  @@index([transDate])
+  @@index([vehicleId])
+  @@index([fuelType])
+  @@index([transVoteNo])
+}
+
+model DailyFuelStats {
+  id               String   @id @default(cuid())
+  date             DateTime
+  fuelType         String
+  totalVolume      Float
+  totalCost        Float
+  transactionCount Int
+  averageVolume    Float
+
+  @@unique([date, fuelType])
+}
+
+model SystemSettings {
+  id             String   @id @default("global")
+  currencyCode   String   @default("NAD")
+  currencySymbol String   @default("N$")
+  petrolPrice    Float    @default(0)
+  dieselPrice    Float    @default(0)
+  updatedAt      DateTime @updatedAt
+}
+
+model UploadedFile {
+  id         String   @id @default(cuid())
+  fileName   String
+  filePath   String
+  fileSize   Int
+  rowCount   Int
+  uploadedAt DateTime @default(now())
+}

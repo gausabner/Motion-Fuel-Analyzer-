@@ -1,0 +1,178 @@
+import { prisma } from "@/lib/prisma";
+import * as XLSX from "xlsx";
+
+/**
+ * Maps standard tank numbers to Fuel Types based on TankDefinition.
+ * Fallback logic provided if DB lookup fails (though DB should be seeded).
+ */
+export async function getFuelTypeMap() {
+    const defs = await prisma.tankDefinition.findMany();
+    const map: Record<string, string> = {};
+    defs.forEach((d) => {
+        map[d.tankNo] = d.fuelType;
+    });
+    return map;
+}
+
+export async function processExcelFile(buffer: Buffer) {
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+    const fuelMap = await getFuelTypeMap();
+
+    const transactions = [];
+    const errors = [];
+
+    // Memory-efficient grouping for daily stats update
+    const dailyAggMap: Record<string, { date: Date, fuelType: string, vol: number, cost: number, count: number }> = {};
+
+    for (const row of jsonData as any[]) {
+        try {
+            // Mapping for the strict Excel format:
+            // "Tank", "Pump", "Issue Date", "Reference No", "Issue Time", "Issue Vote", "Issue Qty", "Issue Cost", "Fleet Unit", "Fleet EI", "Fleet Reading", "Job No", "Activity", "Category"
+
+            const tankNo = String(row["Tank"] || row["Store No"] || "");
+            if (!tankNo) continue;
+
+            const fuelType = fuelMap[tankNo] || "Unknown";
+
+            // Date Parsing: Handle YYYYMMDD (Sample: 20250801)
+            const rawDate = row["Issue Date"] ?? row["Trans Date"] ?? row["date"];
+            let transDate: Date;
+
+            if (typeof rawDate === 'number') {
+                const dateStr = String(rawDate);
+                if (dateStr.length === 8 && /^\d+$/.test(dateStr)) {
+                    transDate = new Date(
+                        parseInt(dateStr.substring(0, 4)),
+                        parseInt(dateStr.substring(4, 6)) - 1,
+                        parseInt(dateStr.substring(6, 8))
+                    );
+                } else {
+                    // Fallback to Excel serial if it's not YYYYMMDD
+                    transDate = new Date((rawDate - 25569) * 86400 * 1000);
+                }
+            } else {
+                const dateStr = String(rawDate || "");
+                if (dateStr.length === 8 && /^\d+$/.test(dateStr)) {
+                    transDate = new Date(
+                        parseInt(dateStr.substring(0, 4)),
+                        parseInt(dateStr.substring(4, 6)) - 1,
+                        parseInt(dateStr.substring(6, 8))
+                    );
+                } else {
+                    transDate = new Date(dateStr);
+                }
+            }
+
+            if (isNaN(transDate.getTime())) {
+                throw new Error(`Invalid Date: ${rawDate}`);
+            }
+
+            const transQty = Math.abs(parseFloat(String(row["Issue Qty"] || row["Trans Qty"] || "0")));
+            const transAmt = Math.abs(parseFloat(String(row["Issue Cost"] || row["Trans Amt"] || "0")));
+
+            // Assume all records in this specific format are Issues unless proven otherwise
+            const isIssue = true;
+
+            const txObj = {
+                storeNo: tankNo,
+                pumpNo: String(row["Pump"] || ""),
+                transDate: transDate,
+                transRefNo: String(row["Reference No"] || ""),
+                issueTime: String(row["Issue Time"] || ""),
+                transVoteNo: String(row["Issue Vote"] || ""),
+                transQty: transQty,
+                transAmt: transAmt,
+                vehicleId: String(row["Fleet Unit"] || "UNKNOWN").trim(),
+                fleetUnit: String(row["Fleet Unit"] || ""),
+                fleetEI: String(row["Fleet EI"] || ""),
+                fleetReading: String(row["Fleet Reading"] || ""),
+                jobNo: String(row["Job No"] || ""),
+                activity: String(row["Activity"] || ""),
+                itemCat: String(row["Category"] || ""),
+                fuelType: fuelType,
+                isIssue: isIssue,
+                transType: "Issue",
+            };
+
+            transactions.push(txObj);
+
+            // Populate aggregation map for quick daily stats update
+            if (isIssue) {
+                const dateKey = transDate.toISOString().split('T')[0];
+                const key = `${dateKey}_${fuelType}`;
+                if (!dailyAggMap[key]) {
+                    dailyAggMap[key] = { date: transDate, fuelType, vol: 0, cost: 0, count: 0 };
+                }
+                dailyAggMap[key].vol += transQty;
+                dailyAggMap[key].cost += txObj.transAmt;
+                dailyAggMap[key].count += 1;
+            }
+
+        } catch (e) {
+            errors.push({ row, error: e instanceof Error ? e.message : String(e) });
+        }
+    }
+
+    // Logging first record for verification
+    if (transactions.length > 0) {
+        console.log("First Transaction to insert:", JSON.stringify(transactions[0], null, 2));
+    }
+
+    // Aggregated insertion via raw SQL to bypass any type caching issues
+    for (const tx of transactions) {
+        await (prisma as any).$executeRawUnsafe(
+            `INSERT INTO FuelTransaction (id, storeNo, pumpNo, transDate, transRefNo, issueTime, transVoteNo, transQty, transAmt, vehicleId, fleetUnit, fleetEI, fleetReading, jobNo, activity, itemCat, transType, fuelType, isIssue)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            tx.id || Math.random().toString(36).substring(7),
+            tx.storeNo,
+            tx.pumpNo,
+            tx.transDate.toISOString(),
+            tx.transRefNo,
+            tx.issueTime,
+            tx.transVoteNo,
+            tx.transQty,
+            tx.transAmt,
+            tx.vehicleId,
+            tx.fleetUnit,
+            tx.fleetEI,
+            tx.fleetReading,
+            tx.jobNo,
+            tx.activity,
+            tx.itemCat,
+            tx.transType,
+            tx.fuelType,
+            tx.isIssue ? 1 : 0
+        );
+    }
+
+    // Update Daily Aggregates efficiently after bulk insert
+    for (const key in dailyAggMap) {
+        const agg = dailyAggMap[key];
+        await prisma.dailyFuelStats.upsert({
+            where: { date_fuelType: { date: agg.date, fuelType: agg.fuelType } },
+            update: {
+                totalVolume: { increment: agg.vol },
+                totalCost: { increment: agg.cost },
+                transactionCount: { increment: agg.count },
+            },
+            create: {
+                date: agg.date,
+                fuelType: agg.fuelType,
+                totalVolume: agg.vol,
+                totalCost: agg.cost,
+                transactionCount: agg.count,
+                averageVolume: agg.vol / agg.count
+            }
+        });
+    }
+
+    return { count: transactions.length, errors: errors.length };
+}
+
+async function aggregateDailyStats(transactions: any[]) {
+    // Logic moved inside processExcelFile for performance (avoiding double loops)
+}
