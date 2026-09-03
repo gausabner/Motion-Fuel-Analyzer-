@@ -1,25 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processExcelFile } from "@/lib/ingestion";
+import { requireRole } from "@/lib/auth";
+import { validateUploadFile } from "@/lib/upload-validation";
 
 export async function POST(req: NextRequest) {
+    const _auth = await requireRole(); if (_auth instanceof NextResponse) return _auth;
     try {
         const formData = await req.formData();
         const file = formData.get("file") as File;
-
-        if (!file) {
-            return NextResponse.json({ error: "No file provided" }, { status: 400 });
+        const selectedSheetsStr = formData.get("selectedSheets") as string;
+        
+        let selectedSheets: string[] | undefined = undefined;
+        if (selectedSheetsStr) {
+            try {
+                selectedSheets = JSON.parse(selectedSheetsStr);
+            } catch (e) {
+                console.warn("Invalid selectedSheets JSON:", selectedSheetsStr);
+            }
         }
 
-        console.log("Processing file:", file.name, "Size:", file.size);
+        const validationError = validateUploadFile(file);
+        if (validationError) {
+            return NextResponse.json({ error: validationError }, { status: 400 });
+        }
+
+        console.log("Processing file:", file.name, "Size:", file.size, "Sheets:", selectedSheets);
 
         const buffer = Buffer.from(await file.arrayBuffer());
-        const result = await processExcelFile(buffer, file.name);
+        const result = await processExcelFile(buffer, file.name, selectedSheets);
 
         console.log("Upload successful:", result);
 
         return NextResponse.json({
             success: true,
             count: result.count,
+            duplicates: result.duplicates,
+            totalProcessed: result.totalProcessed,
             errors: result.errors
         });
 
