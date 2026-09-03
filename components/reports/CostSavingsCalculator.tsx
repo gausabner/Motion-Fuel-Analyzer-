@@ -50,7 +50,7 @@ export function CostSavingsCalculator() {
             <Card className="monumental-card lg:col-span-1">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <Calculator className="h-5 w-5 text-black" />
+                        <Calculator className="h-5 w-5 text-foreground" />
                         Compare Periods
                     </CardTitle>
                     <CardDescription>Select two date ranges to analyze variance.</CardDescription>
@@ -58,20 +58,20 @@ export function CostSavingsCalculator() {
                 <CardContent className="space-y-6">
                     {/* Range A */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-zinc-500">Baseline (Period A)</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Baseline (Period A)</label>
                         <DatePickerWithRange date={dateA} setDate={setDateA} />
                     </div>
 
                     {/* Range B */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-zinc-500">Comparison (Period B)</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Comparison (Period B)</label>
                         <DatePickerWithRange date={dateB} setDate={setDateB} />
                     </div>
 
                     <Button
                         onClick={handleCompare}
                         disabled={loading}
-                        className="w-full h-12 bg-[#FDE047] hover:bg-[#FACC15] text-black font-bold uppercase tracking-wider rounded-none"
+                        className="w-full h-12 font-semibold"
                     >
                         {loading ? "Calculating..." : "Calculate Variance"}
                     </Button>
@@ -89,20 +89,20 @@ export function CostSavingsCalculator() {
                         {/* Summary Cards */}
                         <div className="grid md:grid-cols-2 gap-6">
                             <Card className="monumental-card">
-                                <CardHeader className="pb-2 bg-zinc-50 border-b border-zinc-100">
-                                    <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">Period A Spend</div>
+                                <CardHeader className="pb-2 bg-muted/40 border-b border-border">
+                                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Period A Spend</div>
                                 </CardHeader>
                                 <CardContent className="pt-6 space-y-4">
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-zinc-500 font-medium">Petrol ({result.statsA.petrolVolume.toFixed(0)} L)</span>
+                                        <span className="text-muted-foreground font-medium">Petrol ({result.statsA.petrolVolume.toFixed(0)} L)</span>
                                         <span className="font-bold">${result.statsA.petrolCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-zinc-500 font-medium">Diesel ({result.statsA.dieselVolume.toFixed(0)} L)</span>
+                                        <span className="text-muted-foreground font-medium">Diesel ({result.statsA.dieselVolume.toFixed(0)} L)</span>
                                         <span className="font-bold">${result.statsA.dieselCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </div>
-                                    <div className="pt-4 border-t border-dashed border-zinc-200">
-                                        <div className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">Total Cost</div>
+                                    <div className="pt-4 border-t border-dashed border-border">
+                                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Cost</div>
                                         <div className="text-3xl font-black text-zinc-900">
                                             ${result.statsA.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </div>
@@ -111,20 +111,20 @@ export function CostSavingsCalculator() {
                             </Card>
 
                             <Card className="monumental-card">
-                                <CardHeader className="pb-2 bg-zinc-50 border-b border-zinc-100">
-                                    <div className="text-xs font-bold uppercase tracking-wider text-zinc-400">Period B Spend</div>
+                                <CardHeader className="pb-2 bg-muted/40 border-b border-border">
+                                    <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Period B Spend</div>
                                 </CardHeader>
                                 <CardContent className="pt-6 space-y-4">
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-zinc-500 font-medium">Petrol ({result.statsB.petrolVolume.toFixed(0)} L)</span>
+                                        <span className="text-muted-foreground font-medium">Petrol ({result.statsB.petrolVolume.toFixed(0)} L)</span>
                                         <span className="font-bold">${result.statsB.petrolCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-zinc-500 font-medium">Diesel ({result.statsB.dieselVolume.toFixed(0)} L)</span>
+                                        <span className="text-muted-foreground font-medium">Diesel ({result.statsB.dieselVolume.toFixed(0)} L)</span>
                                         <span className="font-bold">${result.statsB.dieselCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                     </div>
-                                    <div className="pt-4 border-t border-dashed border-zinc-200">
-                                        <div className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">Total Cost</div>
+                                    <div className="pt-4 border-t border-dashed border-border">
+                                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Cost</div>
                                         <div className="text-3xl font-black text-zinc-900">
                                             ${result.statsB.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </div>
@@ -157,7 +157,7 @@ export function CostSavingsCalculator() {
                                     {result.isSaving ? "-" : "+"}
                                     ${Math.abs(result.savings).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </div>
-                                <p className="text-zinc-500 font-medium mt-4 max-w-lg">
+                                <p className="text-muted-foreground font-medium mt-4 max-w-lg">
                                     {result.isSaving
                                         ? "Great job! Your fleet is spending less in the comparison period."
                                         : "Alert: Spending has increased in the comparison period. Check for rising fuel prices or increased consumption."}
@@ -166,12 +166,12 @@ export function CostSavingsCalculator() {
                         </Card>
                     </motion.div>
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center p-12 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg text-center">
-                        <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mb-4 text-zinc-400">
+                    <div className="h-full flex flex-col items-center justify-center p-12 bg-muted/40 border border-dashed border-border rounded-lg text-center">
+                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4 text-muted-foreground">
                             <Calculator className="h-8 w-8" />
                         </div>
                         <h3 className="text-lg font-bold text-zinc-900">No Calculation Yet</h3>
-                        <p className="text-zinc-500 max-w-sm mt-2">
+                        <p className="text-muted-foreground max-w-sm mt-2">
                             Select two date ranges on the left and click Calculate to see your fleet's financial variance.
                         </p>
                     </div>
@@ -196,7 +196,7 @@ function DatePickerWithRange({
                         id="date"
                         variant={"outline"}
                         className={cn(
-                            "w-full justify-start text-left font-normal bg-white border-zinc-200 h-10 rounded-none",
+                            "w-full justify-start text-left font-normal bg-card border-border h-10 rounded-none",
                             !date && "text-muted-foreground"
                         )}
                     >

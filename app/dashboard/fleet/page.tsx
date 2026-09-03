@@ -10,94 +10,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Truck, TrendingUp, AlertTriangle } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { getFleetPerformance } from "@/lib/analytics";
+import { TablePagination } from "@/components/dashboard/TablePagination";
+import { TableCsvButton } from "@/components/reports/ReportExports";
+import { getVehicleAttribution } from "@/lib/vehicle-attribution";
+import { UnitAttributionCard } from "@/components/dashboard/UnitAttributionCard";
+import { getSessionUser, isAdmin } from "@/lib/auth";
+
 
 export const dynamic = 'force-dynamic';
 
-async function getFleetData(vehicleId?: string, fuelType?: string, department?: string, division?: string, from?: string, to?: string) {
-    let queryCondition = '1=1';
-    const params: any[] = [];
-
-    if (vehicleId) {
-        queryCondition += ` AND t.vehicleId LIKE ?`;
-        params.push(`%${vehicleId}%`);
-    }
-
-    if (fuelType && fuelType !== 'all') {
-        const typePattern = fuelType === 'Petrol' ? '%Petrol%' : (fuelType === 'Diesel' ? '%Diesel%' : fuelType);
-        // If specific strict match is desired:
-        // queryCondition += ` AND t.fuelType = ?`;
-        // params.push(fuelType);
-        // But data might be 'Petrol Unleaded', so LIKE is safer if dropdown sends 'Petrol'
-        queryCondition += ` AND t.fuelType LIKE ?`;
-        params.push(`%${typePattern}%`);
-    }
-
-    if (department) {
-        queryCondition += ` AND c.department LIKE ?`;
-        params.push(`%${department}%`);
-    }
-
-    if (division) {
-        queryCondition += ` AND c.division LIKE ?`;
-        params.push(`%${division}%`);
-    }
-
-    if (from) {
-        queryCondition += ` AND t.transDate >= ?`;
-        params.push(from);
-    }
-    if (to) {
-        queryCondition += ` AND t.transDate <= ?`;
-        const toDate = new Date(to);
-        toDate.setHours(23, 59, 59, 999);
-        params.push(toDate.toISOString());
-    }
-
-    // Aggregate stats per vehicle using Raw SQL with JOIN for Department filtering
-    const fleetStats = await (prisma as any).$queryRawUnsafe(`
-        SELECT 
-            t.vehicleId, 
-            t.fuelType, 
-            SUM(t.transQty) as totalQty, 
-            SUM(t.transAmt) as totalCost, 
-            COUNT(t.id) as transCount
-        FROM FuelTransaction t
-        LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
-        WHERE ${queryCondition}
-        GROUP BY t.vehicleId, t.fuelType
-        ORDER BY t.vehicleId ASC
-    `, ...params) as any[];
-
-    // Group by vehicle and calculate totals
-    const processedFleet = fleetStats.reduce((acc: any[], curr) => {
-        const vId = curr.vehicleId || "Unknown";
-        let vehicle = acc.find(v => v.id === vId);
-
-        if (!vehicle) {
-            vehicle = {
-                id: vId,
-                petrolVolume: 0,
-                dieselVolume: 0,
-                totalCost: 0,
-                transactionCount: 0,
-            };
-            acc.push(vehicle);
-        }
-
-        if (curr.fuelType.toLowerCase().includes('petrol')) {
-            vehicle.petrolVolume += curr.totalQty || 0;
-        } else {
-            vehicle.dieselVolume += curr.totalQty || 0;
-        }
-
-        vehicle.totalCost += curr.totalCost || 0;
-        vehicle.transactionCount += Number(curr.transCount); // Ensure number
-
-        return acc;
-    }, []);
-
-    return processedFleet.sort((a, b) => (b.petrolVolume + b.dieselVolume) - (a.petrolVolume + a.dieselVolume));
-}
+// Default rows shown in the Fleet Performance Table; overridable via ?pageSize
+// (free 1–80 entry in the pagination bar).
+const DEFAULT_PAGE_SIZE = 20;
 
 import { FuelLogFilters } from "@/components/dashboard/FuelLogFilters";
 
@@ -107,7 +33,7 @@ import { DashboardCharts } from "@/components/dashboard/Charts";
 // ... getFleetData implementation ...
 
 async function getFleetChartData(vehicleId?: string, fuelType?: string, department?: string, division?: string, from?: string, to?: string) {
-    let queryCondition = '1=1';
+    let queryCondition = "t.transType = 'FIS'";
     const params: any[] = [];
 
     if (vehicleId) {
@@ -160,7 +86,7 @@ async function getFleetChartData(vehicleId?: string, fuelType?: string, departme
 }
 
 async function getDepartmentStats(vehicleId?: string, fuelType?: string, department?: string, division?: string, from?: string, to?: string) {
-    let queryCondition = '1=1';
+    let queryCondition = "t.transType = 'FIS'";
     const params: any[] = [];
 
     if (vehicleId) {
@@ -222,10 +148,23 @@ async function getDepartmentStats(vehicleId?: string, fuelType?: string, departm
 export default async function FleetPage({
     searchParams
 }: {
-    searchParams: Promise<{ vehicleId?: string, fuelType?: string, department?: string, division?: string, from?: string, to?: string }>
+    searchParams: Promise<{ vehicleId?: string, fuelType?: string, department?: string, division?: string, from?: string, to?: string, page?: string, pageSize?: string }>
 }) {
     const params = await searchParams;
-    const fleet = await getFleetData(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to);
+    const filters = {
+        vehicleId: params.vehicleId,
+        fuelType: params.fuelType,
+        department: params.department,
+        division: params.division,
+        from: params.from,
+        to: params.to,
+    };
+    const fleet = await getFleetPerformance(filters);
+    // Attribution only matters when the view is scoped to a unit.
+    const [attribution, sessionUser] = await Promise.all([
+        getVehicleAttribution(params.vehicleId || "", filters),
+        getSessionUser(),
+    ]);
     const dailyData = await getFleetChartData(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to);
     const topVotesForChart = await getDepartmentStats(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to);
 
@@ -237,6 +176,24 @@ export default async function FleetPage({
 
     const highConsumer = fleet.length > 0 && fleet[0]?.id ? fleet[0].id : "N/A";
 
+    // --- Pagination for the Fleet Performance Table (all KPIs above use the
+    // full filtered set; only the table rows are windowed). ---
+    const pageSize = Math.min(80, Math.max(1, Number(params.pageSize) || DEFAULT_PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(fleet.length / pageSize));
+    const currentPage = Math.min(totalPages, Math.max(1, Number(params.page) || 1));
+    const pageRows = fleet.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    // Build the CSV export URL from the active filters (never page/pageSize —
+    // the export is the whole filtered set, not the current page).
+    const exportParams = new URLSearchParams({ report: "fleet" });
+    if (params.vehicleId) exportParams.set("vehicleId", params.vehicleId);
+    if (params.fuelType && params.fuelType !== "all") exportParams.set("fuelType", params.fuelType);
+    if (params.department) exportParams.set("department", params.department);
+    if (params.division) exportParams.set("division", params.division);
+    if (params.from) exportParams.set("from", params.from);
+    if (params.to) exportParams.set("to", params.to);
+    const fleetExportUrl = `/api/reports/export?${exportParams.toString()}`;
+
     // Fetch CostCentres for Filter
     const costCentres = await (prisma as any).costCentre.findMany({
         select: { department: true, division: true },
@@ -246,53 +203,59 @@ export default async function FleetPage({
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-end">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight" style={{ color: '#212320' }}>Fleet Management</h2>
-                    <p className="text-slate-500">Unit-by-unit fuel efficiency and consumption analysis</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Fleet"
+                scope="Unit-by-unit fuel efficiency and consumption analysis · FIS transactions only"
+            >
+                <TableCsvButton filename="fleet_performance.csv" serverUrl={fleetExportUrl} />
+            </PageHeader>
 
             <FuelLogFilters costCentres={costCentres} />
+
+            <UnitAttributionCard
+                attribution={attribution}
+                canAssign={isAdmin(sessionUser?.role)}
+                exportUrl={`/api/reports/export?report=vehicle-attribution&vehicleId=${encodeURIComponent(params.vehicleId || "")}`}
+            />
 
             {/* KPI Cards */}
             <div className="grid gap-6 md:grid-cols-3">
                 <Card className="monumental-card">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold uppercase text-zinc-500 tracking-widest">Active Units</CardTitle>
-                        <Truck className="h-4 w-4 text-black" />
+                        <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Active Units</CardTitle>
+                        <Truck className="h-4 w-4 text-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-black break-all">{fleet.length} Units</div>
-                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-1">Tracking individual performance</p>
+                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{fleet.length} Units</div>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Tracking individual performance</p>
                     </CardContent>
                 </Card>
 
                 <Card className="monumental-card border-l-4 border-l-yellow-400">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold uppercase text-zinc-500 tracking-widest">Top Consumption</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-black" />
+                        <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Top Consumption</CardTitle>
+                        <AlertTriangle className="h-4 w-4 text-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-black break-all">{highConsumer}</div>
-                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-1">Highest fuel usage unit</p>
+                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{highConsumer}</div>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Highest fuel usage unit</p>
                     </CardContent>
                 </Card>
 
                 <Card className="monumental-card">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold uppercase text-zinc-500 tracking-widest">Avg. Unit Burn</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-black" />
+                        <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Avg. Unit Burn</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-black break-all">{avgFill.toFixed(1)} L</div>
-                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-1">Average per vehicle this period</p>
+                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{avgFill.toFixed(1)} L</div>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Average per vehicle this period</p>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Charts Section */}
-            <section className="bg-white/30 backdrop-blur-sm rounded-3xl p-1 border border-white/20 shadow-sm">
+            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-1 border border-white/20 shadow-sm">
                 <DashboardCharts
                     dailyData={dailyData}
                     topFleet={topFleetForChart}
@@ -300,8 +263,8 @@ export default async function FleetPage({
                 />
             </section>
 
-            <Card className="monumental-card bg-white p-0 overflow-hidden">
-                <CardHeader className="p-6 border-b border-zinc-200">
+            <Card className="monumental-card bg-card p-0 overflow-hidden">
+                <CardHeader className="p-6 border-b border-border">
                     <CardTitle className="text-lg font-extrabold uppercase tracking-tight">Fleet Performance Table</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -320,33 +283,33 @@ export default async function FleetPage({
                             <TableBody>
                                 {fleet.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-8 text-zinc-500 font-medium">
+                                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground font-medium">
                                             No fleet data available. Upload Excel logs to see analysis.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    fleet.map((unit) => (
-                                        <TableRow key={unit.id} className="hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-0 text-xs md:text-sm">
-                                            <TableCell className="font-bold text-black py-4">
+                                    pageRows.map((unit) => (
+                                        <TableRow key={unit.id} className="hover:bg-muted/40 transition-colors border-b border-border last:border-0 text-xs md:text-sm">
+                                            <TableCell className="font-bold text-foreground py-4">
                                                 {unit.id}
                                             </TableCell>
-                                            <TableCell className="font-mono font-medium text-zinc-600">
+                                            <TableCell className="font-mono font-medium text-muted-foreground">
                                                 {unit.petrolVolume > 0 ? `${unit.petrolVolume.toFixed(1)} L` : '—'}
                                             </TableCell>
-                                            <TableCell className="font-mono font-medium text-zinc-600">
+                                            <TableCell className="font-mono font-medium text-muted-foreground">
                                                 {unit.dieselVolume > 0 ? `${unit.dieselVolume.toFixed(1)} L` : '—'}
                                             </TableCell>
-                                            <TableCell className="text-right font-bold text-black">
+                                            <TableCell className="text-right font-bold text-foreground">
                                                 ${unit.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </TableCell>
-                                            <TableCell className="text-center font-medium text-zinc-600">
+                                            <TableCell className="text-center font-medium text-muted-foreground">
                                                 {unit.transactionCount}
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <Badge
                                                     className={unit.totalCost > (totalFuel / fleet.length * 1.5)
-                                                        ? 'bg-yellow-400 text-black hover:bg-yellow-500 rounded-none border-0'
-                                                        : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 rounded-none border-0'}
+                                                        ? 'bg-yellow-400 text-foreground hover:bg-yellow-500 rounded-none border-0'
+                                                        : 'bg-muted text-muted-foreground hover:bg-zinc-200 rounded-none border-0'}
                                                 >
                                                     {unit.totalCost > (totalFuel / fleet.length * 1.5) ? 'High Usage' : 'Normal'}
                                                 </Badge>
@@ -357,6 +320,17 @@ export default async function FleetPage({
                             </TableBody>
                         </Table>
                     </div>
+                    {fleet.length > 0 && (
+                        <div className="border-t border-border bg-card px-2">
+                            <TablePagination
+                                totalItems={fleet.length}
+                                itemsPerPage={pageSize}
+                                currentPage={currentPage}
+                                showPageSize
+                                unitLabel="vehicles"
+                            />
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
