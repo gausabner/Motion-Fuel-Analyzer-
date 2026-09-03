@@ -83,6 +83,25 @@ export async function getFREData(limit = 100, opts: TxFilterOpts = {}) {
     `, ...params) as any[];
 }
 
+/**
+ * Ingestion writes this placeholder when a transaction carries no fleet unit.
+ * It is not a vehicle: it currently holds ~28.5k litres across 78 different
+ * votes and would otherwise rank 3rd of 915 "units".
+ *
+ * It stays in totals and tables — the fuel is real and hiding it would make
+ * litres stop reconciling — but it is excluded from rankings and per-unit
+ * comparisons, where a placeholder is actively misleading, and labelled in the
+ * UI via unitLabel().
+ */
+export const UNATTRIBUTED_UNIT = "UNKNOWN";
+
+export const isUnattributedUnit = (id: string | null | undefined) =>
+    !id || String(id).trim().toUpperCase() === UNATTRIBUTED_UNIT;
+
+/** Display name for a fleet unit id. */
+export const unitLabel = (id: string | null | undefined) =>
+    isUnattributedUnit(id) ? "Unattributed" : String(id);
+
 export interface FleetUnit {
     id: string;
     petrolVolume: number;
@@ -208,10 +227,11 @@ export async function getDailyConsumption(opts: TxFilterOpts = {}) {
 export async function getTopFleet(fuelType?: string, opts: TxFilterOpts = {}, limit = 10) {
     // The pinned fuel type is merged last so it always wins over anything in opts.
     const { clause, params } = txFilters(fuelType ? { ...opts, fuelType } : opts);
+    // A "top consuming units" list led by the no-unit placeholder is useless.
     const data = await prisma.$queryRawUnsafe(`
         SELECT vehicleId, SUM(transQty) as volume, SUM(transAmt) as cost
         FROM FuelTransaction
-        WHERE transType = 'FIS'${clause}
+        WHERE transType = 'FIS' AND vehicleId != '${UNATTRIBUTED_UNIT}'${clause}
         GROUP BY vehicleId
         ORDER BY volume DESC
         LIMIT ${Number(limit)}

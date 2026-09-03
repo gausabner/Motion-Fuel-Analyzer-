@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Truck, TrendingUp, AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { getFleetPerformance } from "@/lib/analytics";
+import { getFleetPerformance, isUnattributedUnit, unitLabel } from "@/lib/analytics";
 import { TablePagination } from "@/components/dashboard/TablePagination";
 import { paginate } from "@/lib/pagination";
 import { TableCsvButton } from "@/components/reports/ReportExports";
@@ -173,9 +173,12 @@ export default async function FleetPage({
     const avgFill = fleet.length > 0 ? totalFuel / fleet.length : 0;
 
     // Prepare Top Lists
-    const topFleetForChart = fleet.slice(0, 10).map(f => ({ name: f.id, value: f.petrolVolume + f.dieselVolume }));
+    // Rankings exclude the no-unit placeholder: it is not a vehicle, and it would
+    // otherwise rank 3rd overall. It stays in the table and in every total below.
+    const rankable = fleet.filter(f => !isUnattributedUnit(f.id));
+    const topFleetForChart = rankable.slice(0, 10).map(f => ({ name: f.id, value: f.petrolVolume + f.dieselVolume }));
 
-    const highConsumer = fleet.length > 0 && fleet[0]?.id ? fleet[0].id : "N/A";
+    const highConsumer = rankable[0]?.id ?? "N/A";
 
     // --- Pagination for the Fleet Performance Table (all KPIs above use the
     // full filtered set; only the table rows are windowed). ---
@@ -290,7 +293,14 @@ export default async function FleetPage({
                                     pageRows.map((unit) => (
                                         <TableRow key={unit.id} className="hover:bg-muted/40 transition-colors border-b border-border last:border-0 text-xs md:text-sm">
                                             <TableCell className="font-bold text-foreground py-4">
-                                                {unit.id}
+                                                {isUnattributedUnit(unit.id) ? (
+                                                    <span
+                                                        className="text-muted-foreground italic"
+                                                        title="Fuel issued without a fleet unit recorded — not a vehicle"
+                                                    >
+                                                        {unitLabel(unit.id)}
+                                                    </span>
+                                                ) : unit.id}
                                             </TableCell>
                                             <TableCell className="font-mono font-medium text-muted-foreground">
                                                 {unit.petrolVolume > 0 ? `${unit.petrolVolume.toFixed(1)} L` : '—'}

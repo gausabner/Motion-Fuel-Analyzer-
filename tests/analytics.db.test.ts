@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import {
     getFleetPerformance, getDepartmentBreakdown, getFREData, getFISData,
-    getConsumptionSummary, getTopFleet,
+    getConsumptionSummary, getTopFleet, isUnattributedUnit, unitLabel,
 } from "@/lib/analytics";
 import { getVehicleAttribution } from "@/lib/vehicle-attribution";
 
@@ -210,5 +210,30 @@ describeDb("getVehicleAttribution — multi-unit matches", () => {
         for (const u of r!.units.slice(0, 20)) {
             expect(u.litres).toBeCloseTo(u.votes.reduce((s, v) => s + v.litres, 0), 6);
         }
+    });
+});
+
+describeDb("the unattributed-unit placeholder", () => {
+    it("recognises the placeholder and gives it a display label", () => {
+        expect(isUnattributedUnit("UNKNOWN")).toBe(true);
+        expect(isUnattributedUnit("unknown")).toBe(true);
+        expect(isUnattributedUnit("")).toBe(true);
+        expect(isUnattributedUnit(null)).toBe(true);
+        expect(isUnattributedUnit("WM0303")).toBe(false);
+        expect(unitLabel("UNKNOWN")).toBe("Unattributed");
+        expect(unitLabel("WM0303")).toBe("WM0303");
+    });
+
+    it("keeps it out of top-consumer rankings", async () => {
+        for (const fuel of ["Petrol", "Diesel"]) {
+            const top = await getTopFleet(fuel, {}, 50);
+            expect(top.some(u => isUnattributedUnit(u.vehicleId))).toBe(false);
+        }
+    });
+
+    it("still counts it in the fleet table, so litres reconcile", async () => {
+        const fleet = await getFleetPerformance();
+        // Present in the raw performance data (it is real fuel), just not ranked.
+        expect(fleet.some(u => isUnattributedUnit(u.id))).toBe(true);
     });
 });
