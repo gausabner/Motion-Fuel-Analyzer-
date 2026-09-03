@@ -11,11 +11,19 @@ import 'dotenv/config';
  *   npx tsx scripts/resolve-votes-by-prefix.ts --dry    # preview only
  *   npx tsx scripts/resolve-votes-by-prefix.ts --revert # remove derived rows
  *
- * Mirrors lib/vote-resolution.ts so ingestion and backfill behave identically.
+ * Mirrors lib/vote-resolution.ts so ingestion and backfill behave identically —
+ * change the prefix rule in both or neither.
  */
 const prisma = new PrismaClient();
-const PREFIX_LEN = 7;
-const prefixOf = (v: string) => (v && v.length >= PREFIX_LEN ? v.slice(0, PREFIX_LEN) : null);
+// A vote number is [division][fund] with a fixed 7-digit FUND segment; the
+// division segment is 5 or 6 digits depending on the code's length, so it is
+// anchored to the END. Keep in step with lib/vote-resolution.ts.
+const FUND_SUFFIX_LEN = 7;
+const normalise = (v: string) => String(v ?? '').replace(/\s+/g, '');
+const prefixOf = (v: string) => {
+    const d = normalise(v);
+    return d.length > FUND_SUFFIX_LEN ? d.slice(0, d.length - FUND_SUFFIX_LEN) : null;
+};
 
 async function buildPrefixMap() {
     const ccs = await prisma.costCentre.findMany({
@@ -27,7 +35,7 @@ async function buildPrefixMap() {
         const pfx = prefixOf(cc.voteNo);
         if (!pfx) continue;
         const key = `${cc.department}||${cc.division}`;
-        (byPrefix[pfx] = byPrefix[pfx] || new Map()).set(key, { department: cc.department, division: cc.division, canonical: cc.voteNo });
+        (byPrefix[pfx] = byPrefix[pfx] || new Map()).set(key, { department: cc.department, division: cc.division, canonical: normalise(cc.voteNo) });
     }
     const map: Record<string, { department: string; division: string; canonical: string }> = {};
     const allPrefixes = new Set(Object.keys(byPrefix));

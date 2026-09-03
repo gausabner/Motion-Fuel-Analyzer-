@@ -1,23 +1,40 @@
 import { prisma } from "@/lib/prisma";
 
 /**
- * Vote numbers are 13 digits: the leading 7 identify the DIVISION, the trailing
- * 6 are a fund/project suffix that can vary for the same division. When a
- * transaction's vote isn't registered but its 7-digit division prefix maps to
- * exactly ONE registered division, we can safely resolve it — the fuel clearly
- * belongs to that division regardless of the fund suffix.
+ * A vote number is [division][fund]: a DIVISION segment followed by a fixed
+ * 7-digit FUND/project segment that varies for the same division. Division
+ * segments are not a fixed width — real codes run 12 or 13 digits, giving 5- or
+ * 6-digit divisions:
+ *
+ *     51005  1100655   (12 digits: 5-digit division)
+ *     450010 1100655   (13 digits: 6-digit division)
+ *
+ * So the division is anchored to the END, not the start. Taking a fixed 7 from
+ * the LEFT (as this once did) pulls the first digit of the fund segment into the
+ * prefix, which silently splits one division into several — e.g. 1000250 vs
+ * 1000251 are the same division with different funds.
+ *
+ * When an unregistered vote's division segment maps to exactly ONE registered
+ * division, we can safely resolve it: the fuel belongs to that division whatever
+ * its fund segment. Ambiguous prefixes are always refused.
  *
  * Resolution never touches the transaction: we register a CostCentre row for
  * the unresolved vote pointing at the same division, tagged `derivedFrom` (the
  * canonical vote it was inferred from) so it stays auditable and reversible.
  */
 
-const DIVISION_PREFIX_LEN = 7;
+const FUND_SUFFIX_LEN = 7;
+
+/** Vote numbers are digits only; some registry rows carry stray whitespace. */
+export function normaliseVoteNo(voteNo: string): string {
+    return String(voteNo ?? "").replace(/\s+/g, "");
+}
 
 function prefixOf(voteNo: string): string | null {
-    const digits = String(voteNo).trim();
-    if (digits.length < DIVISION_PREFIX_LEN) return null;
-    return digits.slice(0, DIVISION_PREFIX_LEN);
+    const digits = normaliseVoteNo(voteNo);
+    // Needs at least one division digit on top of the fund segment.
+    if (digits.length <= FUND_SUFFIX_LEN) return null;
+    return digits.slice(0, digits.length - FUND_SUFFIX_LEN);
 }
 
 export type PrefixTarget = { department: string; division: string; canonical: string };
@@ -41,7 +58,7 @@ export async function buildPrefixDivisionMap(): Promise<Record<string, PrefixTar
         (byPrefix[pfx] = byPrefix[pfx] || new Map()).set(key, {
             department: cc.department,
             division: cc.division,
-            canonical: cc.voteNo,
+            canonical: normaliseVoteNo(cc.voteNo),
         });
     }
 
