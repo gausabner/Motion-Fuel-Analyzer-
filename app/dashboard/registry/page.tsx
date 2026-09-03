@@ -35,6 +35,15 @@ export default function RegistryPage() {
     const [unassigned, setUnassigned] = useState<UnassignedVote[]>([]);
     const [assignVote, setAssignVote] = useState<string | null>(null);
     const [assignForm, setAssignForm] = useState({ department: "", division: "" });
+    // Bulk assignment: the remaining backlog needs human decisions, but codes
+    // usually come in family groups that share one cost centre.
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [bulkForm, setBulkForm] = useState({ department: "", division: "" });
+    const toggle = (voteNo: string) => setSelected(prev => {
+        const next = new Set(prev);
+        next.has(voteNo) ? next.delete(voteNo) : next.add(voteNo);
+        return next;
+    });
 
     // Deep-link support: /dashboard/registry?tab=unassigned opens that tab.
     const [tab, setTab] = useState("costcentres");
@@ -63,6 +72,35 @@ export default function RegistryPage() {
     }, []);
 
     useEffect(() => { loadAll(); }, [loadAll]);
+
+    const divisionsFor = (dept: string) =>
+        Array.from(new Set(costCentres.filter(c => c.department === dept).map(c => c.division))).sort();
+
+    const bulkAssign = async () => {
+        setBusy(true);
+        try {
+            const res = await fetch("/api/registry/cost-centres", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ voteNos: [...selected], ...bulkForm }),
+            });
+            const data = await res.json();
+            if (!res.ok) { toast.error(data.error || "Bulk assign failed"); return; }
+            const skipped = data.skipped?.length || 0;
+            toast.success(
+                `Registered ${data.created.length} code${data.created.length === 1 ? "" : "s"}`
+                + (skipped ? ` · ${skipped} skipped` : "")
+            );
+            if (skipped) for (const s of data.skipped) toast.error(`${s.voteNo}: ${s.reason}`);
+            setSelected(new Set());
+            setBulkForm({ department: "", division: "" });
+            await loadAll();
+        } catch {
+            toast.error("Network error");
+        } finally {
+            setBusy(false);
+        }
+    };
 
     const post = async (url: string, body: any, onOk: () => void) => {
         setBusy(true);
@@ -412,10 +450,59 @@ export default function RegistryPage() {
                                     <p className="text-xs text-muted-foreground mt-1">All fuel-issue transactions resolve to a department.</p>
                                 </div>
                             ) : (
+                                <>
+                                {selected.size > 0 && (
+                                    <div className="mb-3 rounded-md border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-end gap-3">
+                                        <div className="text-xs font-bold text-foreground mr-1 mb-2">
+                                            {selected.size} code{selected.size === 1 ? "" : "s"} selected
+                                        </div>
+                                        <div className="space-y-1 min-w-[220px] flex-1">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department</label>
+                                            <Select value={bulkForm.department} onValueChange={val => setBulkForm({ department: val, division: "" })}>
+                                                <SelectTrigger className="bg-background h-9"><SelectValue placeholder="Select department..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    {departments.map(d => <SelectItem key={d.name} value={d.name}>{d.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1 min-w-[220px] flex-1">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Division</label>
+                                            <Select
+                                                value={bulkForm.division}
+                                                onValueChange={val => setBulkForm({ ...bulkForm, division: val })}
+                                                disabled={!bulkForm.department}
+                                            >
+                                                <SelectTrigger className="bg-background h-9"><SelectValue placeholder="Select division..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    {divisionsFor(bulkForm.department).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <Button
+                                            onClick={bulkAssign}
+                                            disabled={busy || !bulkForm.department || !bulkForm.division}
+                                            className="h-9 text-xs"
+                                        >
+                                            Assign {selected.size} code{selected.size === 1 ? "" : "s"}
+                                        </Button>
+                                        <Button variant="outline" className="h-9 text-xs" disabled={busy} onClick={() => setSelected(new Set())}>
+                                            Clear
+                                        </Button>
+                                    </div>
+                                )}
                                 <div className="rounded-sm border border-border max-h-[560px] overflow-y-auto">
                                     <Table>
                                         <TableHeader className="bg-muted/50 sticky top-0 z-10">
                                             <TableRow>
+                                                <TableHead className="w-10">
+                                                    <input
+                                                        type="checkbox"
+                                                        aria-label="Select all unassigned codes"
+                                                        className="h-3.5 w-3.5 align-middle cursor-pointer"
+                                                        checked={selected.size === unassigned.length && unassigned.length > 0}
+                                                        onChange={e => setSelected(e.target.checked ? new Set(unassigned.map(u => u.voteNo)) : new Set())}
+                                                    />
+                                                </TableHead>
                                                 <TableHead className="font-bold uppercase tracking-wider text-[10px]">Vote code</TableHead>
                                                 <TableHead className="font-bold uppercase tracking-wider text-[10px]">Suggested department</TableHead>
                                                 <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Txns</TableHead>
@@ -426,7 +513,16 @@ export default function RegistryPage() {
                                         <TableBody>
                                             {unassigned.map((v) => (
                                                 <Fragment key={v.voteNo}>
-                                                    <TableRow>
+                                                    <TableRow data-state={selected.has(v.voteNo) ? "selected" : undefined}>
+                                                        <TableCell>
+                                                            <input
+                                                                type="checkbox"
+                                                                aria-label={`Select ${v.voteNo}`}
+                                                                className="h-3.5 w-3.5 align-middle cursor-pointer"
+                                                                checked={selected.has(v.voteNo)}
+                                                                onChange={() => toggle(v.voteNo)}
+                                                            />
+                                                        </TableCell>
                                                         <TableCell className="font-mono text-xs font-bold">{v.voteNo}</TableCell>
                                                         <TableCell className="text-xs">
                                                             {v.suggestedDepartment
@@ -453,7 +549,7 @@ export default function RegistryPage() {
                                                     </TableRow>
                                                     {assignVote === v.voteNo && (
                                                         <TableRow className="bg-muted/40">
-                                                            <TableCell colSpan={5} className="py-3">
+                                                            <TableCell colSpan={6} className="py-3">
                                                                 <div className="flex flex-wrap items-end gap-3">
                                                                     <div className="space-y-1 min-w-[240px] flex-1">
                                                                         <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department</label>
@@ -497,6 +593,7 @@ export default function RegistryPage() {
                                         </TableBody>
                                     </Table>
                                 </div>
+                                </>
                             )}
                         </CardContent>
                     </Card>
