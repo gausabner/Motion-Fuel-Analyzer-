@@ -4,14 +4,37 @@
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
     },
     {
       "name": "jobpost",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "/Users/barfortlander/Documents/Jobpost/app", "run", "dev", "--", "--port", "3005"],
+      "runtimeArgs": [
+        "--prefix",
+        "/Users/barfortlander/Documents/Jobpost/app",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3005"
+      ],
       "port": 3005
+    },
+    {
+      "name": "prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "start",
+        "--",
+        "--port",
+        "3100"
+      ],
+      "port": 3100
     }
   ]
 }
