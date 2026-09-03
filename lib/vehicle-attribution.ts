@@ -26,6 +26,8 @@ export type UnitVoteRow = {
 
 export type UnitAttribution = {
     unitNo: string;
+    /** Total litres across every vote, used to rank units. */
+    litres: number;
     votes: UnitVoteRow[];
     /** Highest-litre resolved department/division. */
     primary: { department: string; division: string } | null;
@@ -39,6 +41,11 @@ export type AttributionResult = {
     matchedCount: number;
     /** Full detail; populated only when exactly one unit matched. */
     unit: UnitAttribution | null;
+    /**
+     * Every matched unit, ranked so the ones needing attention come first.
+     * Lets a multi-unit search still be listed and exported.
+     */
+    units: UnitAttribution[];
     summary: { units: number; departments: number; unassignedUnits: number };
 };
 
@@ -71,7 +78,7 @@ export async function getVehicleAttribution(
     `, ...params) as any[];
 
     if (rows.length === 0) {
-        return { query, matchedCount: 0, unit: null, summary: { units: 0, departments: 0, unassignedUnits: 0 } };
+        return { query, matchedCount: 0, unit: null, units: [], summary: { units: 0, departments: 0, unassignedUnits: 0 } };
     }
 
     // Group rows per unit.
@@ -110,6 +117,7 @@ export async function getVehicleAttribution(
 
         return {
             unitNo,
+            litres: votes.reduce((sum, v) => sum + v.litres, 0),
             votes,
             primary: top ? { department: top.department as string, division: top.division || "Unknown" } : null,
             unresolved,
@@ -119,6 +127,9 @@ export async function getVehicleAttribution(
     };
 
     const units = [...byUnit.entries()].map(([u, v]) => build(u, v));
+    // Unresolved units first, then by volume — the ones worth acting on lead.
+    const rank = (u: UnitAttribution) => (u.status === "assigned" ? 1 : 0);
+    units.sort((a, b) => rank(a) - rank(b) || b.litres - a.litres);
     const allDepts = new Set<string>();
     for (const u of units) u.departments.forEach(d => allDepts.add(d));
 
@@ -127,6 +138,7 @@ export async function getVehicleAttribution(
         matchedCount: units.length,
         // Full detail only for an unambiguous single match; otherwise a summary.
         unit: units.length === 1 ? units[0] : null,
+        units,
         summary: {
             units: units.length,
             departments: allDepts.size,

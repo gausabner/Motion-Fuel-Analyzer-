@@ -121,8 +121,7 @@ export async function GET(request: Request) {
             }
             // One row per unit/vote pair, so a multi-unit search still exports cleanly.
             const rows: unknown[][] = [];
-            const units = attr.unit ? [attr.unit] : [];
-            for (const u of units) {
+            for (const u of attr.units) {
                 for (const v of u.votes) {
                     rows.push([
                         u.unitNo, v.voteNo,

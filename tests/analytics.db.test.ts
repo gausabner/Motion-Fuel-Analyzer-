@@ -185,3 +185,30 @@ describeDb("getVehicleAttribution", () => {
         expect(scoped).toEqual(plain);
     });
 });
+
+describeDb("getVehicleAttribution — multi-unit matches", () => {
+    it("exposes every matched unit, not just the single-match case", async () => {
+        const r = await getVehicleAttribution("WM");
+        expect(r!.units.length).toBe(r!.matchedCount);
+        expect(r!.units.length).toBeGreaterThan(1);
+        // The single-unit convenience field stays null for an ambiguous search.
+        expect(r!.unit).toBeNull();
+    });
+
+    it("ranks units needing attention first, then by volume", async () => {
+        const r = await getVehicleAttribution("WM");
+        const rank = (s: string) => (s === "assigned" ? 1 : 0);
+        const ranks = r!.units.map(u => rank(u.status));
+        expect([...ranks].sort((a, b) => a - b)).toEqual(ranks);
+        // Within the unresolved block, volume descends.
+        const unresolved = r!.units.filter(u => u.status !== "assigned").map(u => u.litres);
+        expect([...unresolved].sort((a, b) => b - a)).toEqual(unresolved);
+    });
+
+    it("reports each unit's total litres as the sum of its votes", async () => {
+        const r = await getVehicleAttribution("WM");
+        for (const u of r!.units.slice(0, 20)) {
+            expect(u.litres).toBeCloseTo(u.votes.reduce((s, v) => s + v.litres, 0), 6);
+        }
+    });
+});

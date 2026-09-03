@@ -16,6 +16,9 @@ import type { AttributionResult, UnitVoteRow } from "@/lib/vehicle-attribution";
 
 const fmtL = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 0 })} L`;
 
+/** Units listed inline for a multi-unit match; the CSV always has the full set. */
+const MULTI_LIST_LIMIT = 12;
+
 /**
  * Shows which cost centre a filtered fleet unit's fuel is booked to, and — for
  * unregistered votes — offers to register them (admins only).
@@ -43,22 +46,66 @@ export function UnitAttributionCard({
         );
     }
 
-    // Substring searches can match many units — summarise rather than mislead.
+    // Substring searches can match many units — summarise, then list them so the
+    // ones needing attention are still reachable.
     if (!attribution.unit) {
         const { units, departments, unassignedUnits } = attribution.summary;
+        const shown = attribution.units.slice(0, MULTI_LIST_LIMIT);
         return (
             <Card className="monumental-card border-l-4 border-l-foreground/20">
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Unit attribution</CardTitle>
-                    <CardDescription>
-                        <span className="font-semibold text-foreground">{units} units</span> match “{attribution.query}”,
-                        spanning <span className="font-semibold text-foreground">{departments}</span> department{departments === 1 ? "" : "s"}
-                        {unassignedUnits > 0 && (
-                            <> · <span className="font-semibold text-amber-600">{unassignedUnits}</span> with unregistered votes</>
-                        )}
-                        . Search a single unit number to see and fix its attribution.
-                    </CardDescription>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Unit attribution</CardTitle>
+                            <CardDescription className="mt-1.5">
+                                <span className="font-semibold text-foreground">{units} units</span> match “{attribution.query}”,
+                                spanning <span className="font-semibold text-foreground">{departments}</span> department{departments === 1 ? "" : "s"}
+                                {unassignedUnits > 0 && (
+                                    <> · <span className="font-semibold text-amber-600">{unassignedUnits}</span> with unregistered votes</>
+                                )}
+                                . Search one unit number to see and fix its attribution.
+                            </CardDescription>
+                        </div>
+                        {exportUrl && <TableCsvButton filename="unit_attribution.csv" serverUrl={exportUrl} />}
+                    </div>
                 </CardHeader>
+                <CardContent>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                            <thead>
+                                <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                                    <th className="py-1.5 pr-3 font-bold">Unit</th>
+                                    <th className="py-1.5 pr-3 font-bold">Cost centre</th>
+                                    <th className="py-1.5 pr-3 font-bold text-right">Litres</th>
+                                    <th className="py-1.5 font-bold text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {shown.map(u => (
+                                    <tr key={u.unitNo} className="border-b border-border/50 last:border-0">
+                                        <td className="py-1.5 pr-3 font-mono font-semibold">{u.unitNo}</td>
+                                        <td className="py-1.5 pr-3">
+                                            {u.primary
+                                                ? <>{u.primary.department}<span className="text-muted-foreground"> / {u.primary.division}</span></>
+                                                : <span className="text-amber-600 font-semibold">No registered cost centre</span>}
+                                            {u.departments.length > 1 && (
+                                                <span className="text-muted-foreground"> +{u.departments.length - 1} more</span>
+                                            )}
+                                        </td>
+                                        <td className="py-1.5 pr-3 text-right font-mono">{fmtL(u.litres)}</td>
+                                        <td className="py-1.5 text-right"><StatusBadge status={u.status} /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    {attribution.units.length > shown.length && (
+                        <p className="text-xs text-muted-foreground mt-3">
+                            Showing {shown.length} of {attribution.units.length} matched units, unresolved first.
+                            The CSV contains them all.
+                        </p>
+                    )}
+                </CardContent>
             </Card>
         );
     }
