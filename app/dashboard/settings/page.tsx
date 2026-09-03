@@ -141,7 +141,7 @@ export default function SettingsPage() {
 
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
                     <Card className="glass-panel border-0 shadow-xl rounded-[2rem] overflow-hidden">
-                        <CardHeader className="bg-zinc-500/10 pb-8">
+                        <CardHeader className="bg-muted/400/10 pb-8">
                             <div className="h-12 w-12 bg-zinc-800 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-zinc-800/20">
                                 <Settings className="text-white" />
                             </div>

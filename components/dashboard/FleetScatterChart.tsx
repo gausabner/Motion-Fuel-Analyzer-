@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useRef } from "react";
+import { toLocalYmd } from "@/lib/date-format";
 import { ChartExportButton } from "@/components/ui/ChartExportButton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -23,8 +24,8 @@ interface FleetTransaction {
 }
 
 const PALETTE = {
-    petrol: '#000000', // Black
-    diesel: '#FDE047', // Yellow
+    petrol: '#60A5FA', // Sky
+    diesel: '#1D4ED8', // Deep blue
     grid: 'transparent',
     text: '#71717A'  // zinc-500
 };
@@ -51,10 +52,10 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
             let timeKey = '';
 
             const date = curr.dateObj;
-            if (granularity === 'daily') timeKey = date.toISOString().split('T')[0];
+            if (granularity === 'daily') timeKey = toLocalYmd(date);
             else if (granularity === 'weekly') {
                 const firstDay = new Date(date.setDate(date.getDate() - date.getDay()));
-                timeKey = firstDay.toISOString().split('T')[0] + "_W";
+                timeKey = toLocalYmd(firstDay) + "_W";
             }
             else if (granularity === 'monthly') timeKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
             else if (granularity === 'yearly') timeKey = `${date.getFullYear()}`;
@@ -96,7 +97,7 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
     const chartRef = useRef<HTMLDivElement>(null);
 
     return (
-        <Card className="monumental-card border-0 shadow-none bg-white" ref={chartRef}>
+        <Card className="monumental-card border-0 shadow-none bg-card" ref={chartRef}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b border-border pl-0">
                 <div className="space-y-1">
                     <CardTitle className="text-lg font-extrabold tracking-tight uppercase">Fleet Operations Matrix</CardTitle>
@@ -147,14 +148,14 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
                                 if (active && payload && payload.length) {
                                     const data = payload[0].payload;
                                     return (
-                                        <div className="bg-white shadow-xl rounded-lg p-4 border border-border text-sm min-w-[200px]">
+                                        <div className="bg-card shadow-xl rounded-lg p-4 border border-border text-sm min-w-[200px]">
                                             <p className="font-extrabold mb-2 text-black uppercase tracking-wide border-b border-border pb-2">{data.vehicleId}</p>
                                             <div className="space-y-1.5 text-muted-foreground">
                                                 <p className="flex justify-between"><span className="font-semibold text-xs uppercase">Period</span> <span className="text-black">{data.timeKey}</span></p>
                                                 <p className="flex justify-between"><span className="font-semibold text-xs uppercase">Volume</span> <span className="text-black">{data.quantity.toFixed(1)} L</span></p>
                                                 <p className="flex justify-between"><span className="font-semibold text-xs uppercase">Count</span> <span className="text-black">{data.count}</span></p>
                                                 <div className="mt-2 pt-2 border-t border-border flex items-center gap-2">
-                                                    <div className={`w-3 h-3 rounded-full ${data.fuelType === 'Petrol' ? 'bg-black' : 'bg-yellow-300'}`} />
+                                                    <div className={`w-3 h-3 rounded-full ${data.fuelType === 'Petrol' ? 'bg-[#60A5FA]' : 'bg-[#1D4ED8]'}`} />
                                                     <span className="text-xs font-bold uppercase text-black">{data.fuelType}</span>
                                                 </div>
                                             </div>

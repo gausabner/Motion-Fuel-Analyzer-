@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import { toLocalYmd } from "@/lib/date-format";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { UnassignedVotesBadge } from "@/components/dashboard/UnassignedVotesBadge";
 import { FuelLogFilters } from "@/components/dashboard/FuelLogFilters";
 import { DashboardCharts } from "@/components/dashboard/Charts";
 import { FileUpload } from "@/components/dashboard/FileUpload";
@@ -7,7 +11,9 @@ import { DashboardInteractivity } from "@/components/dashboard/DashboardInteract
 export const dynamic = 'force-dynamic';
 
 async function getDashboardData(filters: { vehicleId?: string, fuelType?: string, department?: string, division?: string, from?: string, to?: string }) {
-    let queryCondition = '1=1';
+    // Consumption = FIS only (fuel issued to vehicles). FRE/GRN/etc. are stock
+    // movements into tanks and must never count as fleet consumption.
+    let queryCondition = "t.transType = 'FIS'";
     const params: any[] = [];
 
     if (filters.vehicleId) {
@@ -83,17 +89,18 @@ async function getDashboardData(filters: { vehicleId?: string, fuelType?: string
         LIMIT 10
     `, ...params) as any[];
 
-    // 4. Top Vote Numbers
+    // 4. Top divisions by consumption — resolved votes roll up under their
+    // division; every unresolved vote collapses into one "Unassigned" row.
     const topVotes = await (prisma as any).$queryRawUnsafe(`
-        SELECT 
-            t.transVoteNo, 
+        SELECT
+            COALESCE(c.division, 'Unassigned') as label,
             SUM(CASE WHEN t.fuelType LIKE '%Petrol%' THEN t.transQty ELSE 0 END) as petrolQty,
             SUM(CASE WHEN t.fuelType LIKE '%Diesel%' THEN t.transQty ELSE 0 END) as dieselQty,
             SUM(t.transQty) as totalQty
         FROM FuelTransaction t
         LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
         WHERE ${queryCondition}
-        GROUP BY t.transVoteNo
+        GROUP BY COALESCE(c.division, 'Unassigned')
         ORDER BY totalQty DESC
         LIMIT 10
     `, ...params) as any[];
@@ -155,7 +162,8 @@ async function getDashboardData(filters: { vehicleId?: string, fuelType?: string
 
 
     const dailyAggregatedData = dailyData.reduce((acc: any[], day: any) => {
-        const dateKey = new Date(day.date).toISOString().split('T')[0];
+        // Group by LOCAL calendar day so chart labels match the picked range.
+        const dateKey = toLocalYmd(day.date);
         const existing = acc.find(d => d.date === dateKey);
         if (existing) {
             existing.totalVolume += day.totalVolume;
@@ -209,8 +217,9 @@ async function getDashboardData(filters: { vehicleId?: string, fuelType?: string
             name: f.vehicleId || 'Unknown',
             value: f.totalQty || 0
         })),
-        topVotes: topVotes.map((v: any) => ({
-            name: v.transVoteNo || 'Unassigned',
+        topVotes: topVotes.map((v: any, i: number) => ({
+            // Renderer expects a "#rank Name" label; keep that contract.
+            name: `#${i + 1} ${v.label || 'Unassigned'}`,
             value: v.totalQty || 0,
             petrol: v.petrolQty || 0,
             diesel: v.dieselQty || 0
@@ -224,21 +233,39 @@ export default async function DashboardPage({
     searchParams: Promise<{ vehicleId?: string, fuelType?: string, department?: string, division?: string, from?: string, to?: string }>
 }) {
     const params = await searchParams;
+
+    // No explicit date range: default to the latest month that has data,
+    // via redirect so the URL (and the date picker) reflect the applied range.
+    if (!params.from && !params.to) {
+        const latest = await (prisma as any).$queryRawUnsafe(
+            `SELECT MAX(transDate) as maxDate FROM FuelTransaction WHERE transType = 'FIS' AND transDate <= ?`,
+            new Date().toISOString()
+        ) as any[];
+        const maxDate = latest?.[0]?.maxDate ? new Date(latest[0].maxDate) : null;
+
+        if (maxDate && !isNaN(maxDate.getTime())) {
+            // Mirror the DateRangePicker's serialization: local-midnight dates as ISO strings
+            const from = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+            const to = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 0);
+            redirect(`/dashboard?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`);
+        }
+    }
+
     const data = await getDashboardData(params);
+
+    const scopeRange = params.from && params.to
+        ? `${new Date(params.from).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} – ${new Date(params.to).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
+        : "all recorded data";
 
     return (
         <div className="space-y-10">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-4xl font-extrabold tracking-tight text-brand-dark">
-                        Intelligence Operations
-                    </h2>
-                    <p className="text-muted-foreground mt-1 font-medium italic">
-                        Multi-dimensional fuel deployment analytics and calendar-based verification.
-                    </p>
-                </div>
+            <PageHeader
+                title="Fuel intelligence"
+                scope={`Fleet consumption for ${scopeRange} · FIS transactions only`}
+            >
+                <UnassignedVotesBadge />
                 <FileUpload />
-            </header>
+            </PageHeader>
 
             <FuelLogFilters costCentres={data.costCentres} />
 

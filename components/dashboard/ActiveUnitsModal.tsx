@@ -60,7 +60,7 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
                     <p className="font-bold">{data.id}</p>
                     <p>Total: {data.y.toFixed(2)} L</p>
                     <p className="text-amber-500">Petrol: {data.petrol.toFixed(2)} L</p>
-                    <p className="text-slate-500">Diesel: {data.diesel.toFixed(2)} L</p>
+                    <p className="text-muted-foreground">Diesel: {data.diesel.toFixed(2)} L</p>
                 </div>
             );
         }
@@ -106,7 +106,7 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
                                         {top20Scatter.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
-                                                fill={entry.petrol > entry.diesel ? "#000000" : "#FDE047"}
+                                                fill={entry.petrol > entry.diesel ? "#60A5FA" : "#1D4ED8"}
                                                 stroke="transparent"
                                             />
                                         ))}
@@ -116,11 +116,11 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
                         </div>
                         <div className="flex justify-center gap-4 mt-1 text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
                             <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-black"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#60A5FA]"></span>
                                 Petrol Dominant
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-300"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#1D4ED8]"></span>
                                 Diesel Dominant
                             </div>
                         </div>
@@ -146,10 +146,10 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
                                         {activeUnitsList.map((unit) => (
                                             <TableRow key={unit.vehicleId} className="border-border/50 hover:bg-muted/30 transition-colors h-8">
                                                 <TableCell className="font-mono text-[10px] font-bold text-foreground py-1">{unit.vehicleId}</TableCell>
-                                                <TableCell className="text-right text-[10px] py-1 text-zinc-500">
+                                                <TableCell className="text-right text-[10px] py-1 text-[#3B82F6]">
                                                     {unit.petrol > 0 ? unit.petrol.toFixed(0) : '-'}
                                                 </TableCell>
-                                                <TableCell className="text-right text-[10px] py-1 text-yellow-600/90 dark:text-yellow-500/90">
+                                                <TableCell className="text-right text-[10px] py-1 text-[#1D4ED8] dark:text-[#60A5FA]">
                                                     {unit.diesel > 0 ? unit.diesel.toFixed(0) : '-'}
                                                 </TableCell>
                                                 <TableCell className="text-right text-[10px] font-bold text-foreground py-1">

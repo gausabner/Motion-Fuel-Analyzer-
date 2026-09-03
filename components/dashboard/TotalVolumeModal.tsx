@@ -28,8 +28,8 @@ interface TotalVolumeModalProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white/95 backdrop-blur-sm border border-zinc-100 p-3 rounded-xl shadow-xl">
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
+            <div className="bg-card/95 backdrop-blur-sm border border-border p-3 rounded-xl shadow-xl">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                     {format(new Date(payload[0].payload.date), "MMM dd, yyyy")}
                 </p>
                 <p className="text-sm font-black text-foreground">
@@ -51,11 +51,11 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="!w-[70vw] !max-w-[70vw] rounded-3xl p-6 bg-white/95 backdrop-blur-xl border-white/20">
+            <DialogContent className="!w-[70vw] !max-w-[70vw] rounded-3xl p-6 bg-card/95 backdrop-blur-xl border-white/20">
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className={`p-2 rounded-xl bg-black/5`}>
-                            <Droplets className="h-6 w-6 text-black" />
+                        <div className={`p-2 rounded-xl bg-accent`}>
+                            <Droplets className="h-6 w-6 text-primary" />
                         </div>
                         <div>
                             <DialogTitle className="text-2xl font-bold text-foreground">
@@ -70,8 +70,8 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
                     {/* Main Chart Area */}
-                    <div className="col-span-1 lg:col-span-3 h-[200px] w-full border border-zinc-100 rounded-xl p-3 bg-zinc-50/50 flex flex-col">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
+                    <div className="col-span-1 lg:col-span-3 h-[200px] w-full border border-border rounded-xl p-3 bg-muted/40 flex flex-col">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
                             Daily Volume Distribution
                         </h3>
                         <div className="flex-1 w-full min-h-0">
@@ -104,11 +104,11 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
                                         content={<CustomTooltip />}
                                         wrapperStyle={{ outline: 'none' }}
                                     />
-                                    <Scatter name="Daily Volume" data={data} fill="#000000">
+                                    <Scatter name="Daily Volume" data={data} fill="#2563EB">
                                         {data.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
-                                                fill={entry.totalVol > avgVolume ? "#000000" : "#A1A1AA"}
+                                                fill={entry.totalVol > avgVolume ? "#2563EB" : "#93C5FD"}
                                                 fillOpacity={entry.totalVol > avgVolume ? 1 : 0.5}
                                             />
                                         ))}
@@ -120,20 +120,20 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
 
                     {/* Stats Side Panel */}
                     <div className="flex flex-col gap-3">
-                        <div className="p-3 rounded-xl border border-zinc-100 bg-white shadow-sm min-w-0">
-                            <p className="text-[9px] font-bold uppercase text-zinc-400 truncate">Total Period Volume</p>
+                        <div className="p-3 rounded-xl border border-border bg-card shadow-sm min-w-0">
+                            <p className="text-[9px] font-bold uppercase text-muted-foreground truncate">Total Period Volume</p>
                             <p className="text-lg font-black text-foreground mt-1 truncate" title={`${totalVolume.toLocaleString()} L`}>
                                 {totalVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L
                             </p>
                         </div>
-                        <div className="p-3 rounded-xl border border-zinc-100 bg-white shadow-sm min-w-0">
-                            <p className="text-[9px] font-bold uppercase text-zinc-400 truncate">Peak Daily Volume</p>
+                        <div className="p-3 rounded-xl border border-border bg-card shadow-sm min-w-0">
+                            <p className="text-[9px] font-bold uppercase text-muted-foreground truncate">Peak Daily Volume</p>
                             <p className="text-lg font-black text-foreground mt-1 truncate" title={`${maxVolume.toLocaleString()} L`}>
                                 {maxVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L
                             </p>
                         </div>
-                        <div className="p-3 rounded-xl border border-zinc-100 bg-white shadow-sm min-w-0">
-                            <p className="text-[9px] font-bold uppercase text-zinc-400 truncate">Average Daily</p>
+                        <div className="p-3 rounded-xl border border-border bg-card shadow-sm min-w-0">
+                            <p className="text-[9px] font-bold uppercase text-muted-foreground truncate">Average Daily</p>
                             <p className="text-lg font-black text-foreground mt-1 truncate" title={`${avgVolume.toLocaleString()} L`}>
                                 {avgVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L
                             </p>

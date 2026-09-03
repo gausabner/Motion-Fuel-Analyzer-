@@ -45,10 +45,9 @@ export function DashboardInteractivity({
                 {/* 1. Total Sales (Spend) */}
                 <div onClick={() => setShowTotalSpendModal(true)} className="cursor-pointer">
                     <IndustrialKPI
-                        label="TOTAL SPEND"
+                        label="Total spend"
                         value={`${currencySymbol}${data.kpi.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
                         icon={Wallet}
-                        trend={{ value: 12, direction: 'up' }}
                         accent={true}
                     />
                 </div>
@@ -56,7 +55,7 @@ export function DashboardInteractivity({
                 {/* 2. Units Sold (Volume) */}
                 <div onClick={() => setShowTotalVolumeModal(true)} className="cursor-pointer">
                     <IndustrialKPI
-                        label="TOTAL VOLUME"
+                        label="Total volume"
                         value={`${totalVol.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
                         subValue="Liters Dispensed"
                         icon={Droplets}
@@ -66,12 +65,14 @@ export function DashboardInteractivity({
                 {/* 3. Avg Price (Implied) */}
                 <div onClick={() => setShowAvgPriceModal(true)} className="cursor-pointer">
                     <IndustrialKPI
-                        label="AVG PRICE / L"
+                        label="Avg price / L"
                         value={`${currencySymbol}${(data.kpi.actualAvgPrice || 0).toFixed(2)}`}
                         icon={Activity}
                         trend={{
                             value: Math.abs(data.kpi.priceDeviation || 0),
-                            direction: (data.kpi.priceDeviation || 0) >= 0 ? 'up' : 'down'
+                            direction: (data.kpi.priceDeviation || 0) >= 0 ? 'up' : 'down',
+                            sentiment: (data.kpi.priceDeviation || 0) >= 0 ? 'bad' : 'good',
+                            label: 'vs set rate'
                         }}
                         bottomTrend={true}
                     />
@@ -80,7 +81,7 @@ export function DashboardInteractivity({
                 {/* 4. Active Vehicles */}
                 <div onClick={() => setShowActiveUnitsModal(true)} className="cursor-pointer">
                     <IndustrialKPI
-                        label="ACTIVE UNITS"
+                        label="Active units"
                         value={(data.kpi.activeUnitsCount || 0).toLocaleString()}
                         subValue="Fleet Vehicles"
                         icon={Fuel}
@@ -100,7 +101,7 @@ export function DashboardInteractivity({
             </div>
 
             <Dialog open={!!selectedFuel} onOpenChange={(open) => !open && setSelectedFuel(null)}>
-                <DialogContent className="w-[95vw] max-w-[95vw] rounded-3xl p-4 md:p-8 bg-white/95 backdrop-blur-xl border-white/20">
+                <DialogContent className="w-[95vw] max-w-[95vw] rounded-3xl p-4 md:p-8 bg-card/95 backdrop-blur-xl border-white/20">
                     <DialogHeader>
                         <div className="flex items-center gap-3 mb-2">
                             <div className={`p-2 rounded-xl bg-black/5`}>
@@ -146,9 +147,6 @@ export function DashboardInteractivity({
                 onOpenChange={setShowTotalSpendModal}
                 data={data.dailySpendData || []}
                 currencySymbol={currencySymbol}
-                totalSpend={data.kpi.totalCost}
-                maxSpend={data.kpi.maxDailySpend || 0}
-                avgSpend={data.kpi.avgDailySpend || 0}
             />
 
             <TotalVolumeModal

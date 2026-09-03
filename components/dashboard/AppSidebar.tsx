@@ -12,64 +12,97 @@ import {
     LogOut,
     Database,
     Upload,
-    Menu
+    Menu,
+    Flame,
+    Container,
+    GitCompareArrows,
+    UserCog
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
 
-// Grouping Logic for "Industrial" Navigation
+/** Compact light/dark switch for the sidebar footer. */
+function SidebarThemeToggle() {
+    const { theme, setTheme, resolvedTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
+    const isDark = mounted && (resolvedTheme === "dark" || theme === "dark");
+
+    return (
+        <button
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            className="p-2 rounded-lg text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover transition-colors"
+        >
+            {/* Render a stable icon until mounted to avoid hydration mismatch */}
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
+    );
+}
+
+// Navigation IA — see UI_Redesign_Plan.pdf §05/§07
 const navGroups = [
     {
-        title: "Analytics",
+        title: "Overview",
         items: [
             { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
-            { name: "Fleet Command", href: "/dashboard/fleet", icon: Truck, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
-            { name: "Cost Centres", href: "/dashboard/departments", icon: Users, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "EMPLOYEE"] },
-            { name: "Reports", href: "/dashboard/reports", icon: BarChart3, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "EMPLOYEE"] },
+            { name: "Fuel issues (FIS)", href: "/dashboard/fis", icon: Flame, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
+            { name: "Fuel receipts (FRE)", href: "/dashboard/fre", icon: Container, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
         ]
     },
     {
-        title: "Data Management",
+        title: "Analysis",
         items: [
-            { name: "Fuel Logs", href: "/dashboard/fuel-logs", icon: Database, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
-            { name: "Ingestion", href: "/dashboard/upload", icon: Upload, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "EMPLOYEE"] },
-            { name: "System Settings", href: "/dashboard/settings", icon: Settings, roles: ["SUPER_ADMIN"] },
+            { name: "Fleet", href: "/dashboard/fleet", icon: Truck, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
+            { name: "Cost centres", href: "/dashboard/departments", icon: Users, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "EMPLOYEE"] },
+            { name: "Compare periods", href: "/dashboard/compare", icon: GitCompareArrows, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
+            { name: "Fuel report", href: "/dashboard/reports", icon: BarChart3, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "EMPLOYEE"] },
+        ]
+    },
+    {
+        title: "Data & Admin",
+        items: [
+            { name: "Fuel logs", href: "/dashboard/fuel-logs", icon: Database, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
+            { name: "Uploads", href: "/dashboard/upload", icon: Upload, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "EMPLOYEE"] },
+            { name: "Registry", href: "/dashboard/registry", icon: Fuel, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "EMPLOYEE"] },
+            { name: "Users", href: "/dashboard/users", icon: UserCog, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN"] },
+            { name: "Settings", href: "/dashboard/settings", icon: Settings, roles: ["SUPER_ADMIN"] },
         ]
     }
 ];
 
-function NavContent({ pathname, userRole, setOpen }: { pathname: string, userRole: string, setOpen?: (open: boolean) => void }) {
+function NavContent({ pathname, session, setOpen }: { pathname: string, session: any, setOpen?: (open: boolean) => void }) {
+    const userRole = (session?.user as any)?.role || "EMPLOYEE";
+    const userName = session?.user?.name || session?.user?.email || "Signed in";
+    const initial = String(userName).charAt(0).toUpperCase();
+    const roleLabel = String(userRole).replace(/_/g, " ").toLowerCase();
+
     return (
-        <div className="flex flex-col h-full bg-black text-white">
+        <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
             {/* Header */}
-            <div className="p-8">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-yellow-400 flex items-center justify-center">
-                        <Fuel className="h-5 w-5 text-black" />
-                    </div>
-                    <h1 className="text-xl font-extrabold tracking-tight text-white">
-                        Motion Fuel Analyser
-                    </h1>
-                </div>
-                <p className="text-[10px] uppercase tracking-[0.2em] mt-2 text-zinc-500 font-bold">Industrial Ops</p>
+            <div className="px-6 pt-7 pb-5">
+                <img src="/logo-on-dark.svg" alt="Motion Fuel Analyzer Logo" className="w-32 h-auto object-contain" />
             </div>
 
             {/* Navigation Groups */}
-            <nav className="flex-1 px-4 py-4 space-y-8 overflow-y-auto">
+            <nav className="flex-1 px-3 py-2 space-y-6 overflow-y-auto">
                 {navGroups.map((group) => {
                     const filteredItems = group.items.filter(item => item.roles.includes(userRole));
                     if (filteredItems.length === 0) return null;
 
                     return (
                         <div key={group.title}>
-                            <h3 className="px-4 text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">
+                            <h3 className="px-3 text-[10px] font-semibold text-sidebar-muted uppercase tracking-[0.15em] mb-2">
                                 {group.title}
                             </h3>
-                            <ul className="space-y-1">
+                            <ul className="space-y-0.5">
                                 {filteredItems.map((item) => {
                                     const isActive = pathname === item.href;
                                     return (
@@ -78,20 +111,17 @@ function NavContent({ pathname, userRole, setOpen }: { pathname: string, userRol
                                                 href={item.href}
                                                 onClick={() => setOpen && setOpen(false)}
                                                 className={cn(
-                                                    "flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 group relative",
+                                                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors duration-150 group",
                                                     isActive
-                                                        ? "bg-white text-black font-bold shadow-sm"
-                                                        : "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                                                        ? "bg-primary text-primary-foreground font-semibold"
+                                                        : "text-sidebar-muted font-medium hover:text-sidebar-foreground hover:bg-sidebar-hover"
                                                 )}
                                             >
                                                 <item.icon className={cn(
-                                                    "h-5 w-5 transition-colors",
-                                                    isActive ? "text-black" : "text-zinc-500 group-hover:text-white"
+                                                    "h-[18px] w-[18px] shrink-0 transition-colors",
+                                                    isActive ? "text-primary-foreground" : "text-sidebar-muted group-hover:text-sidebar-foreground"
                                                 )} />
                                                 <span>{item.name}</span>
-                                                {isActive && (
-                                                    <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-yellow-400" />
-                                                )}
                                             </Link>
                                         </li>
                                     );
@@ -102,16 +132,26 @@ function NavContent({ pathname, userRole, setOpen }: { pathname: string, userRol
                 })}
             </nav>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-border bg-black">
-                {/* Simplified footer for mobile/desktop shared component */}
-                <button
-                    onClick={() => signOut({ callbackUrl: '/' })}
-                    className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/10"
-                >
-                    <LogOut className="h-4 w-4" />
-                    <span className="font-semibold text-sm">Logout</span>
-                </button>
+            {/* User block */}
+            <div className="px-3 py-4 border-t border-sidebar-border">
+                <div className="flex items-center gap-3 px-3 py-2">
+                    <div className="w-9 h-9 rounded-full bg-sidebar-hover flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-[#60A5FA]">{initial}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-sidebar-foreground truncate">{userName}</p>
+                        <p className="text-[11px] text-sidebar-muted capitalize truncate">{roleLabel}</p>
+                    </div>
+                    <SidebarThemeToggle />
+                    <button
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        title="Sign out"
+                        aria-label="Sign out"
+                        className="p-2 rounded-lg text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover transition-colors"
+                    >
+                        <LogOut className="h-4 w-4" />
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -120,11 +160,10 @@ function NavContent({ pathname, userRole, setOpen }: { pathname: string, userRol
 export function AppSidebar() {
     const pathname = usePathname();
     const { data: session } = useSession();
-    const userRole = (session?.user as any)?.role || "EMPLOYEE";
 
     return (
-        <div className="hidden lg:flex w-64 flex-col h-screen fixed inset-y-0 left-0 z-50 border-r border-border bg-black">
-            <NavContent pathname={pathname} userRole={userRole} />
+        <div className="hidden lg:flex w-64 flex-col h-screen fixed inset-y-0 left-0 z-50 border-r border-sidebar-border bg-sidebar">
+            <NavContent pathname={pathname} session={session} />
         </div>
     );
 }
@@ -132,18 +171,17 @@ export function AppSidebar() {
 export function MobileSidebar() {
     const pathname = usePathname();
     const { data: session } = useSession();
-    const userRole = (session?.user as any)?.role || "EMPLOYEE";
     const [open, setOpen] = useState(false);
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
+                <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation menu">
                     <Menu className="h-6 w-6" />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72 border-r border-border">
-                <NavContent pathname={pathname} userRole={userRole} setOpen={setOpen} />
+            <SheetContent side="left" className="p-0 w-72 border-r border-sidebar-border">
+                <NavContent pathname={pathname} session={session} setOpen={setOpen} />
             </SheetContent>
         </Sheet>
     );
