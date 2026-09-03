@@ -17,6 +17,7 @@ import { FuelLogFilters } from "@/components/dashboard/FuelLogFilters";
 import { DepartmentCharts } from "@/components/dashboard/DepartmentCharts";
 import { getDepartmentBreakdown } from "@/lib/analytics";
 import { TablePagination } from "@/components/dashboard/TablePagination";
+import { paginate } from "@/lib/pagination";
 import { TableCsvButton } from "@/components/reports/ReportExports";
 
 // Default rows shown in the Departmental Breakdown table; overridable via ?pageSize
@@ -43,10 +44,8 @@ export default async function DepartmentsPage({
     // --- Pagination for the Departmental Breakdown table (the KPIs, charts and
     // each row's % of total all use the full filtered set; only the table rows
     // are windowed). ---
-    const pageSize = Math.min(80, Math.max(1, Number(params.pageSize) || DEFAULT_PAGE_SIZE));
-    const totalPages = Math.max(1, Math.ceil(departments.length / pageSize));
-    const currentPage = Math.min(totalPages, Math.max(1, Number(params.page) || 1));
-    const pageRows = departments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const { page: currentPage, pageSize, start, end } = paginate(departments.length, params.page, params.pageSize, DEFAULT_PAGE_SIZE);
+    const pageRows = departments.slice(start, end);
 
     // Build the CSV export URL from the active filters (never page/pageSize —
     // the export is the whole filtered set, not the current page).

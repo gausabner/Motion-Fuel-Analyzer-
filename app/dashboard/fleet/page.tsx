@@ -13,6 +13,7 @@ import { Truck, TrendingUp, AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { getFleetPerformance } from "@/lib/analytics";
 import { TablePagination } from "@/components/dashboard/TablePagination";
+import { paginate } from "@/lib/pagination";
 import { TableCsvButton } from "@/components/reports/ReportExports";
 import { getVehicleAttribution } from "@/lib/vehicle-attribution";
 import { UnitAttributionCard } from "@/components/dashboard/UnitAttributionCard";
@@ -178,10 +179,8 @@ export default async function FleetPage({
 
     // --- Pagination for the Fleet Performance Table (all KPIs above use the
     // full filtered set; only the table rows are windowed). ---
-    const pageSize = Math.min(80, Math.max(1, Number(params.pageSize) || DEFAULT_PAGE_SIZE));
-    const totalPages = Math.max(1, Math.ceil(fleet.length / pageSize));
-    const currentPage = Math.min(totalPages, Math.max(1, Number(params.page) || 1));
-    const pageRows = fleet.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const { page: currentPage, pageSize, start, end } = paginate(fleet.length, params.page, params.pageSize, DEFAULT_PAGE_SIZE);
+    const pageRows = fleet.slice(start, end);
 
     // Build the CSV export URL from the active filters (never page/pageSize —
     // the export is the whole filtered set, not the current page).
