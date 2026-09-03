@@ -12,6 +12,10 @@ model User {
   email     String   @unique
   name      String?
   role      String   @default("EMPLOYEE")
+  // bcrypt hash; null only for legacy rows until a password is set.
+  password  String?
+  // ACTIVE = can sign in · PENDING = awaiting admin approval · DISABLED = blocked
+  status    String   @default("ACTIVE")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -25,6 +29,21 @@ model CostCentre {
   voteNo     String @id
   division   String
   department String
+  // Set when this entry was auto-created by prefix resolution (holds the
+  // registered vote it was derived from). NULL for seeded/manual entries.
+  // Makes auto-resolution auditable and reversible.
+  derivedFrom String?
+}
+
+model Department {
+  name      String   @id
+  createdAt DateTime @default(now())
+}
+
+model FleetUnit {
+  unitNo      String   @id
+  description String?
+  createdAt   DateTime @default(now())
 }
 
 model FuelTransaction {
