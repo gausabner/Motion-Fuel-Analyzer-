@@ -6,6 +6,7 @@ import {
     getConsumptionSummary, getTopFleet, isUnattributedUnit, unitLabel,
 } from "@/lib/analytics";
 import { getVehicleAttribution } from "@/lib/vehicle-attribution";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Integration checks against the local dev database. These assert *invariants*
@@ -235,5 +236,35 @@ describeDb("the unattributed-unit placeholder", () => {
         const fleet = await getFleetPerformance();
         // Present in the raw performance data (it is real fuel), just not ranked.
         expect(fleet.some(u => isUnattributedUnit(u.id))).toBe(true);
+    });
+});
+
+describeDb("transDate storage format", () => {
+    it("stores every transDate as ISO text, never epoch milliseconds", async () => {
+        // Analytics filter transDate by STRING comparison, and SQLite sorts every
+        // INTEGER below every TEXT — so a Prisma-native DateTime write lands as
+        // epoch ms and matches no date filter anywhere. Such rows import, report a
+        // success count, and are invisible across the entire app. This exact
+        // regression hid a month of uploaded data.
+        const rows = await prisma.$queryRawUnsafe(
+            `SELECT typeof(transDate) AS t, COUNT(*) AS c FROM FuelTransaction GROUP BY t`
+        ) as { t: string; c: number | bigint }[];
+        const offenders = rows.filter(r => r.t !== "text");
+        expect(
+            offenders.map(o => `${o.t}=${Number(o.c)}`).join(", ") || "none",
+        ).toBe("none");
+    });
+
+    it("finds the newest month through a plain string filter", async () => {
+        // Guards the symptom rather than the mechanism: if the newest data cannot
+        // be reached this way, the dashboard cannot show it either.
+        const [{ latest }] = await prisma.$queryRawUnsafe(
+            `SELECT MAX(transDate) AS latest FROM FuelTransaction`
+        ) as { latest: string }[];
+        const month = String(latest).slice(0, 7);
+        const [{ c }] = await prisma.$queryRawUnsafe(
+            `SELECT COUNT(*) AS c FROM FuelTransaction WHERE transDate >= '${month}-01'`
+        ) as { c: number | bigint }[];
+        expect(Number(c)).toBeGreaterThan(0);
     });
 });

@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
 import fs from "fs/promises";
@@ -180,39 +181,36 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
     }
 
     let insertedCount = 0;
-    // 4. Insert with duplicate detection via the Prisma query builder (fully
-    //    parameterized — no raw SQL). The @@unique index on
-    //    (transDate, transRefNo, vehicleId, issueTime) throws P2002 on a dup,
-    //    which we treat as "skip", matching the old INSERT OR IGNORE behaviour.
+    // 4. Insert with duplicate detection.
+    //
+    //    transDate MUST be written as an ISO-8601 STRING. Every analytics query
+    //    filters it by string comparison (see lib/analytics.ts), and SQLite sorts
+    //    every INTEGER below every TEXT — so a DateTime written Prisma-natively
+    //    lands as epoch milliseconds and becomes invisible to all of them: it is
+    //    in the table, counted as imported, and matches no date filter anywhere.
+    //    That regression silently hid a whole month of uploaded data.
+    //
+    //    This is $executeRaw, NOT $executeRawUnsafe: it is a tagged template, so
+    //    every value below is bound as a parameter and nothing is interpolated.
+    //    INSERT OR IGNORE lets the @@unique index on
+    //    (transDate, transRefNo, vehicleId, issueTime) skip duplicates, matching
+    //    the original behaviour.
     for (const tx of transactions) {
-        let inserted = false;
-        try {
-            await prisma.fuelTransaction.create({
-                data: {
-                    storeNo: tx.storeNo,
-                    pumpNo: tx.pumpNo,
-                    transDate: tx.transDate,
-                    transRefNo: tx.transRefNo,
-                    issueTime: tx.issueTime,
-                    transVoteNo: tx.transVoteNo,
-                    transQty: tx.transQty,
-                    transAmt: tx.transAmt,
-                    vehicleId: tx.vehicleId,
-                    fleetUnit: tx.fleetUnit,
-                    fleetEI: tx.fleetEI,
-                    fleetReading: tx.fleetReading,
-                    jobNo: tx.jobNo,
-                    activity: tx.activity,
-                    itemCat: tx.itemCat,
-                    transType: tx.transType,
-                    fuelType: tx.fuelType,
-                    isIssue: tx.isIssue,
-                },
-            });
-            inserted = true;
-        } catch (e: any) {
-            if (e?.code !== "P2002") throw e; // rethrow anything that isn't a duplicate
-        }
+        const isoDate = tx.transDate.toISOString();
+        const affected = await prisma.$executeRaw`
+            INSERT OR IGNORE INTO FuelTransaction (
+                id, storeNo, pumpNo, transDate, transRefNo, issueTime, transVoteNo,
+                transQty, transAmt, vehicleId, fleetUnit, fleetEI, fleetReading,
+                jobNo, activity, itemCat, transType, fuelType, isIssue, createdAt
+            ) VALUES (
+                ${randomUUID()}, ${tx.storeNo}, ${tx.pumpNo}, ${isoDate}, ${tx.transRefNo},
+                ${tx.issueTime}, ${tx.transVoteNo}, ${tx.transQty}, ${tx.transAmt},
+                ${tx.vehicleId}, ${tx.fleetUnit}, ${tx.fleetEI}, ${tx.fleetReading},
+                ${tx.jobNo}, ${tx.activity}, ${tx.itemCat}, ${tx.transType},
+                ${tx.fuelType}, ${tx.isIssue ? 1 : 0}, ${new Date().toISOString()}
+            )`;
+        // INSERT OR IGNORE reports 0 affected rows when the unique index skipped a duplicate.
+        const inserted = affected > 0;
 
         if (inserted) {
             insertedCount++;
