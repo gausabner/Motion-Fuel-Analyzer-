@@ -127,7 +127,10 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
                 rowData[key.trim()] = row[key];
             });
 
-            const tankNo = String(rowData["Tank"] || rowData["Store No"] || rowData["Store"] || "");
+            // Trimmed on write: the source pads tank numbers inconsistently, so
+            // "937" and "937       " were being stored as two different tanks,
+            // splitting every per-tank total in half.
+            const tankNo = String(rowData["Tank"] || rowData["Store No"] || rowData["Store"] || "").trim();
             if (!tankNo || tankNo.toLowerCase() === 'undefined') continue;
 
             const fuelType = fuelMap[tankNo] || "Unknown";

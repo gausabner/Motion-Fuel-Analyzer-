@@ -17,7 +17,7 @@ import {
     Container,
     GitCompareArrows,
     UserCog
-} from "lucide-react";
+, ArrowLeftRight} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -53,8 +53,16 @@ const navGroups = [
         title: "Overview",
         items: [
             { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
-            { name: "Fuel issues (FIS)", href: "/dashboard/fis", icon: Flame, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
-            { name: "Fuel receipts (FRE)", href: "/dashboard/fre", icon: Container, roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"] },
+            {
+                name: "FIS vs FRE", href: "/dashboard/fis-vs-fre", icon: ArrowLeftRight,
+                roles: ["SUPER_ADMIN", "SYSTEM_ADMIN", "SYSTEM_HEAD", "EMPLOYEE"],
+                // The two single-flow views stay reachable, nested beneath the
+                // comparison that now fronts them.
+                children: [
+                    { name: "Fuel issues (FIS)", href: "/dashboard/fis", icon: Flame },
+                    { name: "Fuel receipts (FRE)", href: "/dashboard/fre", icon: Container },
+                ],
+            },
         ]
     },
     {
@@ -104,6 +112,7 @@ function NavContent({ pathname, session, setOpen }: { pathname: string, session:
                             </h3>
                             <ul className="space-y-0.5">
                                 {filteredItems.map((item) => {
+                                    const children = (item as any).children as { name: string; href: string; icon: any }[] | undefined;
                                     const isActive = pathname === item.href;
                                     return (
                                         <li key={item.href}>
@@ -123,6 +132,31 @@ function NavContent({ pathname, session, setOpen }: { pathname: string, session:
                                                 )} />
                                                 <span>{item.name}</span>
                                             </Link>
+
+                                            {children && (
+                                                <ul className="mt-0.5 mb-1 ml-[26px] pl-3 border-l border-sidebar-hover space-y-0.5">
+                                                    {children.map((child) => {
+                                                        const childActive = pathname === child.href;
+                                                        return (
+                                                            <li key={child.href}>
+                                                                <Link
+                                                                    href={child.href}
+                                                                    onClick={() => setOpen && setOpen(false)}
+                                                                    className={cn(
+                                                                        "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors duration-150 group",
+                                                                        childActive
+                                                                            ? "bg-sidebar-hover text-sidebar-foreground font-semibold"
+                                                                            : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover"
+                                                                    )}
+                                                                >
+                                                                    <child.icon className="h-3.5 w-3.5 shrink-0" />
+                                                                    <span>{child.name}</span>
+                                                                </Link>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            )}
                                         </li>
                                     );
                                 })}
