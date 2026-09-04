@@ -17,8 +17,14 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      # Fail the build on high/critical CVEs so they block merges.
-      - name: npm audit (high+)
+      # Fail the build on high/critical CVEs in code that actually ships.
+      # Dev-only tooling (test runner, bundler) is audited separately below and
+      # does not gate merges: a CVE in a test runner is not a production risk.
+      - name: npm audit — production dependencies (blocking)
+        run: npm audit --omit=dev --audit-level=high
+      # Informational: surfaces dev-tooling advisories without blocking.
+      - name: npm audit — dev dependencies (informational)
+        continue-on-error: true
         run: npm audit --audit-level=high
       # Informational: surface any raw-SQL usage for reviewer scrutiny.
       - name: Flag raw SQL ($queryRawUnsafe / $executeRawUnsafe)
