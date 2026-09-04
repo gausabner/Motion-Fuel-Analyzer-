@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { requireRole } from "@/lib/auth";
 import { validateUploadFile } from "@/lib/upload-validation";
-import { isHr640Sheet } from "@/lib/ingestion-hr640";
+import { detectDeliveryFormat } from "@/lib/ingestion-hr640";
 
 export async function POST(req: NextRequest) {
     const _auth = await requireRole(); if (_auth instanceof NextResponse) return _auth;
@@ -35,14 +35,17 @@ export async function POST(req: NextRequest) {
                 }
             }
 
-            // HR640 (procurement) is checked first; anything else is judged as
+            // Delivery reports are checked first; anything else is judged as
             // HR580, matching the router in lib/ingestion.ts.
-            if (isHr640Sheet(headerRow)) {
+            const delivery = detectDeliveryFormat(headerRow);
+            if (delivery) {
                 return {
                     name: sheetName,
                     isEligible: true,
-                    format: "hr640",
-                    formatLabel: "Fuel deliveries (HR640)",
+                    format: delivery,
+                    formatLabel: delivery === "hr940"
+                        ? "Fuel deliveries, extended (HR940)"
+                        : "Fuel deliveries (HR640)",
                     missingColumns: [],
                 };
             }

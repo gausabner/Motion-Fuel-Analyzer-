@@ -19,6 +19,8 @@ import * as XLSX from "xlsx";
  *     sheet name — detection is by header signature only.
  */
 
+export type DeliveryFormat = "hr640" | "hr940";
+
 export type Hr640Row = {
     orderNo: string;
     orderDate: Date;
@@ -31,6 +33,11 @@ export type Hr640Row = {
     orderCost: number;
     grnQty: number;
     grnCost: number;
+    /** HR940 only; null when the column is absent. */
+    canOrd: string | null;
+    canItem: string | null;
+    invQty: number | null;
+    returnQty: number | null;
 };
 
 const norm = (v: unknown) => String(v ?? "").trim();
@@ -59,13 +66,23 @@ export function normaliseFuelType(itemDesc: string, itemCode: string): string {
 }
 
 /**
- * True when a sheet's headers look like HR640. Routing is header-driven: a sheet
- * that fails this check falls through to the HR580 transaction parser.
+ * Which delivery report a sheet is, or null when it is neither.
+ *
+ * HR940 is a superset of HR640 — the same order and goods-received columns plus
+ * cancellation, invoiced and returned quantities — so it is identified by those
+ * extra columns and read by the same parser. Routing is header-driven: a sheet
+ * matching neither falls through to the HR580 transaction parser.
  */
-export function isHr640Sheet(headers: unknown[]): boolean {
+export function detectDeliveryFormat(headers: unknown[]): DeliveryFormat | null {
     const h = headers.map(x => norm(x).toLowerCase());
     const has = (name: string) => h.some(v => v === name);
-    return has("order no") && has("grn qty") && (has("supp name") || has("supp ref"));
+    if (!(has("order no") && has("grn qty") && (has("supp name") || has("supp ref")))) return null;
+    return ["can ord", "can item", "inv qty", "return qty"].some(has) ? "hr940" : "hr640";
+}
+
+/** Either delivery report is HR640-shaped as far as parsing is concerned. */
+export function isHr640Sheet(headers: unknown[]): boolean {
+    return detectDeliveryFormat(headers) !== null;
 }
 
 export function parseHr640Sheet(sheet: XLSX.WorkSheet): { rows: Hr640Row[]; errors: string[] } {
@@ -80,6 +97,11 @@ export function parseHr640Sheet(sheet: XLSX.WorkSheet): { rows: Hr640Row[]; erro
         iSupp = col("supp name"), iItem = col("item"), iDesc = col("item desc"),
         iOQty = col("order qty"), iOCost = col("ord cost"),
         iGQty = col("grn qty"), iGCost = col("grn cost");
+    // HR940 extras; -1 when the column is absent, which is the HR640 case.
+    const iCanOrd = col("can ord"), iCanItem = col("can item"),
+        iInvQty = col("inv qty"), iReturnQty = col("return qty");
+    const optText = (row: unknown[], i: number) => (i < 0 ? null : (norm(row[i]) || null));
+    const optNum = (row: unknown[], i: number) => (i < 0 || norm(row[i]) === "" ? null : num(row[i]));
 
     for (let r = 1; r < raw.length; r++) {
         const row = raw[r];
@@ -108,13 +130,17 @@ export function parseHr640Sheet(sheet: XLSX.WorkSheet): { rows: Hr640Row[]; erro
             orderCost: num(row[iOCost]),
             grnQty: num(row[iGQty]),
             grnCost: num(row[iGCost]),
+            canOrd: optText(row, iCanOrd),
+            canItem: optText(row, iCanItem),
+            invQty: optNum(row, iInvQty),
+            returnQty: optNum(row, iReturnQty),
         });
     }
     return { rows, errors };
 }
 
 export type Hr640Result = {
-    format: "hr640";
+    format: DeliveryFormat;
     created: number;
     updated: number;
     totalProcessed: number;
@@ -128,7 +154,11 @@ export type Hr640Result = {
  * delivered quantity updates the order in place rather than duplicating it —
  * an order legitimately changes from outstanding to received between reports.
  */
-export async function importHr640Rows(rows: Hr640Row[], errors: string[] = []): Promise<Hr640Result> {
+export async function importHr640Rows(
+    rows: Hr640Row[],
+    errors: string[] = [],
+    format: DeliveryFormat = "hr640"
+): Promise<Hr640Result> {
     let created = 0, updated = 0;
     for (const row of rows) {
         const existing = await prisma.fuelDelivery.findUnique({
@@ -142,13 +172,15 @@ export async function importHr640Rows(rows: Hr640Row[], errors: string[] = []): 
                 itemDesc: row.itemDesc, fuelType: row.fuelType,
                 orderQty: row.orderQty, orderCost: row.orderCost,
                 grnQty: row.grnQty, grnCost: row.grnCost,
+                canOrd: row.canOrd, canItem: row.canItem,
+                invQty: row.invQty, returnQty: row.returnQty,
             },
             create: row,
         });
         existing ? updated++ : created++;
     }
     return {
-        format: "hr640",
+        format,
         created,
         updated,
         totalProcessed: rows.length,

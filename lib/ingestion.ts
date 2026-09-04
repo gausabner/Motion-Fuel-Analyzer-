@@ -1,5 +1,18 @@
 import { randomUUID } from "crypto";
-import { isHr640Sheet, parseHr640Sheet, importHr640Rows, type Hr640Row } from "@/lib/ingestion-hr640";
+import { detectDeliveryFormat, parseHr640Sheet, importHr640Rows, type Hr640Row, type DeliveryFormat, type Hr640Result } from "@/lib/ingestion-hr640";
+
+/** Result of ingesting an HR580 transaction sheet. */
+export type Hr580Result = {
+    format: "hr580";
+    count: number;
+    totalProcessed: number;
+    duplicates: number;
+    errors: number;
+    votesResolved: number;
+};
+
+/** Either shape; discriminate on `format`. */
+export type IngestResult = Hr580Result | Hr640Result;
 import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
 import fs from "fs/promises";
@@ -47,7 +60,7 @@ async function getVoteRepairMap() {
     return map;
 }
 
-export async function processExcelFile(buffer: Buffer, originalFileName: string = "uploaded_file.csv", selectedSheets?: string[]) {
+export async function processExcelFile(buffer: Buffer, originalFileName: string = "uploaded_file.csv", selectedSheets?: string[]): Promise<IngestResult> {
     // 1. Get System Settings for Localization
     const settings = await (prisma as any).systemSettings.findFirst({ where: { id: 'global' } });
     const fuelRate = settings?.fuelRate || 19.95;
@@ -83,11 +96,14 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
     const hr640Rows: Hr640Row[] = [];
     const hr640Errors: string[] = [];
     const hr580Sheets: string[] = [];
+    let deliveryFormat: DeliveryFormat = "hr640";
     for (const sheetName of sheetsToProcess) {
         const sheet = workbook.Sheets[sheetName];
         if (!sheet) continue;
         const headerRow = (XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })[0] || []) as unknown[];
-        if (isHr640Sheet(headerRow)) {
+        const detected = detectDeliveryFormat(headerRow);
+        if (detected) {
+            deliveryFormat = detected;
             const parsed = parseHr640Sheet(sheet);
             hr640Rows.push(...parsed.rows);
             hr640Errors.push(...parsed.errors);
@@ -100,7 +116,7 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
     // returns early rather than being forced into FuelTransaction, where it
     // would double-count the FRE receipts describing the same deliveries.
     if (hr640Rows.length > 0) {
-        const result = await importHr640Rows(hr640Rows, hr640Errors);
+        const result = await importHr640Rows(hr640Rows, hr640Errors, deliveryFormat);
         await (prisma as any).uploadedFile.create({
             data: {
                 id: uploadId,

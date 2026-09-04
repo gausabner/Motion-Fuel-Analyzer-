@@ -32,7 +32,7 @@ export default async function FisVsFrePage({
 
     const [series, forecast, costCentres, settings] = await Promise.all([
         getFlowSeries(granularity, filters),
-        getReplenishmentForecast(),
+        getReplenishmentForecast(filters),
         (prisma as any).costCentre.findMany({
             select: { department: true, division: true },
             distinct: ["department", "division"],

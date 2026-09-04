@@ -164,15 +164,36 @@ const MIN_DELIVERIES = 3;
  * lasts at the measured burn rate, which the data corroborates well — for diesel
  * the derived cycle and the observed gap agree to within a rounding error.
  */
-export async function getReplenishmentForecast(now: Date = new Date()): Promise<{
+export async function getReplenishmentForecast(
+    opts: TxFilterOpts = {},
+    now: Date = new Date()
+): Promise<{
     forecasts: FuelForecast[];
     leadTimeDays: number | null;
     latestIssueDate: string | null;
     latestDeliveryDate: Date | null;
 }> {
+    // Burn is measured over the filtered range when there is one, and over a
+    // trailing window otherwise — a rate has to come from somewhere, and the
+    // whole history would understate today's consumption.
+    const scoped = Boolean(opts.from || opts.to);
+    const { clause, params } = txFilters(opts);
+    const burnWhere = scoped ? clause : ` AND transDate >= date('now','-120 day')`;
+    const burnParams = scoped ? params : [];
+
     const [deliveries, burnRows, latestIssueRow, leadTimeDays] = await Promise.all([
         prisma.fuelDelivery.findMany({
-            where: { grnQty: { gt: 0 } },
+            where: {
+                grnQty: { gt: 0 },
+                ...(opts.from || opts.to ? {
+                    orderDate: {
+                        ...(opts.from ? { gte: new Date(opts.from) } : {}),
+                        ...(opts.to ? { lte: endOfDay(opts.to) } : {}),
+                    },
+                } : {}),
+                ...(opts.fuelType && opts.fuelType !== "all"
+                    ? { fuelType: { contains: opts.fuelType } } : {}),
+            },
             select: { orderDate: true, grnQty: true, fuelType: true },
             orderBy: { orderDate: "asc" },
         }),
@@ -182,12 +203,13 @@ export async function getReplenishmentForecast(now: Date = new Date()): Promise<
                    MIN(substr(transDate,1,10)) AS first_day,
                    MAX(substr(transDate,1,10)) AS last_day
             FROM FuelTransaction
-            WHERE transType = 'FIS' AND transDate >= date('now','-120 day')
+            WHERE transType = 'FIS'${burnWhere}
             GROUP BY ft
-        `) as Promise<{ ft: string; litres: number; first_day: string; last_day: string }[]>,
+        `, ...burnParams) as Promise<{ ft: string; litres: number; first_day: string; last_day: string }[]>,
         prisma.$queryRawUnsafe(`
-            SELECT MAX(substr(transDate,1,10)) AS d FROM FuelTransaction WHERE transType = 'FIS'
-        `) as Promise<{ d: string | null }[]>,
+            SELECT MAX(substr(transDate,1,10)) AS d FROM FuelTransaction
+            WHERE transType = 'FIS'${clause}
+        `, ...params) as Promise<{ d: string | null }[]>,
         getOrderToTankLeadTime(),
     ]);
 

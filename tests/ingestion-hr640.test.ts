@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
-import { isHr640Sheet, parseHr640Sheet, parseYmdInt, normaliseFuelType } from "@/lib/ingestion-hr640";
+import { isHr640Sheet, detectDeliveryFormat, parseHr640Sheet, parseYmdInt, normaliseFuelType } from "@/lib/ingestion-hr640";
 
 /** Builds a sheet with the workbook's real quirks: padded headers and values. */
 function sheetFrom(rows: unknown[][]) {
@@ -103,5 +103,68 @@ describe("parseHr640Sheet", () => {
             HR640_HEADERS, sampleRow, [null, null, null, null, null, null, null, null, null, null],
         ]));
         expect(rows).toHaveLength(1);
+    });
+});
+
+const HR940_HEADERS = [
+    "Order No  ", "O Date  ", "Supp ref", "Supp name              ", "Can ord", "Can Item",
+    "Item      ", "Item Desc              ", "Order Qty       ", "Ord Cost          ",
+    "GRN Qty         ", "GRN Cost          ", "Inv Qty        ", "Return Qty       ", "Column1",
+];
+const hr940Row = [
+    1274152, 20250704, 2353, "VIVO ENERGY NAMIBIA LTD(SHELL)   ", "", "",
+    90001, "diesel                    ", "       25033.000", "      455132.48290",
+    "       25033.000", "      455132.48290", "       25033.000", "           0.000", "",
+];
+
+describe("detectDeliveryFormat", () => {
+    it("tells HR940 apart from HR640 by its extra columns", () => {
+        expect(detectDeliveryFormat(HR640_HEADERS)).toBe("hr640");
+        expect(detectDeliveryFormat(HR940_HEADERS)).toBe("hr940");
+    });
+
+    it("claims neither for an HR580 transaction sheet", () => {
+        expect(detectDeliveryFormat(["Tank", "Issue Date", "Issue Qty", "Fleet Unit"])).toBeNull();
+        expect(detectDeliveryFormat([])).toBeNull();
+    });
+
+    it("treats both delivery reports as parseable", () => {
+        expect(isHr640Sheet(HR640_HEADERS)).toBe(true);
+        expect(isHr640Sheet(HR940_HEADERS)).toBe(true);
+    });
+});
+
+describe("parseHr640Sheet with HR940 columns", () => {
+    it("reads the extra HR940 fields", () => {
+        const { rows, errors } = parseHr640Sheet(sheetFrom([HR940_HEADERS, hr940Row]));
+        expect(errors).toEqual([]);
+        expect(rows[0]).toMatchObject({
+            orderNo: "1274152", itemCode: "90001", fuelType: "Diesel",
+            grnQty: 25033, invQty: 25033, returnQty: 0,
+            canOrd: null, canItem: null,
+        });
+    });
+
+    it("leaves the HR940 fields null for an HR640 sheet", () => {
+        const { rows } = parseHr640Sheet(sheetFrom([HR640_HEADERS, sampleRow]));
+        expect(rows[0]).toMatchObject({ canOrd: null, canItem: null, invQty: null, returnQty: null });
+    });
+
+    it("keeps a cancellation flag when one is present", () => {
+        const cancelled = [...hr940Row];
+        cancelled[4] = "Y";
+        cancelled[5] = "25033";
+        const { rows } = parseHr640Sheet(sheetFrom([HR940_HEADERS, cancelled]));
+        expect(rows[0].canOrd).toBe("Y");
+        expect(rows[0].canItem).toBe("25033");
+    });
+
+    it("ignores the unused Column1 artifact", () => {
+        const withJunk = [...hr940Row];
+        withJunk[14] = "leftover";
+        const { rows, errors } = parseHr640Sheet(sheetFrom([HR940_HEADERS, withJunk]));
+        expect(errors).toEqual([]);
+        expect(rows).toHaveLength(1);
+        expect(Object.values(rows[0])).not.toContain("leftover");
     });
 });

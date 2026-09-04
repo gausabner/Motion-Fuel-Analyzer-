@@ -26,20 +26,29 @@ export async function GET(req: NextRequest) {
         t.sheetName,
     );
 
-    // Guidance travels with the file, so whoever fills it in has the rules to hand.
-    XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.aoa_to_sheet([
-            [t.label],
-            [t.description],
-            [],
-            ["Notes"],
-            ...t.notes.map(n => [n]),
-            [],
-            ["The two example rows on the data sheet are illustrative — delete them before uploading."],
-        ]),
-        "How to use",
+    // Guidance travels with the file, so whoever fills it in has the rules to
+    // hand: what the report is, what each column means, and the format traps.
+    const guidance: (string | undefined)[][] = [
+        [t.label],
+        [t.description],
+        [],
+        ["What this data is"],
+        ...t.briefing.map(line => [line]),
+    ];
+    if (t.glossary?.length) {
+        guidance.push([], ["Column", "Meaning"], ...t.glossary.map(([c, m]) => [c, m]));
+    }
+    guidance.push(
+        [],
+        ["Notes"],
+        ...t.notes.map(n => [n]),
+        [],
+        ["The example rows on the data sheet are illustrative — delete them before uploading."],
     );
+
+    const guideSheet = XLSX.utils.aoa_to_sheet(guidance);
+    guideSheet["!cols"] = [{ wch: 18 }, { wch: 86 }];
+    XLSX.utils.book_append_sheet(wb, guideSheet, "How to use");
 
     const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
     return new NextResponse(new Uint8Array(buf), {

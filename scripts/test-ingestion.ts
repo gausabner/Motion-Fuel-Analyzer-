@@ -14,8 +14,8 @@ async function main() {
         console.log("Ingestion Result:");
         console.dir(result, { depth: null, colors: true });
         
-        const rowsIn = result.format === "hr640" ? result.created + result.updated : result.count;
-        const errCount = result.format === "hr640" ? result.errors.length : result.errors;
+        const rowsIn = result.format === "hr580" ? result.count : result.created + result.updated;
+        const errCount = result.format === "hr580" ? result.errors : result.errors.length;
         if (rowsIn === 0) {
             console.error("Test resulted in 0 rows inserted.");
             process.exit(1);
