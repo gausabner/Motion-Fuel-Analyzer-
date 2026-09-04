@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { isHr640Sheet, parseHr640Sheet, importHr640Rows, type Hr640Row } from "@/lib/ingestion-hr640";
 import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
 import fs from "fs/promises";
@@ -76,10 +77,46 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
     const errors: any[] = [];
     const dailyAggMap: Record<string, { date: Date, fuelType: string, vol: number, cost: number, count: number }> = {};
 
+    // Routing is by HEADER SIGNATURE, never by sheet or file name: the sample
+    // HR640 workbook is named Hr440 and its sheet is named "hr640". A sheet that
+    // does not look like HR640 falls through to the HR580 transaction parser.
+    const hr640Rows: Hr640Row[] = [];
+    const hr640Errors: string[] = [];
+    const hr580Sheets: string[] = [];
     for (const sheetName of sheetsToProcess) {
         const sheet = workbook.Sheets[sheetName];
         if (!sheet) continue;
-        
+        const headerRow = (XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })[0] || []) as unknown[];
+        if (isHr640Sheet(headerRow)) {
+            const parsed = parseHr640Sheet(sheet);
+            hr640Rows.push(...parsed.rows);
+            hr640Errors.push(...parsed.errors);
+        } else {
+            hr580Sheets.push(sheetName);
+        }
+    }
+
+    // HR640 is procurement, not tank movement — it writes FuelDelivery and
+    // returns early rather than being forced into FuelTransaction, where it
+    // would double-count the FRE receipts describing the same deliveries.
+    if (hr640Rows.length > 0) {
+        const result = await importHr640Rows(hr640Rows, hr640Errors);
+        await (prisma as any).uploadedFile.create({
+            data: {
+                id: uploadId,
+                fileName: originalFileName,
+                filePath: `storage/uploads/${diskName}`,
+                fileSize: buffer.length,
+                rowCount: result.created + result.updated,
+            },
+        });
+        return result;
+    }
+
+    for (const sheetName of hr580Sheets) {
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) continue;
+
         const jsonData = XLSX.utils.sheet_to_json(sheet);
 
         for (const row of jsonData as any[]) {
@@ -276,6 +313,7 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
     });
 
     return {
+        format: "hr580" as const,
         count: insertedCount,
         totalProcessed: transactions.length,
         duplicates: transactions.length - insertedCount,

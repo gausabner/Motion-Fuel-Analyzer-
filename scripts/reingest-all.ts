@@ -46,7 +46,8 @@ async function main() {
 
         try {
             const result = await processExcelFile(buffer, file);
-            console.log(`  > Ingested ${result.count} rows.`);
+            const n = result.format === "hr640" ? result.created + result.updated : result.count;
+            console.log(`  > Ingested ${n} rows (${result.format}).`);
 
             // Delete the old file to replace it with the new managed one
             await fs.unlink(filePath);

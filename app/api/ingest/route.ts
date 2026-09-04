@@ -31,8 +31,26 @@ export async function POST(req: NextRequest) {
 
         console.log("Upload successful:", result);
 
+        // HR640 (procurement) and HR580 (tank movements) return different
+        // shapes; the format field tells the client which it got.
+        if (result.format === "hr640") {
+            return NextResponse.json({
+                success: true,
+                format: "hr640",
+                count: result.created + result.updated,
+                created: result.created,
+                updated: result.updated,
+                totalProcessed: result.totalProcessed,
+                outstandingOrders: result.outstandingOrders,
+                receivedLitres: result.receivedLitres,
+                errors: result.errors.length,
+                errorDetail: result.errors.slice(0, 10),
+            });
+        }
+
         return NextResponse.json({
             success: true,
+            format: "hr580",
             count: result.count,
             duplicates: result.duplicates,
             totalProcessed: result.totalProcessed,

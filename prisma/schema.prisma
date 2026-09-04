@@ -104,3 +104,36 @@ model UploadedFile {
   rowCount   Int
   uploadedAt DateTime @default(now())
 }
+
+/// Fuel purchase orders and goods-received notes, imported from the HR640
+/// procurement report. One row is an ORDER, not a tank receipt: it carries a
+/// supplier and cost but no tank, vehicle or vote.
+///
+/// Deliberately separate from FuelTransaction. HR640 and the HR580 FRE receipts
+/// describe the SAME physical deliveries at two stages — an order is raised,
+/// then the fuel lands in a tank a median of 10 days later — so the two overlap
+/// wherever both exist and must never be summed.
+///
+/// Unlike FuelTransaction.transDate (ISO text, filtered by raw string SQL),
+/// orderDate is a real DateTime and this table is queried ONLY through Prisma.
+model FuelDelivery {
+  id         String   @id @default(cuid())
+  orderNo    String
+  orderDate  DateTime
+  suppRef    String?
+  suppName   String
+  itemCode   String
+  itemDesc   String
+  /// Normalised from itemDesc: Diesel / Petrol / Unknown.
+  fuelType   String
+  orderQty   Float
+  orderCost  Float
+  /// Goods actually received. 0 = ordered but not yet delivered.
+  grnQty     Float
+  grnCost    Float
+  createdAt  DateTime @default(now())
+
+  @@unique([orderNo, itemCode])
+  @@index([orderDate])
+  @@index([fuelType])
+}

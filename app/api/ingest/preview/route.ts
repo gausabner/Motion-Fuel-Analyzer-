@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { requireRole } from "@/lib/auth";
 import { validateUploadFile } from "@/lib/upload-validation";
+import { isHr640Sheet } from "@/lib/ingestion-hr640";
 
 export async function POST(req: NextRequest) {
     const _auth = await requireRole(); if (_auth instanceof NextResponse) return _auth;
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
             const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
             
             if (!jsonData || jsonData.length === 0) {
-                return { name: sheetName, isEligible: false, missingColumns: ["Empty Sheet"] };
+                return { name: sheetName, isEligible: false, format: null, formatLabel: "Empty", missingColumns: ["Empty Sheet"] };
             }
             
             let headerRow: string[] = [];
@@ -32,6 +33,18 @@ export async function POST(req: NextRequest) {
                     headerRow = row.map(cell => String(cell || "").trim().toLowerCase());
                     break;
                 }
+            }
+
+            // HR640 (procurement) is checked first; anything else is judged as
+            // HR580, matching the router in lib/ingestion.ts.
+            if (isHr640Sheet(headerRow)) {
+                return {
+                    name: sheetName,
+                    isEligible: true,
+                    format: "hr640",
+                    formatLabel: "Fuel deliveries (HR640)",
+                    missingColumns: [],
+                };
             }
 
             const hasTank = headerRow.some(h => ["tank", "store no", "store"].includes(h));
@@ -46,6 +59,8 @@ export async function POST(req: NextRequest) {
             return {
                 name: sheetName,
                 isEligible: missingColumns.length === 0,
+                format: "hr580",
+                formatLabel: "Fuel transactions (HR580)",
                 missingColumns
             };
         });
