@@ -206,8 +206,14 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
                 storeNo: tankNo,
                 pumpNo: String(rowData["Pump"] || ""),
                 transDate: transDate,
-                transRefNo: String(rowData["Trans Ref No"] || rowData["Reference No"] || rowData["Ref No"] || rowData["Trans No"] || ""),
-                issueTime: String(rowData["Issue Time"] || rowData["Time"] || rowData["Issue"] || ""),
+                // Both are part of the @@unique duplicate key, so both are
+                // normalised on write. The source pads reference numbers
+                // ("F01297      "), and one export of a report carried Issue Time
+                // while another left it blank — that single difference defeated
+                // the index and let the same report import twice, duplicating
+                // 8,513 transactions before it was caught.
+                transRefNo: String(rowData["Trans Ref No"] || rowData["Reference No"] || rowData["Ref No"] || rowData["Trans No"] || "").trim(),
+                issueTime: String(rowData["Issue Time"] || rowData["Time"] || rowData["Issue"] || "").trim(),
                 transVoteNo: (() => {
                     const raw = String(rowData["Trans Vote No"] || rowData["Issue Vote"] || rowData["Vote"] || "");
                     // Repair Excel scientific-notation degradation against the registry
