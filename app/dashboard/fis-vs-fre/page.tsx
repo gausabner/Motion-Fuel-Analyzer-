@@ -6,7 +6,7 @@ import { FlowChart } from "@/components/dashboard/FlowChart";
 import { ReplenishmentForecast } from "@/components/dashboard/ReplenishmentForecast";
 import { FuelPriceChart } from "@/components/dashboard/FuelPriceChart";
 import { getFlowSeries, getReplenishmentForecast, getCostSummary, type Granularity } from "@/lib/fuel-flow";
-import { ArrowDownToLine, ArrowUpFromLine, Repeat, Scale, Wallet, Tag, TrendingUp, Scissors } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Repeat, Scale, Wallet, Tag, TrendingUp, Scissors, TrendingDown, AlertTriangle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +43,8 @@ export default async function FisVsFrePage({
     const cost = await getCostSummary(series, filters);
     const cur = settings?.currencySymbol || "N$";
     const money = (n: number) => `${cur}${Math.round(n).toLocaleString()}`;
-    const perL = (n: number | null) => (n === null ? "—" : `${cur}${n.toFixed(2)}`);
+    const perL = (n: number | null) =>
+        n === null ? "—" : `${n < 0 ? "−" : ""}${cur}${Math.abs(n).toFixed(2)}`;
 
     const issued = series.reduce((s, b) => s + b.issuedLitres, 0);
     const received = series.reduce((s, b) => s + b.receivedLitres, 0);
@@ -120,17 +121,49 @@ export default async function FisVsFrePage({
                 />
                 <IndustrialKPI
                     label="Cost recovery"
-                    value={`${cost.recoveryPerLitre !== null && cost.recoveryPerLitre >= 0 ? "+" : ""}${perL(cost.recoveryPerLitre)}/L`}
+                    value={`${cost.recoveryPerLitre !== null && cost.recoveryPerLitre > 0 ? "+" : ""}${perL(cost.recoveryPerLitre)}/L`}
                     subValue={
                         cost.recoveryTotal === null ? "No overlap to compare"
                             : cost.recoveryTotal >= 0
                                 ? `${money(cost.recoveryTotal)} recovered`
                                 : `${money(Math.abs(cost.recoveryTotal))} not recovered`
                     }
-                    icon={Scissors}
-                    accent={cost.recoveryPerLitre !== null && cost.recoveryPerLitre < 0}
+                    icon={cost.recoveryTrend?.direction === "worsening" ? TrendingDown : Scissors}
+                    accent={
+                        (cost.recoveryPerLitre !== null && cost.recoveryPerLitre < 0)
+                        || Boolean(cost.recoveryTrend?.reversal)
+                    }
                 />
             </div>
+
+            {cost.recoveryTrend?.reversal && (
+                <div className="rounded-md border border-amber-500/50 bg-amber-50/60 dark:bg-amber-950/20 p-4 -mt-2">
+                    <div className="flex items-start gap-3">
+                        <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                        <div className="text-sm">
+                            <p className="font-bold text-foreground">The period average hides a reversal</p>
+                            <p className="text-muted-foreground mt-1">
+                                Cost recovery averages{" "}
+                                <span className="font-semibold text-foreground">
+                                    {cost.recoveryPerLitre! > 0 ? "+" : ""}{perL(cost.recoveryPerLitre)}/L
+                                </span>{" "}
+                                across this period, but it has been{" "}
+                                {cost.recoveryTrend.recentPerLitre < 0 ? "negative" : "positive"} for the last{" "}
+                                <span className="font-semibold text-foreground">
+                                    {cost.recoveryTrend.periods} {granularity === "daily" ? "days" : granularity === "monthly" ? "months" : "years"}
+                                </span>{" "}
+                                — since {cost.recoveryTrend.since} — averaging{" "}
+                                <span className="font-semibold text-foreground">
+                                    {cost.recoveryTrend.recentPerLitre > 0 ? "+" : ""}{perL(cost.recoveryTrend.recentPerLitre)}/L
+                                </span>
+                                {cost.recoveryTrend.recentTotal < 0
+                                    ? <> ({money(Math.abs(cost.recoveryTrend.recentTotal))} not recovered).</>
+                                    : <> ({money(cost.recoveryTrend.recentTotal)} recovered).</>}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {cost.outstandingOrders > 0 && (
                 <p className="text-xs text-muted-foreground -mt-2">

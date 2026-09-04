@@ -3,6 +3,7 @@
 import { FileUpload } from "@/components/dashboard/FileUpload";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { RecentUploads } from "@/components/dashboard/RecentUploads";
+import { UploadTemplates } from "@/components/dashboard/UploadTemplates";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CloudUpload } from "lucide-react";
 
@@ -13,6 +14,8 @@ export default function IngestionPage() {
                 title="Uploads"
                 scope="Import fuel log spreadsheets — Excel or CSV, duplicates skipped automatically."
             />
+
+            <UploadTemplates />
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="monumental-card bg-card col-span-1 md:col-span-2">

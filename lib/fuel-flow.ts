@@ -270,7 +270,78 @@ export type CostSummary = {
     /** Orders raised with nothing received against them yet. */
     outstandingOrders: number;
     outstandingLitres: number;
+    /**
+     * Whether the headline figure is hiding a change of direction.
+     *
+     * A period average can read healthy while every recent period is negative:
+     * across the full year recovery averages positive, yet the last quarter is
+     * squarely negative. This reports the current unbroken run of same-signed
+     * periods, and flags a reversal when that run's sign is opposite the average.
+     */
+    recoveryTrend: RecoveryTrend | null;
 };
+
+export type RecoveryTrend = {
+    /** Length of the current unbroken run of same-signed periods. */
+    periods: number;
+    /** First period in that run. */
+    since: string;
+    /** Litre-weighted recovery across the run. */
+    recentPerLitre: number;
+    recentTotal: number;
+    /** The run's sign is opposite the period average — the average hides it. */
+    reversal: boolean;
+    direction: "improving" | "worsening" | "flat";
+};
+
+/**
+ * Finds the trailing run of periods that share a sign, so a recent, consistent
+ * change of direction can be reported rather than averaged away.
+ */
+export function analyseRecoveryTrend(
+    series: FlowBucket[],
+    overallPerLitre: number | null
+): RecoveryTrend | null {
+    const usable = series
+        .filter(b => b.receivedLitres > 0 && b.issuedLitres > 0)
+        .map(b => ({
+            key: b.key,
+            perLitre: b.issuedValue / b.issuedLitres - b.receivedCost / b.receivedLitres,
+            litres: b.issuedLitres,
+        }));
+    if (usable.length < 2 || overallPerLitre === null) return null;
+
+    const sign = (n: number) => (n > 0 ? 1 : n < 0 ? -1 : 0);
+    const lastSign = sign(usable[usable.length - 1].perLitre);
+    if (lastSign === 0) return null;
+
+    let start = usable.length - 1;
+    while (start > 0 && sign(usable[start - 1].perLitre) === lastSign) start--;
+    const run = usable.slice(start);
+
+    const litres = run.reduce((s, r) => s + r.litres, 0);
+    const recentTotal = run.reduce((s, r) => s + r.perLitre * r.litres, 0);
+    const recentPerLitre = litres > 0 ? recentTotal / litres : 0;
+
+    // Compare the run against everything before it, not against itself.
+    const earlier = usable.slice(0, start);
+    const earlierLitres = earlier.reduce((s, r) => s + r.litres, 0);
+    const earlierPerLitre = earlierLitres > 0
+        ? earlier.reduce((s, r) => s + r.perLitre * r.litres, 0) / earlierLitres
+        : null;
+
+    return {
+        periods: run.length,
+        since: run[0].key,
+        recentPerLitre,
+        recentTotal,
+        // Only a reversal if the average genuinely points the other way.
+        reversal: run.length >= 2 && sign(overallPerLitre) !== 0 && sign(overallPerLitre) !== lastSign,
+        direction: earlierPerLitre === null || Math.abs(recentPerLitre - earlierPerLitre) < 0.005
+            ? "flat"
+            : recentPerLitre > earlierPerLitre ? "improving" : "worsening",
+    };
+}
 
 /**
  * Cost view of the same buckets. Purchase price comes from the delivery report,
@@ -317,6 +388,7 @@ export async function getCostSummary(
     return {
         receivedCost, receivedLitres, purchasePerLitre, issuePerLitre,
         recoveryPerLitre,
+        recoveryTrend: analyseRecoveryTrend(series, recoveryPerLitre),
         recoveryTotal: recoveryPerLitre !== null ? recoveryPerLitre * issuedLitres : null,
         firstPurchasePerLitre, lastPurchasePerLitre, priceChangePct,
         outstandingOrders: outstanding.length,

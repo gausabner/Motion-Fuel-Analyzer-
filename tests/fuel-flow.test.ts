@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
-import { getFlowSeries, getReplenishmentForecast, getOrderToTankLeadTime, getCostSummary } from "@/lib/fuel-flow";
+import { getFlowSeries, getReplenishmentForecast, getOrderToTankLeadTime, getCostSummary, analyseRecoveryTrend } from "@/lib/fuel-flow";
 import { prisma } from "@/lib/prisma";
 
 const hasDb = fs.existsSync(path.resolve(process.cwd(), "prisma/dev.db"));
@@ -145,5 +145,75 @@ describeDb("getCostSummary", () => {
             const expected = ((c.lastPurchasePerLitre - c.firstPurchasePerLitre) / c.firstPurchasePerLitre) * 100;
             expect(c.priceChangePct).toBeCloseTo(expected, 6);
         }
+    });
+});
+
+describe("analyseRecoveryTrend", () => {
+    const bucket = (key: string, recoveryPerLitre: number, litres = 1000) => ({
+        key, issuedLitres: litres, receivedLitres: litres,
+        issueCount: 1, deliveryCount: 1,
+        receivedCost: litres * 10,
+        issuedValue: litres * (10 + recoveryPerLitre),
+    });
+
+    it("flags a reversal when recent periods run against the average", () => {
+        // Strongly positive early, negative lately — the average stays positive.
+        const series = [
+            bucket("2025-07", 2), bucket("2025-08", 2), bucket("2025-09", 2),
+            bucket("2026-04", -0.5), bucket("2026-05", -0.7), bucket("2026-06", -1.1),
+        ];
+        const overall = 0.45;
+        const t = analyseRecoveryTrend(series, overall)!;
+        expect(t.reversal).toBe(true);
+        expect(t.periods).toBe(3);
+        expect(t.since).toBe("2026-04");
+        expect(t.recentPerLitre).toBeLessThan(0);
+        expect(t.direction).toBe("worsening");
+    });
+
+    it("does not cry reversal when the average already agrees with the trend", () => {
+        const series = [bucket("a", -1), bucket("b", -1), bucket("c", -1)];
+        expect(analyseRecoveryTrend(series, -1)!.reversal).toBe(false);
+    });
+
+    it("needs a run of at least two periods, so one odd month is not a reversal", () => {
+        const series = [bucket("a", 1), bucket("b", 1), bucket("c", -0.2)];
+        const t = analyseRecoveryTrend(series, 0.6)!;
+        expect(t.periods).toBe(1);
+        expect(t.reversal).toBe(false);
+    });
+
+    it("weights the run by litres rather than averaging the periods evenly", () => {
+        const series = [
+            bucket("a", 5, 100), bucket("b", -1, 100), bucket("c", -3, 900),
+        ];
+        const t = analyseRecoveryTrend(series, 0.5)!;
+        // (-1*100 + -3*900) / 1000 = -2.8, not the -2 a plain mean would give.
+        expect(t.recentPerLitre).toBeCloseTo(-2.8, 6);
+    });
+
+    it("returns nothing when there is too little to compare", () => {
+        expect(analyseRecoveryTrend([bucket("a", 1)], 1)).toBeNull();
+        expect(analyseRecoveryTrend([], 1)).toBeNull();
+        expect(analyseRecoveryTrend([bucket("a", 1), bucket("b", 1)], null)).toBeNull();
+    });
+
+    it("ignores periods missing either side of the comparison", () => {
+        const noDelivery = { ...bucket("x", 0), receivedLitres: 0, receivedCost: 0 };
+        const series = [noDelivery, bucket("a", -1), bucket("b", -1)];
+        const t = analyseRecoveryTrend(series, 0.5)!;
+        expect(t.periods).toBe(2);
+        expect(t.since).toBe("a");
+    });
+});
+
+describeDb("recovery trend against the real data", () => {
+    it("detects that the yearly average masks a negative recent run", async () => {
+        const series = await getFlowSeries("monthly");
+        const cost = await getCostSummary(series);
+        expect(cost.recoveryPerLitre).toBeGreaterThan(0);
+        expect(cost.recoveryTrend).not.toBeNull();
+        expect(cost.recoveryTrend!.reversal).toBe(true);
+        expect(cost.recoveryTrend!.recentPerLitre).toBeLessThan(0);
     });
 });
