@@ -4,8 +4,9 @@ import { FuelLogFilters } from "@/components/dashboard/FuelLogFilters";
 import { IndustrialKPI } from "@/components/dashboard/IndustrialKPI";
 import { FlowChart } from "@/components/dashboard/FlowChart";
 import { ReplenishmentForecast } from "@/components/dashboard/ReplenishmentForecast";
-import { getFlowSeries, getReplenishmentForecast, type Granularity } from "@/lib/fuel-flow";
-import { ArrowDownToLine, ArrowUpFromLine, Repeat, Scale } from "lucide-react";
+import { FuelPriceChart } from "@/components/dashboard/FuelPriceChart";
+import { getFlowSeries, getReplenishmentForecast, getCostSummary, type Granularity } from "@/lib/fuel-flow";
+import { ArrowDownToLine, ArrowUpFromLine, Repeat, Scale, Wallet, Tag, TrendingUp, Scissors } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export default async function FisVsFrePage({
     // issued side alone and quietly break the comparison.
     const filters = { from: sp.from, to: sp.to, fuelType: sp.fuelType };
 
-    const [series, forecast, costCentres] = await Promise.all([
+    const [series, forecast, costCentres, settings] = await Promise.all([
         getFlowSeries(granularity, filters),
         getReplenishmentForecast(),
         (prisma as any).costCentre.findMany({
@@ -37,7 +38,12 @@ export default async function FisVsFrePage({
             distinct: ["department", "division"],
             orderBy: [{ department: "asc" }, { division: "asc" }],
         }),
+        (prisma as any).systemSettings.findFirst({ where: { id: "global" } }),
     ]);
+    const cost = await getCostSummary(series, filters);
+    const cur = settings?.currencySymbol || "N$";
+    const money = (n: number) => `${cur}${Math.round(n).toLocaleString()}`;
+    const perL = (n: number | null) => (n === null ? "—" : `${cur}${n.toFixed(2)}`);
 
     const issued = series.reduce((s, b) => s + b.issuedLitres, 0);
     const received = series.reduce((s, b) => s + b.receivedLitres, 0);
@@ -89,7 +95,54 @@ export default async function FisVsFrePage({
                 />
             </div>
 
+            <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+                <IndustrialKPI
+                    label="Fuel spend"
+                    value={money(cost.receivedCost)}
+                    subValue="Cost of fuel received"
+                    icon={Wallet}
+                />
+                <IndustrialKPI
+                    label="Purchase price"
+                    value={`${perL(cost.purchasePerLitre)}/L`}
+                    subValue={
+                        cost.priceChangePct !== null
+                            ? `${cost.priceChangePct >= 0 ? "+" : ""}${cost.priceChangePct.toFixed(1)}% over the period`
+                            : "Weighted average paid"
+                    }
+                    icon={Tag}
+                />
+                <IndustrialKPI
+                    label="Charged out"
+                    value={`${perL(cost.issuePerLitre)}/L`}
+                    subValue="Average issue value"
+                    icon={TrendingUp}
+                />
+                <IndustrialKPI
+                    label="Cost recovery"
+                    value={`${cost.recoveryPerLitre !== null && cost.recoveryPerLitre >= 0 ? "+" : ""}${perL(cost.recoveryPerLitre)}/L`}
+                    subValue={
+                        cost.recoveryTotal === null ? "No overlap to compare"
+                            : cost.recoveryTotal >= 0
+                                ? `${money(cost.recoveryTotal)} recovered`
+                                : `${money(Math.abs(cost.recoveryTotal))} not recovered`
+                    }
+                    icon={Scissors}
+                    accent={cost.recoveryPerLitre !== null && cost.recoveryPerLitre < 0}
+                />
+            </div>
+
+            {cost.outstandingOrders > 0 && (
+                <p className="text-xs text-muted-foreground -mt-2">
+                    {cost.outstandingOrders} order{cost.outstandingOrders === 1 ? "" : "s"} raised with nothing received
+                    against {cost.outstandingOrders === 1 ? "it" : "them"} yet
+                    ({Math.round(cost.outstandingLitres).toLocaleString()} L ordered) — excluded from received totals.
+                </p>
+            )}
+
             <FlowChart data={series} granularity={granularity} />
+
+            <FuelPriceChart data={series} currency={cur} />
 
             <ReplenishmentForecast
                 forecasts={forecast.forecasts}

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
-import { getFlowSeries, getReplenishmentForecast, getOrderToTankLeadTime } from "@/lib/fuel-flow";
+import { getFlowSeries, getReplenishmentForecast, getOrderToTankLeadTime, getCostSummary } from "@/lib/fuel-flow";
 import { prisma } from "@/lib/prisma";
 
 const hasDb = fs.existsSync(path.resolve(process.cwd(), "prisma/dev.db"));
@@ -101,5 +101,49 @@ describeDb("tank identity", () => {
             `SELECT COUNT(DISTINCT storeNo) AS raw, COUNT(DISTINCT trim(storeNo)) AS trimmed FROM FuelTransaction`
         ) as { raw: number | bigint; trimmed: number | bigint }[];
         expect(Number(rows[0].raw)).toBe(Number(rows[0].trimmed));
+    });
+});
+
+describeDb("getCostSummary", () => {
+    it("reports purchase spend that matches the delivery records", async () => {
+        const series = await getFlowSeries("monthly");
+        const cost = await getCostSummary(series);
+        const agg = await prisma.fuelDelivery.aggregate({
+            _sum: { grnCost: true }, where: { grnQty: { gt: 0 } },
+        });
+        expect(Math.round(cost.receivedCost)).toBe(Math.round(agg._sum.grnCost ?? 0));
+    });
+
+    it("derives purchase price as a weighted average, not a mean of means", async () => {
+        const series = await getFlowSeries("monthly");
+        const cost = await getCostSummary(series);
+        expect(cost.purchasePerLitre).toBeCloseTo(cost.receivedCost / cost.receivedLitres, 6);
+    });
+
+    it("makes recovery the gap between what fuel is charged at and what it cost", async () => {
+        const series = await getFlowSeries("monthly");
+        const { purchasePerLitre, issuePerLitre, recoveryPerLitre } = await getCostSummary(series);
+        expect(recoveryPerLitre).toBeCloseTo(issuePerLitre! - purchasePerLitre!, 6);
+    });
+
+    it("counts outstanding orders separately from received fuel", async () => {
+        const series = await getFlowSeries("monthly");
+        const cost = await getCostSummary(series);
+        const outstanding = await prisma.fuelDelivery.count({ where: { grnQty: { lte: 0 } } });
+        expect(cost.outstandingOrders).toBe(outstanding);
+        // Their litres must never leak into the received total.
+        const received = await prisma.fuelDelivery.aggregate({
+            _sum: { grnQty: true }, where: { grnQty: { gt: 0 } },
+        });
+        expect(Math.round(cost.receivedLitres)).toBe(Math.round(received._sum.grnQty ?? 0));
+    });
+
+    it("measures the price move across the covered range", async () => {
+        const series = await getFlowSeries("monthly");
+        const c = await getCostSummary(series);
+        if (c.firstPurchasePerLitre && c.lastPurchasePerLitre) {
+            const expected = ((c.lastPurchasePerLitre - c.firstPurchasePerLitre) / c.firstPurchasePerLitre) * 100;
+            expect(c.priceChangePct).toBeCloseTo(expected, 6);
+        }
     });
 });

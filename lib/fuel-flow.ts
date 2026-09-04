@@ -25,6 +25,10 @@ export type FlowBucket = {
     receivedLitres: number;
     issueCount: number;
     deliveryCount: number;
+    /** What the fuel was bought for (HR640 GRN cost). */
+    receivedCost: number;
+    /** What the fleet was charged for it (FIS transaction value). */
+    issuedValue: number;
 };
 
 /** Issued vs received, bucketed by day, month or year. */
@@ -37,11 +41,11 @@ export async function getFlowSeries(
 
     const issued = await prisma.$queryRawUnsafe(`
         SELECT substr(transDate, 1, ${len}) AS k,
-               SUM(transQty) AS litres, COUNT(id) AS n
+               SUM(transQty) AS litres, SUM(transAmt) AS value, COUNT(id) AS n
         FROM FuelTransaction
         WHERE transType = 'FIS'${clause}
         GROUP BY k
-    `, ...params) as { k: string; litres: number; n: number | bigint }[];
+    `, ...params) as { k: string; litres: number; value: number; n: number | bigint }[];
 
     const deliveries = await prisma.fuelDelivery.findMany({
         where: {
@@ -55,23 +59,28 @@ export async function getFlowSeries(
             ...(opts.fuelType && opts.fuelType !== "all"
                 ? { fuelType: { contains: opts.fuelType } } : {}),
         },
-        select: { orderDate: true, grnQty: true },
+        select: { orderDate: true, grnQty: true, grnCost: true },
     });
 
     const map = new Map<string, FlowBucket>();
     const bucket = (k: string) => {
         let b = map.get(k);
-        if (!b) { b = { key: k, issuedLitres: 0, receivedLitres: 0, issueCount: 0, deliveryCount: 0 }; map.set(k, b); }
+        if (!b) {
+            b = { key: k, issuedLitres: 0, receivedLitres: 0, issueCount: 0, deliveryCount: 0, receivedCost: 0, issuedValue: 0 };
+            map.set(k, b);
+        }
         return b;
     };
     for (const r of issued) {
         const b = bucket(r.k);
         b.issuedLitres += r.litres || 0;
+        b.issuedValue += r.value || 0;
         b.issueCount += Number(r.n);
     }
     for (const d of deliveries) {
         const b = bucket(d.orderDate.toISOString().slice(0, len));
         b.receivedLitres += d.grnQty;
+        b.receivedCost += d.grnCost;
         b.deliveryCount += 1;
     }
 
@@ -237,4 +246,80 @@ export async function getReplenishmentForecast(now: Date = new Date()): Promise<
 
     forecasts.sort((a, b) => b.burnLitresPerDay - a.burnLitresPerDay);
     return { forecasts, leadTimeDays, latestIssueDate, latestDeliveryDate };
+}
+
+export type CostSummary = {
+    /** Spend on fuel actually received, from the HR640 GRN cost. */
+    receivedCost: number;
+    receivedLitres: number;
+    /** Weighted purchase price. */
+    purchasePerLitre: number | null;
+    /** What the fleet was charged, per litre, over the same buckets. */
+    issuePerLitre: number | null;
+    /**
+     * Issue price minus purchase price. Negative means fuel is being issued for
+     * less than it cost to buy, so the difference is not being recovered.
+     */
+    recoveryPerLitre: number | null;
+    /** Unrecovered (or surplus) value across the litres actually issued. */
+    recoveryTotal: number | null;
+    /** Purchase price at the start and end of the covered range. */
+    firstPurchasePerLitre: number | null;
+    lastPurchasePerLitre: number | null;
+    priceChangePct: number | null;
+    /** Orders raised with nothing received against them yet. */
+    outstandingOrders: number;
+    outstandingLitres: number;
+};
+
+/**
+ * Cost view of the same buckets. Purchase price comes from the delivery report,
+ * issue price from the transactions the fleet is charged for — the gap between
+ * them is the part worth watching.
+ */
+export async function getCostSummary(
+    series: FlowBucket[],
+    opts: TxFilterOpts = {}
+): Promise<CostSummary> {
+    const receivedCost = series.reduce((s, b) => s + b.receivedCost, 0);
+    const receivedLitres = series.reduce((s, b) => s + b.receivedLitres, 0);
+    const issuedValue = series.reduce((s, b) => s + b.issuedValue, 0);
+    const issuedLitres = series.reduce((s, b) => s + b.issuedLitres, 0);
+
+    const purchasePerLitre = receivedLitres > 0 ? receivedCost / receivedLitres : null;
+    const issuePerLitre = issuedLitres > 0 ? issuedValue / issuedLitres : null;
+    const recoveryPerLitre =
+        purchasePerLitre !== null && issuePerLitre !== null ? issuePerLitre - purchasePerLitre : null;
+
+    // Price trend across buckets that actually had a delivery.
+    const priced = series.filter(b => b.receivedLitres > 0)
+        .map(b => b.receivedCost / b.receivedLitres);
+    const firstPurchasePerLitre = priced.length ? priced[0] : null;
+    const lastPurchasePerLitre = priced.length ? priced[priced.length - 1] : null;
+    const priceChangePct =
+        firstPurchasePerLitre && lastPurchasePerLitre
+            ? ((lastPurchasePerLitre - firstPurchasePerLitre) / firstPurchasePerLitre) * 100
+            : null;
+
+    const outstanding = await prisma.fuelDelivery.findMany({
+        where: {
+            grnQty: { lte: 0 },
+            ...(opts.from || opts.to ? {
+                orderDate: {
+                    ...(opts.from ? { gte: new Date(opts.from) } : {}),
+                    ...(opts.to ? { lte: endOfDay(opts.to) } : {}),
+                },
+            } : {}),
+        },
+        select: { orderQty: true },
+    });
+
+    return {
+        receivedCost, receivedLitres, purchasePerLitre, issuePerLitre,
+        recoveryPerLitre,
+        recoveryTotal: recoveryPerLitre !== null ? recoveryPerLitre * issuedLitres : null,
+        firstPurchasePerLitre, lastPurchasePerLitre, priceChangePct,
+        outstandingOrders: outstanding.length,
+        outstandingLitres: outstanding.reduce((s, o) => s + o.orderQty, 0),
+    };
 }
