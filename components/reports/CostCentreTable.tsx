@@ -11,7 +11,7 @@ import {
 
 export function CostCentreTable({ data }: { data: any[] }) {
     return (
-        <div className="rounded-sm border border-border bg-white">
+        <div className="rounded-sm border border-border bg-card">
             <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                     <TableRow>
@@ -27,10 +27,10 @@ export function CostCentreTable({ data }: { data: any[] }) {
                     {data.map((row) => (
                         <TableRow key={row.cc.voteNo}>
                             <TableCell className="font-mono text-xs">{row.cc.voteNo}</TableCell>
-                            <TableCell className="text-xs font-bold text-slate-700">{row.cc.division}</TableCell>
+                            <TableCell className="text-xs font-bold text-foreground/80">{row.cc.division}</TableCell>
                             <TableCell className="text-[10px] text-muted-foreground uppercase">{row.cc.department}</TableCell>
-                            <TableCell className="text-xs text-right font-mono text-blue-600 font-medium">{row.petrol.toFixed(2)}</TableCell>
-                            <TableCell className="text-xs text-right font-mono text-amber-600 font-medium">{row.diesel.toFixed(2)}</TableCell>
+                            <TableCell className="text-xs text-right font-mono text-[#60A5FA] font-medium">{row.petrol.toFixed(2)}</TableCell>
+                            <TableCell className="text-xs text-right font-mono text-[#1D4ED8] font-medium">{row.diesel.toFixed(2)}</TableCell>
                             <TableCell className="text-xs text-right font-mono font-bold">{(row.petrol + row.diesel).toFixed(2)}</TableCell>
                         </TableRow>
                     ))}

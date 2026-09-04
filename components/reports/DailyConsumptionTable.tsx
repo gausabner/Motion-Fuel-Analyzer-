@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 
 export function DailyConsumptionTable({ data }: { data: any[] }) {
     return (
-        <div className="rounded-sm border border-border bg-white">
+        <div className="rounded-sm border border-border bg-card">
             <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                     <TableRow>
@@ -30,7 +30,7 @@ export function DailyConsumptionTable({ data }: { data: any[] }) {
                                 {format(new Date(row.date), 'dd MMM yyyy')}
                             </TableCell>
                             <TableCell>
-                                <Badge variant="outline" className={row.fuelType.includes('Petrol') ? 'border-blue-500 text-blue-700' : 'border-amber-500 text-amber-700'}>
+                                <Badge variant="outline" className={row.fuelType.includes('Petrol') ? 'border-[#60A5FA] text-[#3B82F6]' : 'border-[#1D4ED8] text-[#1D4ED8]'}>
                                     {row.fuelType}
                                 </Badge>
                             </TableCell>

@@ -12,6 +12,10 @@ model User {
   email     String   @unique
   name      String?
   role      String   @default("EMPLOYEE")
+  // bcrypt hash; null only for legacy rows until a password is set.
+  password  String?
+  // ACTIVE = can sign in · PENDING = awaiting admin approval · DISABLED = blocked
+  status    String   @default("ACTIVE")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -25,6 +29,21 @@ model CostCentre {
   voteNo     String @id
   division   String
   department String
+  // Set when this entry was auto-created by prefix resolution (holds the
+  // registered vote it was derived from). NULL for seeded/manual entries.
+  // Makes auto-resolution auditable and reversible.
+  derivedFrom String?
+}
+
+model Department {
+  name      String   @id
+  createdAt DateTime @default(now())
+}
+
+model FleetUnit {
+  unitNo      String   @id
+  description String?
+  createdAt   DateTime @default(now())
 }
 
 model FuelTransaction {
@@ -84,4 +103,46 @@ model UploadedFile {
   fileSize   Int
   rowCount   Int
   uploadedAt DateTime @default(now())
+}
+
+/// Fuel purchase orders and goods-received notes, imported from the HR640
+/// procurement report. One row is an ORDER, not a tank receipt: it carries a
+/// supplier and cost but no tank, vehicle or vote.
+///
+/// Deliberately separate from FuelTransaction. HR640 and the HR580 FRE receipts
+/// describe the SAME physical deliveries at two stages — an order is raised,
+/// then the fuel lands in a tank a median of 10 days later — so the two overlap
+/// wherever both exist and must never be summed.
+///
+/// Unlike FuelTransaction.transDate (ISO text, filtered by raw string SQL),
+/// orderDate is a real DateTime and this table is queried ONLY through Prisma.
+model FuelDelivery {
+  id         String   @id @default(cuid())
+  orderNo    String
+  orderDate  DateTime
+  suppRef    String?
+  suppName   String
+  itemCode   String
+  itemDesc   String
+  /// Normalised from itemDesc: Diesel / Petrol / Unknown.
+  fuelType   String
+  orderQty   Float
+  orderCost  Float
+  /// Goods actually received. 0 = ordered but not yet delivered.
+  grnQty     Float
+  grnCost    Float
+
+  /// HR940 only — absent on HR640, which does not carry these columns.
+  /// Cancellation flags at order (header) and line-item level; null = not cancelled.
+  canOrd     String?
+  canItem    String?
+  /// Quantity invoiced by the supplier, and any returned to them.
+  invQty     Float?
+  returnQty  Float?
+
+  createdAt  DateTime @default(now())
+
+  @@unique([orderNo, itemCode])
+  @@index([orderDate])
+  @@index([fuelType])
 }

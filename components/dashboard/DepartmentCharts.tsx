@@ -69,12 +69,12 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
             <foreignObject x={x - AXIS_WIDTH} y={y - 21} width={AXIS_WIDTH - 10} height={42}>
                 <div className="flex items-center w-full h-full text-xs">
                     {/* Rank Column: 15% of Total Width (37.5% of Axis) */}
-                    <div className="w-[37.5%] text-zinc-500 font-medium pl-2 flex items-center h-full">
+                    <div className="w-[37.5%] text-muted-foreground font-medium pl-2 flex items-center h-full">
                         #{rank}
                     </div>
 
                     {/* Name Column: 25% of Total Width (62.5% of Axis) */}
-                    <div className="w-[62.5%] font-bold text-black whitespace-normal leading-[1.1] flex items-center text-[10px] pr-1" title={name}>
+                    <div className="w-[62.5%] font-bold text-foreground whitespace-normal leading-[1.1] flex items-center text-[10px] pr-1" title={name}>
                         <span className="line-clamp-3">{name}</span>
                     </div>
                 </div>
@@ -86,7 +86,7 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
         const totalHeight = data.length * ITEM_HEIGHT;
 
         return (
-            <div className="w-full relative border border-zinc-100 rounded-md bg-zinc-50/50">
+            <div className="w-full relative border border-border rounded-md bg-muted/40">
                 <div
                     className="overflow-y-auto pr-4 custom-scrollbar"
                     style={{ height: `${CONTAINER_HEIGHT}px` }}
@@ -112,13 +112,13 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
                                 <Tooltip
                                     cursor={{ fill: '#F4F4F5' }}
                                     contentStyle={{ borderRadius: '0px', border: '1px solid #E4E4E7', boxShadow: 'none' }}
-                                    itemStyle={{ color: '#000000', fontSize: '12px', fontWeight: 'bold' }}
+                                    itemStyle={{ color: '#0F172A', fontSize: '12px', fontWeight: 'bold' }}
                                     formatter={(value: any) => [`${Number(value).toLocaleString()} ${unit}`, 'Total']}
                                     labelFormatter={(label) => label.substring(label.indexOf(' ') + 1)} // Clean label in tooltip
                                 />
                                 <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={42} background={{ fill: '#f4f4f5' }}>
                                     {data.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={index < 3 ? '#FDE047' : '#000000'} />
+                                        <Cell key={`cell-${index}`} fill={index < 3 ? '#2563EB' : '#93C5FD'} />
                                     ))}
                                 </Bar>
                             </BarChart>
@@ -135,7 +135,7 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
     return (
         <div className="industrial-grid">
             {/* Top Consumption (Volume) */}
-            <Card className="monumental-card bg-white col-span-1 md:col-span-2" ref={volumeRef}>
+            <Card className="monumental-card bg-card col-span-1 md:col-span-2" ref={volumeRef}>
                 <CardHeader className="px-0 pt-0 pb-6 border-b border-border pl-0 mb-6 flex flex-row items-center justify-between">
                     <div>
                         <CardTitle className="text-lg font-extrabold uppercase tracking-tight">Top 50 Consumers (Volume)</CardTitle>
@@ -143,7 +143,7 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
                     </div>
                     <div className="flex items-center gap-2">
                         <ChartExportButton targetRef={volumeRef} fileName="top_50_consumers_volume" />
-                        <div className="bg-yellow-400 text-black text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded-sm">
+                        <div className="bg-accent text-accent-foreground text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded-md">
                             Top {topConsumers.length}
                         </div>
                     </div>
@@ -154,7 +154,7 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
             </Card>
 
             {/* Top Frequency (Refills) */}
-            <Card className="monumental-card bg-white col-span-1 md:col-span-2" ref={frequencyRef}>
+            <Card className="monumental-card bg-card col-span-1 md:col-span-2" ref={frequencyRef}>
                 <CardHeader className="px-0 pt-0 pb-6 border-b border-border pl-0 mb-6 flex flex-row items-center justify-between">
                     <div>
                         <CardTitle className="text-lg font-extrabold uppercase tracking-tight">Most Frequent Refills</CardTitle>
@@ -162,7 +162,7 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
                     </div>
                     <div className="flex items-center gap-2">
                         <ChartExportButton targetRef={frequencyRef} fileName="most_frequent_refills" />
-                        <div className="bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded-sm">
+                        <div className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded-md">
                             Top {topFrequency.length}
                         </div>
                     </div>

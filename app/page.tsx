@@ -2,148 +2,131 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
-import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { motion } from "framer-motion";
+import { ArrowRight, Droplets, TrendingDown, Truck } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { PublicHeader } from "@/components/PublicHeader";
 
 export default function HomePage() {
-    return (
-        <div className="min-h-screen bg-white text-black font-sans selection:bg-yellow-300 selection:text-black overflow-x-hidden">
-            {/* Minimal Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-zinc-100">
-                <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        {/* Abstract Logo Icon */}
-                        <div className="w-8 h-8 bg-black relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-4 h-4 bg-[#FDE047]"></div>
-                        </div>
-                        <span className="text-xl font-extrabold tracking-tighter uppercase">Motion Analyzers</span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <Link href="/about">
-                            <span className="hidden md:block text-sm font-bold uppercase tracking-wider hover:text-zinc-600 transition-colors cursor-pointer">
-                                Discover
-                            </span>
-                        </Link>
-                        <Link href="/auth/signin">
-                            <Button className="bg-[#FDE047] hover:bg-[#FACC15] text-black font-bold uppercase tracking-wider border-none rounded-none px-6 h-10">
-                                Sign In
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </header>
+    const reduceMotion = useReducedMotion();
 
-            {/* Main Content Grid */}
-            <main className="container mx-auto px-6 pt-24 pb-12 min-h-screen flex flex-col justify-center max-w-[1400px]">
+    return (
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-accent-foreground overflow-x-hidden">
+            <PublicHeader />
+
+            <main className="container mx-auto px-6 pt-28 pb-12 min-h-screen flex flex-col justify-center max-w-[1400px]">
                 <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
 
-                    {/* Left Column: Typography */}
-                    <div className="space-y-8 max-w-2xl">
-                        <ScrollReveal>
-                            <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter">
-                                UNLEASH YOUR <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-black to-zinc-800">FLEET'S</span> <br />
-                                POTENTIAL
-                            </h1>
-                        </ScrollReveal>
+                    {/* Left column: message */}
+                    <div className="space-y-8 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.02] tracking-tight">
+                            Every litre,<br />
+                            <span className="text-primary">accounted for.</span>
+                        </h1>
 
-                        <ScrollReveal delay={0.1}>
-                            <p className="text-lg md:text-xl text-zinc-600 font-medium leading-relaxed max-w-lg">
-                                Elevate your fuel management with precise analytics.
-                                Designed to inspire efficiency and empower your operational journey.
-                            </p>
-                        </ScrollReveal>
+                        <p className="text-lg md:text-xl text-muted-foreground font-medium leading-relaxed max-w-lg">
+                            Motion Fuel Analyzer turns raw fuel transactions into clear consumption,
+                            cost-centre and fleet intelligence for the whole municipality.
+                        </p>
 
-                        <ScrollReveal delay={0.2}>
-                            <div className="flex flex-wrap gap-8 md:gap-12 pt-6 border-t-2 border-black/5">
-                                <div>
-                                    <h3 className="text-3xl font-black mb-1">300+</h3>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Vehicles Tracked</p>
-                                </div>
-                                <div>
-                                    <h3 className="text-3xl font-black mb-1">50+</h3>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Active Depts</p>
-                                </div>
-                                <div>
-                                    <h3 className="text-3xl font-black mb-1">100k+</h3>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Liters Analyzed</p>
-                                </div>
+                        <div className="flex flex-wrap gap-8 md:gap-12 pt-6 border-t border-border">
+                            <div>
+                                <h3 className="text-3xl font-extrabold tabular-nums mb-1">890+</h3>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Fleet units tracked</p>
                             </div>
-                        </ScrollReveal>
-
-                        <ScrollReveal delay={0.3}>
-                            <div className="pt-2">
-                                <Link href="/auth/signin">
-                                    <Button className="h-14 px-8 bg-black hover:bg-zinc-800 text-white text-base font-bold uppercase tracking-wider rounded-none group transition-all duration-300">
-                                        Sign In
-                                        <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                                    </Button>
-                                </Link>
+                            <div>
+                                <h3 className="text-3xl font-extrabold tabular-nums mb-1">10</h3>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Departments</p>
                             </div>
-                        </ScrollReveal>
+                            <div>
+                                <h3 className="text-3xl font-extrabold tabular-nums mb-1">1.9M+</h3>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Litres analysed</p>
+                            </div>
+                        </div>
+
+                        <div className="pt-2 flex items-center gap-4">
+                            <Link href="/auth/signin">
+                                <Button className="h-13 px-8 text-base group">
+                                    Open the dashboard
+                                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                                </Button>
+                            </Link>
+                            <Link href="/about">
+                                <Button variant="outline" className="h-13 px-6 text-base">
+                                    Discover more
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
-                    {/* Right Column: Geometric Composition */}
-                    <div className="relative w-full aspect-square max-w-[500px] lg:max-w-[550px] mx-auto lg:ml-auto hidden md:block">
-                        <div className="grid grid-cols-2 grid-rows-2 gap-0 w-full h-full">
-                            {/* Top Left: Rounded Grey */}
-                            <motion.div
-                                className="bg-zinc-200 rounded-tl-[100px]"
-                                animate={{ scale: [1, 1.02, 1] }}
-                                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                            ></motion.div>
+                    {/* Right column: glass composition around the mark */}
+                    <div className="relative w-full aspect-square max-w-[480px] mx-auto lg:ml-auto hidden md:block animate-in fade-in zoom-in-95 duration-700">
+                        {/* soft blue glow */}
+                        <div className="absolute inset-8 rounded-full bg-primary/10 blur-3xl" />
 
-                            {/* Top Right: Yellow Circle + Diamond */}
-                            <div className="relative">
-                                {/* Yellow Semi-Circle */}
-                                <motion.div
-                                    className="absolute right-0 top-0 w-full h-full bg-[#FDE047] rounded-r-full"
-                                    animate={{ borderRadius: ["0px 50% 50% 0px", "0px 40% 40% 0px", "0px 50% 50% 0px"] }}
-                                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                                ></motion.div>
-                                {/* Yellow Diamond overlay */}
-                                <motion.div
-                                    className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-1/2 h-1/2 bg-[#FDE047] rotate-45 z-10"
-                                    animate={{ rotate: 45, scale: [1, 1.1, 1] }}
-                                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                                ></motion.div>
-                            </div>
+                        {/* main glass tile — echoes the favicon */}
+                        <motion.div
+                            className="absolute inset-[12%] rounded-[3rem] bg-gradient-to-br from-[#3B82F6] via-[#165DFC] to-[#0E3FBF] shadow-2xl shadow-primary/30 overflow-hidden"
+                            animate={reduceMotion ? undefined : { y: [0, -8, 0] }}
+                            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-b from-white/35 via-white/5 to-transparent" />
+                            <div className="absolute inset-2 rounded-[2.6rem] border border-white/30" />
+                            <img
+                                src="/logo-mark.svg"
+                                alt=""
+                                aria-hidden="true"
+                                className="absolute inset-0 m-auto w-1/2 h-1/2 brightness-0 invert"
+                            />
+                        </motion.div>
 
-                            {/* Bottom Left: Stacked shapes */}
-                            <div className="relative">
-                                {/* Border Square */}
-                                <div className="absolute inset-4 border-[16px] border-zinc-900"></div>
-                                {/* Black Circle Overlay */}
-                                <motion.div
-                                    className="absolute -right-1/4 -top-1/4 w-3/4 h-3/4 bg-zinc-800 rounded-full z-20"
-                                    animate={{ x: [0, 10, 0], y: [0, -10, 0] }}
-                                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-                                ></motion.div>
-                                {/* Bottom semi-circle */}
-                                <div className="absolute bottom-0 left-0 w-full h-1/2 bg-black rounded-b-full"></div>
-                            </div>
-
-                            {/* Bottom Right: Black Quarter */}
-                            <motion.div
-                                className="bg-zinc-900 rounded-tr-[100px] rounded-bl-[100px] relative overflow-hidden"
-                                whileHover={{ scale: 0.98 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                {/* Triangle Shape using CSS borders */}
-                                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0 
-                                    border-l-[60px] border-l-transparent
-                                    border-r-[60px] border-r-transparent
-                                    border-b-[100px] border-b-zinc-700">
+                        {/* floating glass stat cards */}
+                        <motion.div
+                            className="absolute -left-2 top-[16%] bg-card/80 backdrop-blur-md border border-border rounded-2xl px-5 py-4 shadow-lg"
+                            animate={reduceMotion ? undefined : { y: [0, 6, 0] }}
+                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
+                                    <Droplets className="w-4 h-4 text-primary" />
                                 </div>
-                                {/* Inner Triangle hole */}
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-0 h-0 
-                                    border-l-[30px] border-l-transparent
-                                    border-r-[30px] border-r-transparent
-                                    border-b-[50px] border-b-zinc-900">
+                                <div>
+                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">This month</p>
+                                    <p className="text-lg font-extrabold tabular-nums">111,424 L</p>
                                 </div>
-                            </motion.div>
-                        </div>
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            className="absolute right-0 bottom-[18%] bg-card/80 backdrop-blur-md border border-border rounded-2xl px-5 py-4 shadow-lg"
+                            animate={reduceMotion ? undefined : { y: [0, -6, 0] }}
+                            transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
+                                    <TrendingDown className="w-4 h-4 text-emerald-700" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Consumption</p>
+                                    <p className="text-lg font-extrabold tabular-nums text-emerald-700">▼ 4% vs April</p>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            className="absolute left-[8%] bottom-[4%] bg-card/80 backdrop-blur-md border border-border rounded-2xl px-5 py-4 shadow-lg"
+                            animate={reduceMotion ? undefined : { y: [0, 5, 0] }}
+                            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
+                                    <Truck className="w-4 h-4 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Active units</p>
+                                    <p className="text-lg font-extrabold tabular-nums">570</p>
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
             </main>

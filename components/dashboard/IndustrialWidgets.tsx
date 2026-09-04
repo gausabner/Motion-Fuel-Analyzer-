@@ -22,7 +22,7 @@ export function IndustrialKPI({ label, value, subValue, trend, icon: Icon, accen
             <div className="flex justify-between items-start">
                 <div className={cn(
                     "p-2 rounded-lg",
-                    accent ? "bg-black/10 text-black" : "bg-black/5 text-foreground"
+                    accent ? "bg-accent text-primary" : "bg-muted text-foreground"
                 )}>
                     <Icon className="h-5 w-5" />
                 </div>
@@ -40,20 +40,20 @@ export function IndustrialKPI({ label, value, subValue, trend, icon: Icon, accen
             <div className="mt-4">
                 <p className={cn(
                     "text-xs font-bold uppercase tracking-widest mb-1",
-                    accent ? "text-black/60" : "text-muted-foreground"
+                    accent ? "text-muted-foreground" : "text-muted-foreground"
                 )}>
                     {label}
                 </p>
                 <h3 className={cn(
                     "text-xl md:text-3xl font-extrabold tracking-tight",
-                    accent ? "text-black" : "text-foreground"
+                    accent ? "text-foreground" : "text-foreground"
                 )}>
                     {value}
                 </h3>
                 {subValue && (
                     <p className={cn(
                         "text-sm font-medium mt-1",
-                        accent ? "text-black/70" : "text-muted-foreground"
+                        accent ? "text-muted-foreground" : "text-muted-foreground"
                     )}>
                         {subValue}
                     </p>
@@ -68,7 +68,7 @@ export function StatusWidget({ petrolVol, dieselVol, totalVol }: { petrolVol: nu
     const dieselPercent = totalVol > 0 ? (dieselVol / totalVol) * 100 : 0;
 
     return (
-        <div className="monumental-card bg-white">
+        <div className="monumental-card bg-card">
             <h3 className="text-lg font-bold mb-6 border-b border-border pb-2">Units per Status</h3>
 
             {/* Numeric Grid Removed for Cleaner UI */}
@@ -77,7 +77,7 @@ export function StatusWidget({ petrolVol, dieselVol, totalVol }: { petrolVol: nu
             {/* Progress Bar "Hudson Style" */}
             <div className="h-12 w-full flex rounded-none overflow-hidden mt-auto">
                 <div
-                    className="h-full bg-accent flex items-center justify-center text-xs font-bold text-black transition-all duration-500"
+                    className="h-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground transition-all duration-500"
                     style={{ width: `${petrolPercent}%` }}
                 >
                     {petrolPercent > 10 && `PETROL ${petrolPercent.toFixed(0)}%`}

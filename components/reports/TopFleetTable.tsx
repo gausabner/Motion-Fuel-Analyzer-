@@ -11,7 +11,7 @@ import {
 
 export function TopFleetTable({ data }: { data: any[] }) {
     return (
-        <div className="rounded-sm border border-border bg-white">
+        <div className="rounded-sm border border-border bg-card">
             <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                     <TableRow>
@@ -26,7 +26,7 @@ export function TopFleetTable({ data }: { data: any[] }) {
                         <TableRow key={row.vehicleId}>
                             <TableCell className="font-bold text-xs text-muted-foreground">#{idx + 1}</TableCell>
                             <TableCell className="font-bold text-sm">{row.vehicleId}</TableCell>
-                            <TableCell className="text-sm text-right font-mono font-bold text-amber-600">{row.volume.toFixed(2)}</TableCell>
+                            <TableCell className="text-sm text-right font-mono font-bold text-primary">{row.volume.toFixed(2)}</TableCell>
                             <TableCell className="text-sm text-right font-mono">{row.cost.toFixed(2)}</TableCell>
                         </TableRow>
                     ))}

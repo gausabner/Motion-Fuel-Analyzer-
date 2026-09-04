@@ -16,6 +16,9 @@ async function main() {
 
     const aggs = await prisma.fuelTransaction.groupBy({
         by: ['transDate', 'fuelType'],
+        // Consumption stats are FIS (issues to vehicles) only — FRE and other
+        // stock movements into tanks are not fleet consumption.
+        where: { transType: 'FIS' },
         _sum: {
             transQty: true,
             transAmt: true,

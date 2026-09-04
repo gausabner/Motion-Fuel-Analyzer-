@@ -29,7 +29,7 @@ export function FleetRankings({ topFreqVehicles, topCostCentres }: RankingProps)
     return (
         <div className="grid gap-6 md:grid-cols-2">
             {/* Top Frequent Consumers */}
-            <Card className="shadow-sm border-0 bg-white/50 backdrop-blur-sm">
+            <Card className="shadow-sm border-0 bg-card/50 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="text-lg font-bold text-slate-800">Most Frequent Refills</CardTitle>
                     <CardDescription>Vehicles with the highest number of transaction events</CardDescription>
@@ -55,7 +55,7 @@ export function FleetRankings({ topFreqVehicles, topCostCentres }: RankingProps)
             </Card>
 
             {/* Top Cost Centres */}
-            <Card className="shadow-sm border-0 bg-white/50 backdrop-blur-sm">
+            <Card className="shadow-sm border-0 bg-card/50 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="text-lg font-bold text-slate-800">Top Fueling Cost Centres</CardTitle>
                     <CardDescription>Departments consuming the most fleet resources</CardDescription>
