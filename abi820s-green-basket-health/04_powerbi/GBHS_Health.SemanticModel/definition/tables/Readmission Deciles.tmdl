@@ -1,0 +1,50 @@
+/// Calibration of the 30-day readmission risk model on the 2025-26 test set (03_analytics/readmission_model.py); disconnected.
+table 'Readmission Deciles'
+
+	/// Decile of predicted 30-day readmission risk in the test set (1 = lowest, 10 = highest).
+	column 'Risk Decile'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: decile
+
+	column Spells
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: spells
+
+	column 'Mean Predicted'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: mean_predicted
+
+	column 'Observed Rate'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: observed
+
+	/// Model whose predictions are summarised.
+	column Model
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model
+
+	partition 'Readmission Deciles' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("analytics_readmission_deciles.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "analytics_readmission_deciles"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"decile", Int64.Type}, {"spells", Int64.Type}, {"mean_predicted", type number}, {"observed", type number}, {"model", type text}}, "en-US")
+				in
+				    Typed
+

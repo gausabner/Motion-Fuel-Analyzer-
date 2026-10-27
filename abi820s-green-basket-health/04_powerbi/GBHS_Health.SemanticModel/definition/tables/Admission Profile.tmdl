@@ -1,0 +1,59 @@
+/// Junk dimension: admission method x discharge status.
+table 'Admission Profile'
+
+	/// Surrogate key. Source: generated (Cartesian product)
+	column 'Admission Profile Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: admission_profile_key
+
+	/// EMER-ED, EMER-DIRECT, ELECTIVE, MATERNITY, TRANSFER-IN or UNK. Source: PAS admission_method via ref.code_map (AD07)
+	column 'Admission Method Code'
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: admission_method_code
+
+	/// Admission method description. Source: ref.code_map
+	column 'Admission Method'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: admission_method_name
+
+	/// True for unplanned admissions (EMER-ED, EMER-DIRECT, TRANSFER-IN). Source: derived
+	column 'Is Emergency Admission'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_emergency
+
+	/// HOME, TRANSFER, DIED, AMA, IN (still in hospital) or UNK. Source: PAS discharge_status
+	column 'Discharge Status Code'
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: discharge_status_code
+
+	/// Discharge status description. Source: ref.code_map
+	column 'Discharge Status'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: discharge_status_name
+
+	partition 'Admission Profile' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_admission_profile.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_admission_profile"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"admission_profile_key", Int64.Type}, {"admission_method_code", type text}, {"admission_method_name", type text}, {"is_emergency", type logical}, {"discharge_status_code", type text}, {"discharge_status_name", type text}}, "en-US")
+				in
+				    Typed
+

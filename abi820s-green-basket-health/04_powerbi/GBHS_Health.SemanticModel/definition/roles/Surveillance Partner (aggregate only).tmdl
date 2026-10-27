@@ -1,0 +1,22 @@
+/// Object-level security for the MoHSS surveillance unit: patient-level tables (attendances, spells, patients, model outputs on patients, the access list) are invisible - not just empty. Aggregated IDSR, population and weather data only.
+role 'Surveillance Partner (aggregate only)'
+	modelPermission: read
+
+	tablePermission Attendance
+		metadataPermission: none
+
+	tablePermission Admission
+		metadataPermission: none
+
+	tablePermission Patient
+		metadataPermission: none
+
+	tablePermission 'Readmission Deciles'
+		metadataPermission: none
+
+	tablePermission 'Readmission Drivers'
+		metadataPermission: none
+
+	tablePermission 'Security User Facility'
+		metadataPermission: none
+

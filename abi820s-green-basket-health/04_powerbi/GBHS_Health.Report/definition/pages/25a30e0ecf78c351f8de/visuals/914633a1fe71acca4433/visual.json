@@ -1,0 +1,117 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "914633a1fe71acca4433",
+  "position": {
+    "x": 24,
+    "y": 232,
+    "z": 0,
+    "width": 820,
+    "height": 250,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Date"
+                    }
+                  },
+                  "Property": "Year Month"
+                }
+              },
+              "queryRef": "Date.Year Month"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Seen Within Target %"
+                }
+              },
+              "queryRef": "_Measures.Seen Within Target %",
+              "displayName": "Seen within target"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Seen Within Target % PY"
+                }
+              },
+              "queryRef": "_Measures.Seen Within Target % PY",
+              "displayName": "Same month last year"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Target Seen Within Target %"
+                }
+              },
+              "queryRef": "_Measures.Target Seen Within Target %",
+              "displayName": "Target 80 %"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Share of ED patients seen within their triage target, by month'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Line chart of the monthly share of triaged emergency patients seen by a doctor within the SATS target, against the same month last year and the 80 percent target. Performance held near 78 percent in 2022-2024 and fell to about 67 percent in 2025-2026.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

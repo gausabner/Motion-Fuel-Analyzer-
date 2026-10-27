@@ -1,0 +1,43 @@
+/// Field parameter: lets users switch the metric shown in a visual.
+table 'Metric Selector'
+
+	column Metric
+		summarizeBy: none
+		sourceColumn: [Value1]
+		sortByColumn: 'Metric Order'
+
+		relatedColumnDetails
+			groupByColumn: 'Metric Fields'
+
+	column 'Metric Fields'
+		isHidden
+		summarizeBy: none
+		sourceColumn: [Value2]
+		sortByColumn: 'Metric Order'
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 3,
+				  "kind": 2
+				}
+
+	column 'Metric Order'
+		isHidden
+		summarizeBy: sum
+		sourceColumn: [Value3]
+
+	partition 'Metric Selector' = calculated
+		mode: import
+		source =
+				{
+				    ( "ED Attendances", NAMEOF ( '_Measures'[ED Attendances] ), 0 ),
+				    ( "Seen Within Target %", NAMEOF ( '_Measures'[Seen Within Target %] ), 1 ),
+				    ( "Median Door-to-Doctor (min)", NAMEOF ( '_Measures'[Median Door-to-Doctor (min)] ), 2 ),
+				    ( "LWBS Rate %", NAMEOF ( '_Measures'[LWBS Rate %] ), 3 ),
+				    ( "Bed Occupancy %", NAMEOF ( '_Measures'[Bed Occupancy %] ), 4 ),
+				    ( "ALOS (days)", NAMEOF ( '_Measures'[ALOS (days)] ), 5 ),
+				    ( "Readmission Rate 30d %", NAMEOF ( '_Measures'[Readmission Rate 30d %] ), 6 ),
+				    ( "NHPPD", NAMEOF ( '_Measures'[NHPPD] ), 7 ),
+				    ( "Malaria Cases", NAMEOF ( '_Measures'[Malaria Cases] ), 8 )
+				}
+

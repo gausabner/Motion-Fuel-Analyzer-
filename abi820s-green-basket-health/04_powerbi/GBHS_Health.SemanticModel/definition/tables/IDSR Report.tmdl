@@ -1,0 +1,62 @@
+/// Report-coverage fact (grain: facility x epi week expected): completeness and timeliness of IDSR reporting.
+table 'IDSR Report'
+
+	/// FK to dim_date = Monday of the epi week. Source: scaffold of expected weeks
+	column 'Epi Week Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: epi_week_date_key
+
+	/// FK to dim_facility. Source: scaffold of active facilities
+	column 'Facility Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: facility_key
+
+	/// Always 1 (denominator of completeness). Source: ETL
+	column 'Report Expected'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: report_expected
+
+	/// 1 if any version of the weekly report was received by the extract cut-off. Source: stg.idsr_submission
+	column 'Report Received'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: report_received
+
+	/// 1 if the first submission arrived by the due time (Tuesday 12:00 after the epi week). Source: derived (GBHS SOP)
+	column 'Report On Time'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: report_on_time
+
+	/// Hours between due time and first submission (negative = early; NULL if not received). Source: derived
+	column 'Hours After Due'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: hours_after_due
+
+	partition 'IDSR Report' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_idsr_report.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_idsr_report"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"epi_week_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"report_expected", Int64.Type}, {"report_received", Int64.Type}, {"report_on_time", Int64.Type}, {"hours_after_due", type number}}, "en-US")
+				in
+				    Typed
+

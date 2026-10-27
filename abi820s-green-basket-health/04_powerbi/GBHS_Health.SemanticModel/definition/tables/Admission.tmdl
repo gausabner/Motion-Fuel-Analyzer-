@@ -1,0 +1,153 @@
+/// Inpatient spells (accumulating snapshot; grain: one row per spell, updated as milestones arrive: admission, discharge, 30-day follow-up). Active date = admission; inactive role-playing date = discharge.
+table Admission
+
+	/// FK to dim_date - admission date (active relationship). Source: PAS admission_datetime
+	column 'Admission Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: admission_date_key
+
+	/// FK to dim_date - discharge date (role-playing; -2 = still in hospital). Source: PAS discharge_datetime (AD02, AD03)
+	column 'Discharge Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: discharge_date_key
+
+	/// FK to dim_care_unit version (admitting ward) valid on the admission date. Source: PAS ward_code (AD04)
+	column 'Care Unit Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: care_unit_key
+
+	/// FK to dim_patient version valid on the admission date. Source: PAS patient_id
+	column 'Patient Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: patient_key
+
+	/// Durable (supernatural) key: the surrogate key of the patient's first version, identical on every version - used to count distinct patients across SCD2 versions. Source: ETL
+	column 'Patient Durable Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: patient_durable_key
+
+	/// FK to dim_diagnosis - principal diagnosis (-1 until coded). Source: PAS principal_icd10 (AD05)
+	column 'Diagnosis Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: diagnosis_key
+
+	/// FK to the admission method x discharge status junk dimension. Source: PAS admission_method, discharge_status (AD07)
+	column 'Admission Profile Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: admission_profile_key
+
+	/// FK to dim_age_band (age at admission). Source: derived
+	column 'Age Band Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: age_band_key
+
+	/// Always 1; additive count of spells. Source: ETL
+	column 'Admission Count'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: admission_count
+
+	/// Length of stay in midnights (discharge date - admission date); NULL while in hospital. Additive (= patient days). Source: derived
+	column 'LOS (days)'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: los_days
+
+	/// 1 once the discharge milestone is recorded. Source: derived
+	column 'Is Discharged'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: is_discharged
+
+	/// 1 for an in-hospital death. Source: discharge_status = DIED
+	column 'Is Died'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: is_died
+
+	/// 1 if discharged before 12:00 (flow KPI); NULL while in hospital. Source: derived
+	column 'Discharged Before Noon'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: discharged_before_noon
+
+	/// 1 if discharged on Saturday or Sunday; NULL while in hospital. Source: derived
+	column 'Is Weekend Discharge'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: is_weekend_discharge
+
+	/// 1 if this spell is an emergency admission within 30 days of the same patient's previous live discharge. Source: derived (window over patient pseudonym)
+	column 'Is Readmission 30d'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: is_readmission_30d
+
+	/// 1 if this spell counts in the readmission-rate denominator: discharged alive (home or AMA), not maternity, and 30 days of follow-up available. Source: derived (GBHS KPI definition)
+	column 'Readmission Eligible'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: readmission_eligible
+
+	/// 1 if an eligible spell was followed by an emergency readmission within 30 days (milestone 3). Source: derived
+	column 'Readmitted Within 30d'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: readmitted_within_30d
+
+	/// Number of the patient's admissions in the 365 days before this admission (risk feature). Source: derived
+	column 'Prior Admissions 12m'
+		dataType: int64
+		isHidden
+		summarizeBy: average
+		sourceColumn: prior_admissions_12m
+
+	/// 1 if the spell is still open more than 60 days after admission at the snapshot date (AD06, probable missing discharge). Source: derived
+	column 'Is Open Over 60d'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: is_open_over_60d
+
+	partition Admission = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_admission.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_admission"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"admission_date_key", Int64.Type}, {"discharge_date_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"patient_key", Int64.Type}, {"patient_durable_key", Int64.Type}, {"diagnosis_key", Int64.Type}, {"admission_profile_key", Int64.Type}, {"age_band_key", Int64.Type}, {"admission_count", Int64.Type}, {"los_days", Int64.Type}, {"is_discharged", Int64.Type}, {"is_died", Int64.Type}, {"discharged_before_noon", Int64.Type}, {"is_weekend_discharge", Int64.Type}, {"is_readmission_30d", Int64.Type}, {"readmission_eligible", Int64.Type}, {"readmitted_within_30d", Int64.Type}, {"prior_admissions_12m", Int64.Type}, {"is_open_over_60d", Int64.Type}}, "en-US")
+				in
+				    Typed
+

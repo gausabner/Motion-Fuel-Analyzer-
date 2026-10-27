@@ -1,0 +1,22 @@
+flowchart LR
+  subgraph E["1 Extract - Python"]
+    direction TB
+    E1["COPY each file into stg.*_raw<br/>every column as text<br/>+ source_file, row_num, batch_id"]
+    E2["Excel sheets, NSA CSV with<br/>title rows, NASA JSON:<br/>landed as delivered"]
+    E1 --- E2
+  end
+  subgraph T["2 Transform - 05_etl_transform.sql"]
+    direction TB
+    T1["master data MD01-06"] --> T2["patients MD01-05"] --> T3["attendances EN01-12"]
+    T3 --> T4["spells AD01-07"] --> T5["census WC01-04"] --> T6["roster RS01-04"]
+    T6 --> T7["IDSR SV01-07"] --> T8["NSA + NASA EX01-02, WE01-02"]
+  end
+  subgraph LD["3 Load - 06 / 07"]
+    direction TB
+    D1["dimensions: date, static,<br/>region + facility (Type 1),<br/>diagnosis + condition,<br/>care unit SCD2, patient SCD2,<br/>inferred members"] --> F1["facts: encounter, admission<br/>(accumulating), census, roster,<br/>surveillance + IDSR coverage,<br/>population, weather"]
+  end
+  subgraph Q["4 Control"]
+    direction TB
+    R1["sp_reconcile R01-R22"] --> O1["mart views + grants,<br/>13_optimisation.sql"] --> B2["batch 2: 1 Oct delta<br/>same procedures"]
+  end
+  E --> T --> LD --> Q

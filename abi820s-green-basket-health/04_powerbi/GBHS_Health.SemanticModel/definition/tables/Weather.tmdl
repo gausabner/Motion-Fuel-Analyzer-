@@ -1,0 +1,62 @@
+/// NASA POWER daily weather at each facility (external; rainfall is averaged across locations, never summed).
+table Weather
+
+	/// FK to dim_date. Source: NASA POWER date (YYYYMMDD)
+	column 'Weather Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: weather_date_key
+
+	/// FK to dim_facility (weather point = facility coordinates). Source: file name
+	column 'Facility Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: facility_key
+
+	/// Corrected precipitation, mm/day (PRECTOTCORR). Source: NASA POWER (WE02)
+	column 'Rainfall (mm)'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: rainfall_mm
+
+	/// Maximum temperature at 2 m, deg C (T2M_MAX). Source: NASA POWER (WE01)
+	column 'Max Temp (C)'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: tmax_c
+
+	/// Minimum temperature at 2 m, deg C (T2M_MIN). Source: NASA POWER (WE01)
+	column 'Min Temp (C)'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: tmin_c
+
+	/// Relative humidity at 2 m, % (RH2M). Source: NASA POWER (WE01)
+	column 'Relative Humidity (%)'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: rh_pct
+
+	partition Weather = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_weather.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_weather"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"weather_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"rainfall_mm", type number}, {"tmax_c", type number}, {"tmin_c", type number}, {"rh_pct", type number}}, "en-US")
+				in
+				    Typed
+

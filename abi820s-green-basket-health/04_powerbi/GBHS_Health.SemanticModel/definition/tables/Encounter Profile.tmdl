@@ -1,0 +1,65 @@
+/// Junk dimension: department x arrival mode x disposition.
+table 'Encounter Profile'
+
+	/// Surrogate key. Source: generated (Cartesian product)
+	column 'Encounter Profile Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: encounter_profile_key
+
+	/// ED (emergency department) or OPD (clinic outpatient). Source: PAS department
+	column 'Department Code'
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: department_code
+
+	/// Department name. Source: generated
+	column Department
+		dataType: string
+		summarizeBy: none
+		sourceColumn: department_name
+
+	/// Arrival mode description. Source: ref.code_map
+	column 'Arrival Mode'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: arrival_mode_name
+
+	/// DIS, ADM, TRF, LWBS, DIED, REF or UNK. Source: PAS disposition via ref.code_map (EN09)
+	column 'Disposition Code'
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: disposition_code
+
+	/// Disposition description. Source: ref.code_map
+	column Disposition
+		dataType: string
+		summarizeBy: none
+		sourceColumn: disposition_name
+
+	/// Discharged, Admitted or transferred, Referred, Left / died, Unknown. Source: derived
+	column 'Disposition Group'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: disposition_group
+
+	partition 'Encounter Profile' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_encounter_profile.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_encounter_profile"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"encounter_profile_key", Int64.Type}, {"department_code", type text}, {"department_name", type text}, {"arrival_mode_name", type text}, {"disposition_code", type text}, {"disposition_name", type text}, {"disposition_group", type text}}, "en-US")
+				in
+				    Typed
+

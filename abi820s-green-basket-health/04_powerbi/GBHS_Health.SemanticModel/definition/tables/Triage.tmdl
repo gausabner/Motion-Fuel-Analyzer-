@@ -1,0 +1,73 @@
+/// South African Triage Scale (SATS) category with time-to-doctor target.
+table Triage
+
+	/// Surrogate key = priority (-1 = not recorded). Source: generated
+	column 'Triage Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: triage_key
+
+	/// Triage colour code. Source: master data, Triage_Scale sheet
+	column 'Triage Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: triage_code
+		sortByColumn: Priority
+
+	/// Triage label (colour and urgency). Source: master data
+	column 'Triage Category'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: triage_label
+		sortByColumn: Priority
+
+	/// Clinical priority 1 (highest) - 9 (sort key). Source: master data
+	column Priority
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: priority
+
+	/// Target time from arrival to doctor in minutes (0 = immediate). Source: master data (SATS-style targets)
+	column 'Target (min)'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: target_minutes
+
+	/// Minutes within which the patient counts as seen on time (RED: 5 minutes for 'immediate').
+	column 'Compliance Threshold (min)'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: compliance_minutes
+
+	/// Target in words. Source: master data
+	column Target
+		dataType: string
+		summarizeBy: none
+		sourceColumn: target_text
+
+	/// Display colour (used with text labels, never colour alone). Source: master data
+	column Colour
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: colour_hex
+
+	partition Triage = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_triage.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_triage"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"triage_key", Int64.Type}, {"triage_code", type text}, {"triage_label", type text}, {"priority", Int64.Type}, {"target_minutes", Int64.Type}, {"compliance_minutes", Int64.Type}, {"target_text", type text}, {"colour_hex", type text}}, "en-US")
+				in
+				    Typed
+

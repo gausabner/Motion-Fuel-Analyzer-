@@ -1,0 +1,83 @@
+/// IDSR weekly returns (periodic snapshot; grain: facility x condition x epi week; key = Monday of the epi week).
+table Surveillance
+
+	/// FK to dim_date = Monday of the ISO epi week. Source: IDSR epi_week (SV01)
+	column 'Epi Week Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: epi_week_date_key
+
+	/// FK to dim_facility (reporting facility). Source: IDSR facility_code
+	column 'Facility Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: facility_key
+
+	/// FK to dim_condition. Source: IDSR condition (SV03)
+	column 'Condition Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: condition_key
+
+	/// Cases in children under 5 (additive). Source: IDSR return (SV06, SV07)
+	column 'Cases Under 5'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: cases_under5
+
+	/// Cases aged 5 and over (additive). Source: IDSR return (SV06, SV07)
+	column 'Cases 5 Plus'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: cases_5plus
+
+	/// All cases = under 5 + 5 and over (additive). Source: derived
+	column 'Cases Total'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: cases_total
+
+	/// All deaths (additive). Source: derived
+	column 'Deaths Total'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: deaths_total
+
+	/// Malaria tests performed (RDT/microscopy); NULL for other conditions (additive). Source: IDSR return (SV05)
+	column 'Tests Done'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: tests_done
+
+	/// Positive malaria tests (additive). Source: IDSR return (SV05)
+	column 'Tests Positive'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: tests_positive
+
+	partition Surveillance = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_surveillance.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_surveillance"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"epi_week_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"condition_key", Int64.Type}, {"cases_under5", Int64.Type}, {"cases_5plus", Int64.Type}, {"cases_total", Int64.Type}, {"deaths_total", Int64.Type}, {"tests_done", Int64.Type}, {"tests_positive", Int64.Type}}, "en-US")
+				in
+				    Typed
+

@@ -1,0 +1,53 @@
+/// NSA 2023 Population and Housing Census by region (2023 = census count; other years projected). Semi-additive over time: never sum across years.
+table 'Regional Population'
+
+	/// FK to dim_date = 1 July of the year (mid-year population). Source: derived
+	column 'Year Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: year_date_key
+
+	/// FK to dim_region. Source: NSA region name mapped through ref.region_alias
+	column 'Region Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: region_key
+
+	/// Population (semi-additive). 2023 = census count; other years = 2023 count x (1 + national intercensal growth 2011-2023)^(year-2023). Source: NSA 2023 PHC preliminary results (EX01)
+	column Population
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: population
+
+	/// True for the census year itself, false for derived estimates. Source: ETL
+	column 'Is Census Count'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_census_count
+
+	/// Provenance text shown in report tooltips. Source: ETL
+	column 'Population Source'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: population_source
+
+	partition 'Regional Population' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_population.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_population"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"year_date_key", Int64.Type}, {"region_key", Int64.Type}, {"population", Int64.Type}, {"is_census_count", type logical}, {"population_source", type text}}, "en-US")
+				in
+				    Typed
+

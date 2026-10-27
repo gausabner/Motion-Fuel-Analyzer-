@@ -1,0 +1,68 @@
+/// Weeks flagged by the outbreak-detection algorithms (EARS C2, CUSUM, historical limits; 03_analytics/outbreak_detection.py).
+table 'Outbreak Alerts'
+
+	column 'Week Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: week_date_key
+
+	column 'Facility Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: facility_key
+
+	column 'Condition Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: condition_key
+
+	/// Detection algorithm: EARS C2, CUSUM or historical limits (malaria).
+	column Method
+		dataType: string
+		summarizeBy: none
+		sourceColumn: method
+
+	column Cases
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: cases
+
+	column Expected
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: expected
+
+	column Threshold
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: threshold_value
+
+	/// True if the week lies in one of the 12 outbreaks injected by the generator (ground truth for evaluation).
+	column 'Is Known Outbreak'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_injected_outbreak
+
+	partition 'Outbreak Alerts' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("analytics_outbreak_alerts.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "analytics_outbreak_alerts"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"week_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"condition_key", Int64.Type}, {"method", type text}, {"cases", type number}, {"expected", type number}, {"threshold_value", type number}, {"is_injected_outbreak", type logical}}, "en-US")
+				in
+				    Typed
+

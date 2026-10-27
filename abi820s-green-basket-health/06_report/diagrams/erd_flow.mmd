@@ -1,0 +1,57 @@
+%%{init: {"er": {"layoutDirection": "LR"}}}%%
+erDiagram
+  DIM_DATE ||--o{ FACT_ENCOUNTER : arrival_date_key
+  DIM_HOUR ||--o{ FACT_ENCOUNTER : arrival_hour_key
+  DIM_CARE_UNIT ||--o{ FACT_ENCOUNTER : care_unit_key
+  DIM_PATIENT ||--o{ FACT_ENCOUNTER : patient_key
+  DIM_DIAGNOSIS ||--o{ FACT_ENCOUNTER : diagnosis_key
+  DIM_TRIAGE ||--o{ FACT_ENCOUNTER : triage_key
+  DIM_ENCOUNTER_PROFILE ||--o{ FACT_ENCOUNTER : encounter_profile_key
+  DIM_AGE_BAND ||--o{ FACT_ENCOUNTER : age_band_key
+  DIM_FACILITY ||--o{ DIM_CARE_UNIT : facility_key
+  DIM_REGION ||--o{ DIM_FACILITY : region_key
+  DIM_CONDITION ||--o{ DIM_DIAGNOSIS : condition_key
+  FACT_ENCOUNTER {
+    bigint encounter_key PK
+    varchar encounter_id "degenerate, unique"
+    int arrival_date_key FK
+    smallint arrival_hour_key FK
+    int care_unit_key FK "SCD2 version as-was"
+    int patient_key FK "SCD2 version as-was"
+    int diagnosis_key FK
+    smallint triage_key FK
+    smallint encounter_profile_key FK "junk dimension"
+    smallint age_band_key FK
+    numeric door_to_doctor_min
+    numeric ed_los_min
+    smallint seen_within_target "0/1"
+    smallint is_lwbs "additive"
+  }
+  DIM_PATIENT {
+    int patient_key PK
+    int patient_durable_key "first version key"
+    varchar patient_pseudo_id "random token, not in mart"
+    char sex
+    varchar residence_region_name "SCD2"
+    varchar payer_code "SCD2"
+    date scd_effective_from
+    date scd_effective_to
+  }
+  DIM_CARE_UNIT {
+    int care_unit_key PK
+    varchar unit_code "natural key"
+    int facility_key FK "snowflake"
+    varchar specialty "SCD2"
+    smallint bed_complement "SCD2"
+  }
+  DIM_DIAGNOSIS {
+    int diagnosis_key PK
+    varchar icd10_code "natural key"
+    varchar chapter_code
+    int condition_key FK "snowflake"
+  }
+  DIM_TRIAGE {
+    smallint triage_key PK
+    varchar triage_code "SATS colour"
+    int compliance_minutes
+  }

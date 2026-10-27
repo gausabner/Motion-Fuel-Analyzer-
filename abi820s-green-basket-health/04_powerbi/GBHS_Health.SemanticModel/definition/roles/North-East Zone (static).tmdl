@@ -1,0 +1,6 @@
+/// Static RLS: the North-East malaria task team sees Zambezi and the two Kavango regions only.
+role 'North-East Zone (static)'
+	modelPermission: read
+
+	tablePermission Region = 'Region'[Zone] = "North-East"
+

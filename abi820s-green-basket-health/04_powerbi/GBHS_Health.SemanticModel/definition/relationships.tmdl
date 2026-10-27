@@ -1,0 +1,153 @@
+relationship 'Attendance[Arrival Date Key] -> Date'
+	fromColumn: Attendance.'Arrival Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Attendance[Arrival Hour Key] -> Hour'
+	fromColumn: Attendance.'Arrival Hour Key'
+	toColumn: Hour.'Hour Key'
+
+relationship 'Attendance[Care Unit Key] -> Care Unit'
+	fromColumn: Attendance.'Care Unit Key'
+	toColumn: 'Care Unit'.'Care Unit Key'
+
+relationship 'Attendance[Patient Key] -> Patient'
+	fromColumn: Attendance.'Patient Key'
+	toColumn: Patient.'Patient Key'
+
+relationship 'Attendance[Diagnosis Key] -> Diagnosis'
+	fromColumn: Attendance.'Diagnosis Key'
+	toColumn: Diagnosis.'Diagnosis Key'
+
+relationship 'Attendance[Triage Key] -> Triage'
+	fromColumn: Attendance.'Triage Key'
+	toColumn: Triage.'Triage Key'
+
+relationship 'Attendance[Encounter Profile Key] -> Encounter Profile'
+	fromColumn: Attendance.'Encounter Profile Key'
+	toColumn: 'Encounter Profile'.'Encounter Profile Key'
+
+relationship 'Attendance[Age Band Key] -> Age Band'
+	fromColumn: Attendance.'Age Band Key'
+	toColumn: 'Age Band'.'Age Band Key'
+
+relationship 'Admission[Admission Date Key] -> Date'
+	fromColumn: Admission.'Admission Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Admission[Discharge Date Key] -> Date'
+	isActive: false
+	fromColumn: Admission.'Discharge Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Admission[Care Unit Key] -> Care Unit'
+	fromColumn: Admission.'Care Unit Key'
+	toColumn: 'Care Unit'.'Care Unit Key'
+
+relationship 'Admission[Patient Key] -> Patient'
+	fromColumn: Admission.'Patient Key'
+	toColumn: Patient.'Patient Key'
+
+relationship 'Admission[Diagnosis Key] -> Diagnosis'
+	fromColumn: Admission.'Diagnosis Key'
+	toColumn: Diagnosis.'Diagnosis Key'
+
+relationship 'Admission[Admission Profile Key] -> Admission Profile'
+	fromColumn: Admission.'Admission Profile Key'
+	toColumn: 'Admission Profile'.'Admission Profile Key'
+
+relationship 'Admission[Age Band Key] -> Age Band'
+	fromColumn: Admission.'Age Band Key'
+	toColumn: 'Age Band'.'Age Band Key'
+
+relationship 'Ward Census[Census Date Key] -> Date'
+	fromColumn: 'Ward Census'.'Census Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Ward Census[Care Unit Key] -> Care Unit'
+	fromColumn: 'Ward Census'.'Care Unit Key'
+	toColumn: 'Care Unit'.'Care Unit Key'
+
+relationship 'Staff Roster[Roster Date Key] -> Date'
+	fromColumn: 'Staff Roster'.'Roster Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Staff Roster[Care Unit Key] -> Care Unit'
+	fromColumn: 'Staff Roster'.'Care Unit Key'
+	toColumn: 'Care Unit'.'Care Unit Key'
+
+relationship 'Staff Roster[Shift Key] -> Shift'
+	fromColumn: 'Staff Roster'.'Shift Key'
+	toColumn: Shift.'Shift Key'
+
+relationship 'Surveillance[Epi Week Date Key] -> Date'
+	fromColumn: Surveillance.'Epi Week Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Surveillance[Facility Key] -> Facility'
+	fromColumn: Surveillance.'Facility Key'
+	toColumn: Facility.'Facility Key'
+
+relationship 'Surveillance[Condition Key] -> Condition'
+	fromColumn: Surveillance.'Condition Key'
+	toColumn: Condition.'Condition Key'
+
+relationship 'IDSR Report[Epi Week Date Key] -> Date'
+	fromColumn: 'IDSR Report'.'Epi Week Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'IDSR Report[Facility Key] -> Facility'
+	fromColumn: 'IDSR Report'.'Facility Key'
+	toColumn: Facility.'Facility Key'
+
+relationship 'Regional Population[Year Date Key] -> Date'
+	fromColumn: 'Regional Population'.'Year Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Regional Population[Region Key] -> Region'
+	fromColumn: 'Regional Population'.'Region Key'
+	toColumn: Region.'Region Key'
+
+relationship 'Catchment Population[Year Date Key] -> Date'
+	fromColumn: 'Catchment Population'.'Year Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Catchment Population[Facility Key] -> Facility'
+	fromColumn: 'Catchment Population'.'Facility Key'
+	toColumn: Facility.'Facility Key'
+
+relationship 'Weather[Weather Date Key] -> Date'
+	fromColumn: Weather.'Weather Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Weather[Facility Key] -> Facility'
+	fromColumn: Weather.'Facility Key'
+	toColumn: Facility.'Facility Key'
+
+relationship 'Malaria Forecast[Week Date Key] -> Date'
+	fromColumn: 'Malaria Forecast'.'Week Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Outbreak Alerts[Week Date Key] -> Date'
+	fromColumn: 'Outbreak Alerts'.'Week Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Outbreak Alerts[Facility Key] -> Facility'
+	fromColumn: 'Outbreak Alerts'.'Facility Key'
+	toColumn: Facility.'Facility Key'
+
+relationship 'Outbreak Alerts[Condition Key] -> Condition'
+	fromColumn: 'Outbreak Alerts'.'Condition Key'
+	toColumn: Condition.'Condition Key'
+
+relationship 'Care Unit[Facility Key] -> Facility'
+	fromColumn: 'Care Unit'.'Facility Key'
+	toColumn: Facility.'Facility Key'
+
+relationship 'Facility[Region Key] -> Region'
+	fromColumn: Facility.'Region Key'
+	toColumn: Region.'Region Key'
+
+relationship 'Diagnosis[Condition Key] -> Condition'
+	fromColumn: Diagnosis.'Condition Key'
+	toColumn: Condition.'Condition Key'
+

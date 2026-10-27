@@ -1,0 +1,4 @@
+/// Unrestricted read for the executive committee, the CEO and the BI team.
+role 'Executive (all facilities)'
+	modelPermission: read
+

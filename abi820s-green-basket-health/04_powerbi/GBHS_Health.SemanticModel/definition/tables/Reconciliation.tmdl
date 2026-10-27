@@ -1,0 +1,71 @@
+/// Reconciliation checks of the latest load batch (row counts, control totals, cross-source); disconnected.
+table Reconciliation
+
+	/// Reconciliation check identifier (R01-R22).
+	column 'Check Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: check_code
+
+	/// What is compared.
+	column Check
+		dataType: string
+		summarizeBy: none
+		sourceColumn: check_name
+
+	/// Row count, control total, cross-source, integrity, completeness, referential or plausibility.
+	column 'Check Type'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: check_type
+
+	/// Value on the source / staging side.
+	column 'Source Value'
+		dataType: double
+		formatString: #,0
+		summarizeBy: none
+		sourceColumn: source_value
+
+	/// Value on the warehouse side.
+	column 'Target Value'
+		dataType: double
+		formatString: #,0
+		summarizeBy: none
+		sourceColumn: target_value
+
+	/// Target minus source.
+	column Difference
+		dataType: double
+		formatString: #,0
+		summarizeBy: none
+		sourceColumn: difference
+
+	/// PASS, WARN (explained, within tolerance) or FAIL (stops publication).
+	column Status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: status
+
+	/// Business explanation of any difference.
+	column Explanation
+		dataType: string
+		summarizeBy: none
+		sourceColumn: explanation
+
+	partition Reconciliation = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_recon_latest.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_recon_latest"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"check_code", type text}, {"check_name", type text}, {"check_type", type text}, {"source_value", type number}, {"target_value", type number}, {"difference", type number}, {"status", type text}, {"explanation", type text}}, "en-US")
+				in
+				    Typed
+

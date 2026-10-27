@@ -1,0 +1,46 @@
+/// Age at the event, in reporting bands (IDSR under-5 split).
+table 'Age Band'
+
+	/// Surrogate key = sort order (-1 = Unknown). Source: generated
+	column 'Age Band Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: age_band_key
+
+	/// Age band label (0-4, 5-14, 15-24, 25-44, 45-64, 65+). Source: generated
+	column 'Age Band'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: age_band
+		sortByColumn: 'Age Band Key'
+
+	/// IDSR reporting group: Under 5 or 5 and over. Source: generated
+	column 'IDSR Age Group'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: idsr_age_group
+
+	/// Child, Adult or Older adult. Source: generated
+	column 'Life Stage'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: life_stage
+
+	partition 'Age Band' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_age_band.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_age_band"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"age_band_key", Int64.Type}, {"age_band", type text}, {"idsr_age_group", type text}, {"life_stage", type text}}, "en-US")
+				in
+				    Typed
+

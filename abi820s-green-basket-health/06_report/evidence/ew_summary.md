@@ -1,0 +1,1 @@
+OLS: n = 150,000 ED attendances (ORANGE/YELLOW/GREEN), adjusted R2 = 0.757; gradient boosting trained on 2022-2024 (120,000 rows) explains R2 = 0.769 of log waiting time in 2025-2026 (40,000 rows). Median arrivals per doctor per shift: 15.0; median hospital occupancy: 80 %.

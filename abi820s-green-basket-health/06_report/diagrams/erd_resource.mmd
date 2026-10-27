@@ -1,0 +1,53 @@
+erDiagram
+  DIM_DATE ||--o{ FACT_WARD_CENSUS_DAILY : census_date_key
+  DIM_CARE_UNIT ||--o{ FACT_WARD_CENSUS_DAILY : "care_unit_key (version valid that day)"
+  DIM_DATE ||--o{ FACT_STAFF_ROSTER : roster_date_key
+  DIM_CARE_UNIT ||--o{ FACT_STAFF_ROSTER : care_unit_key
+  DIM_SHIFT ||--o{ FACT_STAFF_ROSTER : shift_key
+  DIM_FACILITY ||--o{ DIM_CARE_UNIT : facility_key
+  DIM_REGION ||--o{ DIM_FACILITY : region_key
+  FACT_WARD_CENSUS_DAILY {
+    int census_date_key PK, FK
+    int care_unit_key PK, FK
+    smallint beds_available "semi-additive"
+    smallint occupied_beds "semi-additive"
+    smallint admissions "additive flow"
+    smallint pas_occupied_beds "reconciliation"
+    varchar census_source "lineage"
+  }
+  FACT_STAFF_ROSTER {
+    int roster_date_key PK, FK
+    int care_unit_key PK, FK
+    smallint shift_key PK, FK
+    numeric nurse_hours "additive"
+    numeric overtime_hours "additive"
+    numeric agency_hours "additive"
+    smallint doctors_on_duty "semi-additive"
+  }
+  DIM_DATE {
+    int date_key PK "YYYYMMDD"
+    date full_date
+    smallint epi_year "ISO"
+    char epi_week_label "e.g. 2026-W39"
+    boolean is_public_holiday "Namibia"
+    char fiscal_year_label "Apr-Mar"
+    boolean is_malaria_season "Jan-May"
+  }
+  DIM_SHIFT {
+    smallint shift_key PK
+    char shift_code
+    time start_time
+  }
+  DIM_FACILITY {
+    int facility_key PK
+    varchar facility_code "natural key"
+    varchar facility_name "Type 1"
+    int region_key FK
+    numeric catchment_share
+  }
+  DIM_REGION {
+    int region_key PK
+    varchar region_code "ISO 3166-2:NA"
+    varchar zone
+    varchar malaria_stratum
+  }

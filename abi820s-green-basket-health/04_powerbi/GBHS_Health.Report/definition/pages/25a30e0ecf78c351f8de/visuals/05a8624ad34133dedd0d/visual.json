@@ -1,0 +1,214 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "05a8624ad34133dedd0d",
+  "position": {
+    "x": 440,
+    "y": 494,
+    "z": 0,
+    "width": 816,
+    "height": 210,
+    "tabOrder": 15000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Facility"
+                    }
+                  },
+                  "Property": "Facility"
+                }
+              },
+              "queryRef": "Facility.Facility"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "ED Attendances"
+                }
+              },
+              "queryRef": "_Measures.ED Attendances",
+              "displayName": "ED attendances"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Seen Within Target %"
+                }
+              },
+              "queryRef": "_Measures.Seen Within Target %",
+              "displayName": "Within target"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "LWBS Rate %"
+                }
+              },
+              "queryRef": "_Measures.LWBS Rate %",
+              "displayName": "LWBS"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Bed Occupancy %"
+                }
+              },
+              "queryRef": "_Measures.Bed Occupancy %",
+              "displayName": "Occupancy"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "ALOS (days)"
+                }
+              },
+              "queryRef": "_Measures.ALOS (days)",
+              "displayName": "ALOS (days)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Readmission Rate 30d %"
+                }
+              },
+              "queryRef": "_Measures.Readmission Rate 30d %",
+              "displayName": "Readmitted 30d"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Malaria Cases"
+                }
+              },
+              "queryRef": "_Measures.Malaria Cases",
+              "displayName": "Malaria cases"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "ED Attendances"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Facility scorecard (right-click a facility to drill through)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table of facilities with ED attendances, share seen within target, left-without-being-seen rate, bed occupancy, average length of stay, 30-day readmission rate and malaria cases.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualTooltip": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "type": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Canvas'"
+                }
+              }
+            },
+            "section": {
+              "expr": {
+                "Literal": {
+                  "Value": "'63eebbd63ae71c9ed5ea'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

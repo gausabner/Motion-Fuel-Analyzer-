@@ -1,0 +1,92 @@
+/// GBHS hospitals and clinics (snowflaked to Region). Type 1 attributes (name corrections overwrite).
+table Facility
+
+	/// Surrogate key (-1 = Unknown). Source: generated
+	column 'Facility Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: facility_key
+
+	/// Facility natural key (GBH- hospital, GBC- clinic). Source: master data, Facilities sheet
+	column 'Facility Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: facility_code
+
+	/// Facility name (Type 1). Source: master data, Facilities sheet
+	column 'Facility Name'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: facility_name
+
+	/// Short display name (town).
+	column Facility
+		dataType: string
+		summarizeBy: none
+		sourceColumn: facility_short_name
+
+	/// Referral hospital, District hospital or Clinic. Source: master data
+	column 'Facility Type'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: facility_type
+
+	/// FK to dim_region (snowflake). Source: master data region name mapped through ref.region_alias
+	column 'Region Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: region_key
+
+	/// Town where the facility is located. Source: master data
+	column Town
+		dataType: string
+		dataCategory: City
+		summarizeBy: none
+		sourceColumn: town
+
+	/// Latitude (decimal degrees), used for the NASA POWER weather point. Source: master data
+	column Latitude
+		dataType: double
+		dataCategory: Latitude
+		summarizeBy: none
+		sourceColumn: latitude
+
+	/// Longitude (decimal degrees). Source: master data
+	column Longitude
+		dataType: double
+		dataCategory: Longitude
+		summarizeBy: none
+		sourceColumn: longitude
+
+	/// True for hospitals with a 24-hour emergency department. Source: master data
+	column 'Has Emergency Department'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: has_emergency_department
+
+	/// Share of the regional population that uses the facility (planning assumption, master data).
+	column 'Catchment Share'
+		dataType: double
+		formatString: 0%
+		summarizeBy: none
+		sourceColumn: catchment_share
+
+	partition Facility = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_facility.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_facility"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"facility_key", Int64.Type}, {"facility_code", type text}, {"facility_name", type text}, {"facility_short_name", type text}, {"facility_type", type text}, {"region_key", Int64.Type}, {"town", type text}, {"latitude", type number}, {"longitude", type number}, {"has_emergency_department", type logical}, {"catchment_share", type number}}, "en-US")
+				in
+				    Typed
+

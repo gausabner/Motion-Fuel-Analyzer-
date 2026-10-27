@@ -1,0 +1,107 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "3ad027b0840e4a939b00",
+  "position": {
+    "x": 24,
+    "y": 428,
+    "z": 0,
+    "width": 410,
+    "height": 276,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ED Wait Drivers"
+                    }
+                  },
+                  "Property": "Driver"
+                }
+              },
+              "queryRef": "ED Wait Drivers.Driver"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Wait Effect % (Operational)"
+                }
+              },
+              "queryRef": "_Measures.Wait Effect % (Operational)",
+              "displayName": "Effect on waiting time"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "Wait Effect % (Operational)"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'What lengthens ED waits? (% change, OLS)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Bar chart of the percentage change in door-to-doctor time associated with each operational driver: arrivals per doctor, night shift, bed occupancy, malaria season and weekend.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

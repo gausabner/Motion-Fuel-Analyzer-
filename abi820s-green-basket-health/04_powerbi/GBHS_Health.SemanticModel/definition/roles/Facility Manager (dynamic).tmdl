@@ -1,0 +1,13 @@
+/// Dynamic RLS: users see the facilities mapped to their UPN in sec.user_facility_access (and every ward, attendance, spell, roster, census and surveillance row of those facilities). They can read only their own mapping rows.
+role 'Facility Manager (dynamic)'
+	modelPermission: read
+
+	tablePermission Facility =
+			'Facility'[Facility Key]
+			    IN CALCULATETABLE (
+			        VALUES ( 'Security User Facility'[Facility Key] ),
+			        'Security User Facility'[User Principal Name] = LOWER ( USERPRINCIPALNAME () )
+			    )
+
+	tablePermission 'Security User Facility' = 'Security User Facility'[User Principal Name] = LOWER ( USERPRINCIPALNAME () )
+

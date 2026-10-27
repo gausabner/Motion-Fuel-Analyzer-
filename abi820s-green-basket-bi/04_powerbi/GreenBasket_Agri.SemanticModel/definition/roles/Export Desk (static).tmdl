@@ -1,6 +1,0 @@
-/// Static RLS: the export desk sees export-channel customers only.
-role 'Export Desk (static)'
-	modelPermission: read
-
-	tablePermission Customer = 'Customer'[Channel] = "Export"
-

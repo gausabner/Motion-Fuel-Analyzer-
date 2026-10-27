@@ -1,0 +1,51 @@
+model Model
+	culture: en-GB
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: en-GB
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table _Measures
+ref table Date
+ref table Hour
+ref table Region
+ref table Facility
+ref table 'Care Unit'
+ref table Patient
+ref table Diagnosis
+ref table Condition
+ref table Triage
+ref table 'Encounter Profile'
+ref table 'Admission Profile'
+ref table 'Age Band'
+ref table Shift
+ref table Attendance
+ref table Admission
+ref table 'Ward Census'
+ref table 'Staff Roster'
+ref table Surveillance
+ref table 'IDSR Report'
+ref table 'Regional Population'
+ref table 'Catchment Population'
+ref table Weather
+ref table 'Malaria Forecast'
+ref table 'Outbreak Alerts'
+ref table 'Readmission Deciles'
+ref table 'Readmission Drivers'
+ref table 'ED Wait Drivers'
+ref table 'DQ Summary'
+ref table Reconciliation
+ref table 'Security User Facility'
+ref table 'Metric Selector'
+
+ref role 'Executive (all facilities)'
+ref role 'Facility Manager (dynamic)'
+ref role 'North-East Zone (static)'
+ref role 'Surveillance Partner (aggregate only)'
+

@@ -1,0 +1,31 @@
+flowchart TB
+  subgraph ED["ED or clinic - nurses and doctors"]
+    direction LR
+    E0([Patient<br/>arrives]) --> E1[Registration<br/>S1 arrival time] --> E2[SATS triage<br/>S1 colour, time]
+    E2 --> E3[Doctor sees<br/>S1 seen time, ICD-10] --> E4{Disposition}
+    E2 -. waits too long .-> E5([Leaves without<br/>being seen])
+    E4 -- home / refer --> E6([Departs<br/>S1 departure])
+    E4 -- admit --> E7([To ward])
+  end
+  subgraph WARD["Wards - nursing services"]
+    direction LR
+    W1[Admission<br/>S2 spell opens] --> W2[Midnight census<br/>S4 ward return] --> W3[Nursing shifts<br/>S5 e-roster]
+    W3 --> W4[Discharge<br/>S2 milestone] --> W5([30-day<br/>follow-up])
+  end
+  subgraph SURV["Surveillance officer - weekly"]
+    direction LR
+    I1[Tally notifiable<br/>cases Mon-Sun] --> I2[IDSR return<br/>S6 due Tue 12:00] --> I3([MoHSS regional<br/>surveillance])
+  end
+  subgraph BI["BI platform - nightly"]
+    direction LR
+    X[(S7 master data<br/>S8 census, S9 weather)] -.-> B1[Extract to<br/>landing] --> B2{44 DQ rules}
+    B2 -- fail --> B3[Correct, map,<br/>flag, quarantine]
+    B2 -- pass --> B4[Load star<br/>schema]
+    B3 --> B4
+    B4 --> B5[Reconcile<br/>R01-R22] --> B6([Refresh<br/>Power BI])
+  end
+  ED -- admitted patients --> WARD
+  ED -. notifiable diagnoses .-> SURV
+  ED -. S1 extract .-> BI
+  WARD -. S2-S5 extracts .-> BI
+  SURV -. S6 returns .-> BI

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "GBHS Health Services"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "8c2e4f61-5a3b-4c7d-9e18-2b3c4d5e6f70"
+  }
+}

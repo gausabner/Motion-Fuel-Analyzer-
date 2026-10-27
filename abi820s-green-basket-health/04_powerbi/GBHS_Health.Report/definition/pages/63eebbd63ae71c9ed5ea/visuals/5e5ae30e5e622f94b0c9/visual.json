@@ -1,0 +1,122 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "5e5ae30e5e622f94b0c9",
+  "position": {
+    "x": 8,
+    "y": 8,
+    "z": 0,
+    "width": 304,
+    "height": 224,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "multiRowCard",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Seen Within Target %"
+                }
+              },
+              "queryRef": "_Measures.Seen Within Target %",
+              "displayName": "Seen within target"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "ED Target Status"
+                }
+              },
+              "queryRef": "_Measures.ED Target Status",
+              "displayName": "Status"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Median Door-to-Doctor (min)"
+                }
+              },
+              "queryRef": "_Measures.Median Door-to-Doctor (min)",
+              "displayName": "Median door-to-doctor (min)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "LWBS Rate %"
+                }
+              },
+              "queryRef": "_Measures.LWBS Rate %",
+              "displayName": "LWBS"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Bed Occupancy %"
+                }
+              },
+              "queryRef": "_Measures.Bed Occupancy %",
+              "displayName": "Bed occupancy"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Readmission Rate 30d %"
+                }
+              },
+              "queryRef": "_Measures.Readmission Rate 30d %",
+              "displayName": "Readmitted 30d"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Tooltip with the key patient-flow and utilisation KPIs of the hovered facility'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

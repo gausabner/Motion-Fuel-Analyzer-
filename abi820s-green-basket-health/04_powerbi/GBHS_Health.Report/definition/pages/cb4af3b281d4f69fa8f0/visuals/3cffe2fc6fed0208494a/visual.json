@@ -1,0 +1,126 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "3cffe2fc6fed0208494a",
+  "position": {
+    "x": 660,
+    "y": 438,
+    "z": 0,
+    "width": 596,
+    "height": 266,
+    "tabOrder": 11000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Date"
+                    }
+                  },
+                  "Property": "Calendar Year"
+                }
+              },
+              "queryRef": "Date.Calendar Year"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "NHPPD"
+                }
+              },
+              "queryRef": "_Measures.NHPPD"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Overtime %"
+                }
+              },
+              "queryRef": "_Measures.Overtime %",
+              "displayName": "Overtime"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Agency %"
+                }
+              },
+              "queryRef": "_Measures.Agency %",
+              "displayName": "Agency"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "ED Arrivals per Doctor Shift"
+                }
+              },
+              "queryRef": "_Measures.ED Arrivals per Doctor Shift",
+              "displayName": "ED arrivals / doctor-shift"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Staffing by year'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table of nursing hours per patient day, overtime, agency share and ED arrivals per doctor-shift by year.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

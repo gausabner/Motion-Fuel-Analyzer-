@@ -1,0 +1,48 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
+  "name": "cb4af3b281d4f69fa8f0",
+  "displayName": "Facility Detail",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "e725ad67bafeb27aac38",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Facility"
+              }
+            },
+            "Property": "Facility"
+          }
+        },
+        "type": "Categorical",
+        "howCreated": "Drillthrough"
+      }
+    ]
+  },
+  "pageBinding": {
+    "name": "0cf25e74aa8c2775f641",
+    "type": "Drillthrough",
+    "parameters": [
+      {
+        "name": "c632d02bfd1f07c4a663",
+        "boundFilter": "e725ad67bafeb27aac38",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Facility"
+              }
+            },
+            "Property": "Facility"
+          }
+        }
+      }
+    ]
+  },
+  "visibility": "HiddenInViewMode"
+}

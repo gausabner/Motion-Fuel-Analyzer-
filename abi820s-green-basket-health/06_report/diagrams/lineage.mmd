@@ -1,0 +1,10 @@
+flowchart LR
+  A["PAS extract S1<br/>arrival_datetime,<br/>seen_datetime,<br/>triage_category"] --> B["stg.encounter_raw<br/>text, source_file,<br/>row_num, batch_id"]
+  B --> C["sp_transform_encounters<br/>EN01 duplicates, EN02 dates,<br/>EN04 triage, EN05 seen before<br/>arrival, EN09 code maps"]
+  C --> D["stg.encounter_clean<br/>door_to_doctor_min"]
+  M["S7 master data<br/>SATS sheet"] --> T["dw.dim_triage<br/>compliance_minutes"]
+  D --> F["dw.fact_encounter<br/>seen_within_target =<br/>door_to_doctor <= compliance"]
+  T --> F
+  F --> V["mart.v_fact_encounter"] --> P["Power BI measure<br/>Seen Within Target %"] --> R["Page 1 card<br/>+ trend + scorecard"]
+  C -. issues .-> L[("audit.dq_issue_log")]
+  F -. control totals .-> Q[("audit.recon_result<br/>R02, R03")]

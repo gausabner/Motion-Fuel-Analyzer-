@@ -1,0 +1,8 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
+  "name": "1c09e94c6deab9136f97",
+  "displayName": "Patient Flow & Resources",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280
+}

@@ -1,0 +1,131 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "52125f2a3a1ef7995376",
+  "position": {
+    "x": 886,
+    "y": 428,
+    "z": 0,
+    "width": 370,
+    "height": 276,
+    "tabOrder": 11000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DQ Summary"
+                    }
+                  },
+                  "Property": "Rule Code"
+                }
+              },
+              "queryRef": "DQ Summary.Rule Code",
+              "displayName": "Rule"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DQ Summary"
+                    }
+                  },
+                  "Property": "DQ Dimension"
+                }
+              },
+              "queryRef": "DQ Summary.DQ Dimension",
+              "displayName": "Dimension"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DQ Summary"
+                    }
+                  },
+                  "Property": "Action"
+                }
+              },
+              "queryRef": "DQ Summary.Action"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "DQ Issues Logged"
+                }
+              },
+              "queryRef": "_Measures.DQ Issues Logged",
+              "displayName": "Issues"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "DQ Issues Logged"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Data-quality rules and issues logged'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table of data-quality rules with their dimension, handling action and number of issues logged.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

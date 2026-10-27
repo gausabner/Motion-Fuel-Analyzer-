@@ -1,0 +1,60 @@
+/// Hour of arrival (0-23) with day-part band and nursing shift.
+table Hour
+
+	/// Hour of day 0-23 (natural and surrogate key). Source: generated
+	column 'Hour Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: hour_key
+
+	/// Hour label HH:00. Source: generated
+	column Hour
+		dataType: string
+		summarizeBy: none
+		sourceColumn: hour_label
+		sortByColumn: 'Hour Key'
+
+	/// Part of day: Night 00-06, Morning 07-11, Afternoon 12-16, Evening 17-23. Source: generated
+	column 'Hour Band'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: hour_band
+		sortByColumn: 'Hour Band Sort'
+
+	/// Sort key for hour_band. Source: generated
+	column 'Hour Band Sort'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: hour_band_sort
+
+	/// Shift name (Day / Night). Source: generated
+	column Shift
+		dataType: string
+		summarizeBy: none
+		sourceColumn: shift_name
+
+	/// True outside 08:00-16:59 (reduced specialist cover). Source: generated
+	column 'Is After Hours'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_after_hours
+
+	partition Hour = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_hour.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_hour"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"hour_key", Int64.Type}, {"hour_label", type text}, {"hour_band", type text}, {"hour_band_sort", Int64.Type}, {"shift_name", type text}, {"is_after_hours", type logical}}, "en-US")
+				in
+				    Typed
+

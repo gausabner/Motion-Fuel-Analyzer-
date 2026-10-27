@@ -1,0 +1,157 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "a5f1719dff0b14d07bd5",
+  "position": {
+    "x": 450,
+    "y": 428,
+    "z": 0,
+    "width": 420,
+    "height": 276,
+    "tabOrder": 10000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Date"
+                    }
+                  },
+                  "Property": "Epi Week Label"
+                }
+              },
+              "queryRef": "Date.Epi Week Label",
+              "displayName": "Epi week"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Facility"
+                    }
+                  },
+                  "Property": "Facility"
+                }
+              },
+              "queryRef": "Facility.Facility"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Condition"
+                    }
+                  },
+                  "Property": "Condition"
+                }
+              },
+              "queryRef": "Condition.Condition"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Outbreak Alerts"
+                    }
+                  },
+                  "Property": "Method"
+                }
+              },
+              "queryRef": "Outbreak Alerts.Method"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Outbreak Alerts"
+                    }
+                  },
+                  "Property": "Is Known Outbreak"
+                }
+              },
+              "queryRef": "Outbreak Alerts.Is Known Outbreak",
+              "displayName": "Known outbreak"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Outbreak Alerts"
+                }
+              },
+              "queryRef": "_Measures.Outbreak Alerts",
+              "displayName": "Alerts"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Date"
+                  }
+                },
+                "Property": "Epi Week Label"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": false
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Outbreak alerts (facility x condition x week)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table of weeks flagged by the outbreak-detection methods, with facility, condition, method and whether the week lies in a known outbreak.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

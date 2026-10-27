@@ -1,0 +1,104 @@
+/// E-roster shift summary (periodic snapshot; grain: unit x day x shift). Hours are additive; staff on duty are semi-additive.
+table 'Staff Roster'
+
+	/// FK to dim_date (date the shift starts). Source: e-roster roster_date
+	column 'Roster Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: roster_date_key
+
+	/// FK to dim_care_unit version valid on the roster date. Source: e-roster unit_code
+	column 'Care Unit Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: care_unit_key
+
+	/// FK to dim_shift. Source: e-roster shift (RS01)
+	column 'Shift Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: shift_key
+
+	/// Nursing hours on the approved roster (additive). Source: e-roster
+	column 'Planned Nurse Hours'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: planned_nurse_hours
+
+	/// Total nursing hours worked = rn_hours + en_hours (additive; numerator of NHPPD). Source: derived
+	column 'Nurse Hours'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: nurse_hours
+
+	/// Registered-nurse hours worked (additive). Source: e-roster (RS02)
+	column 'RN Hours'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: rn_hours
+
+	/// Doctor hours worked in the unit (additive). Source: e-roster
+	column 'Doctor Hours'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: doctor_hours
+
+	/// Overtime nursing hours (additive; NULL when inconsistent, RS04). Source: e-roster
+	column 'Overtime Hours'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: overtime_hours
+
+	/// Agency (temporary) nursing hours (additive). Source: e-roster
+	column 'Agency Hours'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: agency_hours
+
+	/// Rostered hours lost to sick leave (additive). Source: e-roster
+	column 'Sick Leave Hours'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: sick_leave_hours
+
+	/// Nurses on duty during the shift (semi-additive). Source: e-roster
+	column 'Nurses on Duty'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: nurses_on_duty
+
+	/// Doctors on duty during the shift (semi-additive). Source: e-roster
+	column 'Doctors on Duty'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: doctors_on_duty
+
+	partition 'Staff Roster' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_staff_roster.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_staff_roster"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"roster_date_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"shift_key", Int64.Type}, {"planned_nurse_hours", type number}, {"nurse_hours", type number}, {"rn_hours", type number}, {"doctor_hours", type number}, {"overtime_hours", type number}, {"agency_hours", type number}, {"sick_leave_hours", type number}, {"nurses_on_duty", Int64.Type}, {"doctors_on_duty", Int64.Type}}, "en-US")
+				in
+				    Typed
+

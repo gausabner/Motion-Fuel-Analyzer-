@@ -1,0 +1,171 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "b1bc1d09d2c3ca5640d8",
+  "position": {
+    "x": 24,
+    "y": 128,
+    "z": 0,
+    "width": 620,
+    "height": 280,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Region"
+                    }
+                  },
+                  "Property": "Region"
+                }
+              },
+              "queryRef": "Region.Region"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Facility"
+                    }
+                  },
+                  "Property": "Facility"
+                }
+              },
+              "queryRef": "Facility.Facility"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Care Unit"
+                    }
+                  },
+                  "Property": "Ward Code"
+                }
+              },
+              "queryRef": "Care Unit.Ward Code"
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Bed Occupancy %"
+                }
+              },
+              "queryRef": "_Measures.Bed Occupancy %",
+              "displayName": "Occupancy"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Average Daily Census"
+                }
+              },
+              "queryRef": "_Measures.Average Daily Census",
+              "displayName": "Avg daily census"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "ALOS (days)"
+                }
+              },
+              "queryRef": "_Measures.ALOS (days)",
+              "displayName": "ALOS"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "NHPPD"
+                }
+              },
+              "queryRef": "_Measures.NHPPD",
+              "displayName": "NHPPD"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Overtime %"
+                }
+              },
+              "queryRef": "_Measures.Overtime %",
+              "displayName": "Overtime"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Ward utilisation (drill down region > facility > ward)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Matrix of bed occupancy, average daily census, average length of stay, nursing hours per patient day and overtime, expandable from region to facility to ward.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

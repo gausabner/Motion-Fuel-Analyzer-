@@ -1,0 +1,103 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "8967b82e5202c5836608",
+  "position": {
+    "x": 886,
+    "y": 482,
+    "z": 0,
+    "width": 370,
+    "height": 222,
+    "tabOrder": 16000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Facility"
+                    }
+                  },
+                  "Property": "Facility"
+                }
+              },
+              "queryRef": "Facility.Facility"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "IDSR Completeness %"
+                }
+              },
+              "queryRef": "_Measures.IDSR Completeness %",
+              "displayName": "Completeness"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "IDSR Timeliness %"
+                }
+              },
+              "queryRef": "_Measures.IDSR Timeliness %",
+              "displayName": "Timeliness"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'IDSR completeness and timeliness by facility'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Column chart comparing the completeness and timeliness of weekly IDSR reports for each facility.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

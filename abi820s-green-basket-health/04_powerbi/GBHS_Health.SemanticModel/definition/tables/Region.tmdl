@@ -1,0 +1,60 @@
+/// Namibia's 14 regions (ISO 3166-2:NA) with GBHS management zone and malaria-endemicity stratum.
+table Region
+
+	/// Surrogate key (-1 = Unknown). Source: generated
+	column 'Region Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: region_key
+
+	/// ISO 3166-2:NA region code (e.g. NA-KE). Source: master data, Regions sheet
+	column 'Region Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: region_code
+
+	/// Official region name. Source: master data, Regions sheet
+	column Region
+		dataType: string
+		dataCategory: StateOrProvince
+		summarizeBy: none
+		sourceColumn: region_name
+
+	/// GBHS management zone (North-East, North-Central, Central, West, South, East, North-West). Source: master data
+	column Zone
+		dataType: string
+		summarizeBy: none
+		sourceColumn: zone
+
+	/// Malaria planning stratum: Endemic - high, Endemic - low, Non-endemic (imported cases only). Source: master data (GBHS planning assumption based on MoHSS stratification)
+	column 'Malaria Stratum'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: malaria_stratum
+
+	hierarchy Geography
+
+		level Zone
+			column: Zone
+
+		level Region
+			column: Region
+
+	partition Region = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_region.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_region"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"region_key", Int64.Type}, {"region_code", type text}, {"region_name", type text}, {"zone", type text}, {"malaria_stratum", type text}}, "en-US")
+				in
+				    Typed
+

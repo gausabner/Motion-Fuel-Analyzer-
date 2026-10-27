@@ -1,0 +1,3389 @@
+// GBHS health semantic model - TMDL script for Power BI Desktop TMDL view (createOrReplace).
+// Usage: blank report > TMDL view > new tab > paste all > Apply > then Home > Refresh.
+
+createOrReplace
+
+	expression PgServer = "localhost:5432" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+
+		annotation PBI_ResultType = Text
+
+	expression PgDatabase = "gbhs_health_dw" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+
+		annotation PBI_ResultType = Text
+
+	expression SourceMode = "PostgreSQL" meta [IsParameterQuery = true, List = {"PostgreSQL", "CSV"}, DefaultValue = "PostgreSQL", Type = "Text", IsParameterQueryRequired = true]
+
+		annotation PBI_ResultType = Text
+
+	expression CsvFolder = "C:\GBHS\04_powerbi\data_csv\" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+
+		annotation PBI_ResultType = Text
+
+	expression RangeStart = #datetime(2022, 1, 1, 0, 0, 0) meta [IsParameterQuery = true, Type = "DateTime", IsParameterQueryRequired = true]
+
+		annotation PBI_ResultType = DateTime
+
+	expression RangeEnd = #datetime(2027, 1, 1, 0, 0, 0) meta [IsParameterQuery = true, Type = "DateTime", IsParameterQueryRequired = true]
+
+		annotation PBI_ResultType = DateTime
+
+
+	/// Junk dimension: admission method x discharge status.
+	table 'Admission Profile'
+
+		/// Surrogate key. Source: generated (Cartesian product)
+		column 'Admission Profile Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: admission_profile_key
+
+		/// EMER-ED, EMER-DIRECT, ELECTIVE, MATERNITY, TRANSFER-IN or UNK. Source: PAS admission_method via ref.code_map (AD07)
+		column 'Admission Method Code'
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: admission_method_code
+
+		/// Admission method description. Source: ref.code_map
+		column 'Admission Method'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: admission_method_name
+
+		/// True for unplanned admissions (EMER-ED, EMER-DIRECT, TRANSFER-IN). Source: derived
+		column 'Is Emergency Admission'
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_emergency
+
+		/// HOME, TRANSFER, DIED, AMA, IN (still in hospital) or UNK. Source: PAS discharge_status
+		column 'Discharge Status Code'
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: discharge_status_code
+
+		/// Discharge status description. Source: ref.code_map
+		column 'Discharge Status'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: discharge_status_name
+
+		partition 'Admission Profile' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_admission_profile.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_admission_profile"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"admission_profile_key", Int64.Type}, {"admission_method_code", type text}, {"admission_method_name", type text}, {"is_emergency", type logical}, {"discharge_status_code", type text}, {"discharge_status_name", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// Inpatient spells (accumulating snapshot; grain: one row per spell, updated as milestones arrive: admission, discharge, 30-day follow-up). Active date = admission; inactive role-playing date = discharge.
+	table Admission
+
+		/// FK to dim_date - admission date (active relationship). Source: PAS admission_datetime
+		column 'Admission Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: admission_date_key
+
+		/// FK to dim_date - discharge date (role-playing; -2 = still in hospital). Source: PAS discharge_datetime (AD02, AD03)
+		column 'Discharge Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: discharge_date_key
+
+		/// FK to dim_care_unit version (admitting ward) valid on the admission date. Source: PAS ward_code (AD04)
+		column 'Care Unit Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: care_unit_key
+
+		/// FK to dim_patient version valid on the admission date. Source: PAS patient_id
+		column 'Patient Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: patient_key
+
+		/// Durable (supernatural) key: the surrogate key of the patient's first version, identical on every version - used to count distinct patients across SCD2 versions. Source: ETL
+		column 'Patient Durable Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: patient_durable_key
+
+		/// FK to dim_diagnosis - principal diagnosis (-1 until coded). Source: PAS principal_icd10 (AD05)
+		column 'Diagnosis Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: diagnosis_key
+
+		/// FK to the admission method x discharge status junk dimension. Source: PAS admission_method, discharge_status (AD07)
+		column 'Admission Profile Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: admission_profile_key
+
+		/// FK to dim_age_band (age at admission). Source: derived
+		column 'Age Band Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: age_band_key
+
+		/// Always 1; additive count of spells. Source: ETL
+		column 'Admission Count'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: admission_count
+
+		/// Length of stay in midnights (discharge date - admission date); NULL while in hospital. Additive (= patient days). Source: derived
+		column 'LOS (days)'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: los_days
+
+		/// 1 once the discharge milestone is recorded. Source: derived
+		column 'Is Discharged'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: is_discharged
+
+		/// 1 for an in-hospital death. Source: discharge_status = DIED
+		column 'Is Died'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: is_died
+
+		/// 1 if discharged before 12:00 (flow KPI); NULL while in hospital. Source: derived
+		column 'Discharged Before Noon'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: discharged_before_noon
+
+		/// 1 if discharged on Saturday or Sunday; NULL while in hospital. Source: derived
+		column 'Is Weekend Discharge'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: is_weekend_discharge
+
+		/// 1 if this spell is an emergency admission within 30 days of the same patient's previous live discharge. Source: derived (window over patient pseudonym)
+		column 'Is Readmission 30d'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: is_readmission_30d
+
+		/// 1 if this spell counts in the readmission-rate denominator: discharged alive (home or AMA), not maternity, and 30 days of follow-up available. Source: derived (GBHS KPI definition)
+		column 'Readmission Eligible'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: readmission_eligible
+
+		/// 1 if an eligible spell was followed by an emergency readmission within 30 days (milestone 3). Source: derived
+		column 'Readmitted Within 30d'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: readmitted_within_30d
+
+		/// Number of the patient's admissions in the 365 days before this admission (risk feature). Source: derived
+		column 'Prior Admissions 12m'
+			dataType: int64
+			isHidden
+			summarizeBy: average
+			sourceColumn: prior_admissions_12m
+
+		/// 1 if the spell is still open more than 60 days after admission at the snapshot date (AD06, probable missing discharge). Source: derived
+		column 'Is Open Over 60d'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: is_open_over_60d
+
+		partition Admission = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_fact_admission.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_admission"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"admission_date_key", Int64.Type}, {"discharge_date_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"patient_key", Int64.Type}, {"patient_durable_key", Int64.Type}, {"diagnosis_key", Int64.Type}, {"admission_profile_key", Int64.Type}, {"age_band_key", Int64.Type}, {"admission_count", Int64.Type}, {"los_days", Int64.Type}, {"is_discharged", Int64.Type}, {"is_died", Int64.Type}, {"discharged_before_noon", Int64.Type}, {"is_weekend_discharge", Int64.Type}, {"is_readmission_30d", Int64.Type}, {"readmission_eligible", Int64.Type}, {"readmitted_within_30d", Int64.Type}, {"prior_admissions_12m", Int64.Type}, {"is_open_over_60d", Int64.Type}}, "en-US")
+					in
+					    Typed
+
+
+	/// Age at the event, in reporting bands (IDSR under-5 split).
+	table 'Age Band'
+
+		/// Surrogate key = sort order (-1 = Unknown). Source: generated
+		column 'Age Band Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: age_band_key
+
+		/// Age band label (0-4, 5-14, 15-24, 25-44, 45-64, 65+). Source: generated
+		column 'Age Band'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: age_band
+			sortByColumn: 'Age Band Key'
+
+		/// IDSR reporting group: Under 5 or 5 and over. Source: generated
+		column 'IDSR Age Group'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: idsr_age_group
+
+		/// Child, Adult or Older adult. Source: generated
+		column 'Life Stage'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: life_stage
+
+		partition 'Age Band' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_age_band.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_age_band"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"age_band_key", Int64.Type}, {"age_band", type text}, {"idsr_age_group", type text}, {"life_stage", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// ED and clinic attendances (transaction fact; grain: one row per attendance). Import with incremental refresh on Arrival Date Key.
+	table Attendance
+
+		refreshPolicy
+			policyType: basic
+			rollingWindowGranularity: year
+			rollingWindowPeriods: 5
+			incrementalGranularity: day
+			incrementalPeriods: 10
+			sourceExpression =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_encounter.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_encounter"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"arrival_date_key", Int64.Type}, {"arrival_hour_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"patient_key", Int64.Type}, {"patient_durable_key", Int64.Type}, {"diagnosis_key", Int64.Type}, {"triage_key", Int64.Type}, {"encounter_profile_key", Int64.Type}, {"age_band_key", Int64.Type}, {"encounter_count", Int64.Type}, {"wait_to_triage_min", type number}, {"door_to_doctor_min", type number}, {"ed_los_min", type number}, {"seen_within_target", Int64.Type}, {"is_lwbs", Int64.Type}, {"is_admitted", Int64.Type}, {"is_died", Int64.Type}}, "en-US"),
+				    // incremental refresh window (RangeStart/RangeEnd folded to SQL as integer date keys)
+				    Filtered = Table.SelectRows(Typed, each [arrival_date_key] >= Int64.From(DateTime.ToText(RangeStart, "yyyyMMdd")) and [arrival_date_key] < Int64.From(DateTime.ToText(RangeEnd, "yyyyMMdd")))
+				in
+				    Filtered
+
+		/// FK to dim_date (arrival date). Source: PAS arrival_datetime (EN02, EN12)
+		column 'Arrival Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: arrival_date_key
+
+		/// FK to dim_hour (arrival hour). Source: PAS arrival_datetime
+		column 'Arrival Hour Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: arrival_hour_key
+
+		/// FK to dim_care_unit version valid on the arrival date (ED or clinic unit). Source: PAS facility_code + department (EN03)
+		column 'Care Unit Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: care_unit_key
+
+		/// FK to dim_patient version valid on the arrival date (-1 unidentified). Source: PAS patient_id (EN10, EN11)
+		column 'Patient Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: patient_key
+
+		/// First surrogate key of the patient: stable across SCD2 versions (distinct patient counts).
+		column 'Patient Durable Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: patient_durable_key
+
+		/// FK to dim_diagnosis (primary diagnosis, -1 not coded/invalid). Source: PAS primary_icd10 (EN07, EN08)
+		column 'Diagnosis Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: diagnosis_key
+
+		/// FK to dim_triage (-1 not recorded; 9 clinic attendance). Source: PAS triage_category (EN04, EN09)
+		column 'Triage Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: triage_key
+
+		/// FK to the department x arrival mode x disposition junk dimension. Source: PAS department, arrival_mode, disposition
+		column 'Encounter Profile Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: encounter_profile_key
+
+		/// FK to dim_age_band (age at arrival). Source: derived from birth year
+		column 'Age Band Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: age_band_key
+
+		/// Always 1; additive count of attendances. Source: ETL
+		column 'Encounter Count'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: encounter_count
+
+		/// Minutes from arrival to triage (ED only; NULL if invalid). Source: triage_datetime - arrival_datetime
+		column 'Wait to Triage (min)'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: wait_to_triage_min
+
+		/// Minutes from arrival to first assessment by a doctor/clinician (NULL if not seen or invalid, EN05/EN06). Source: seen_datetime - arrival_datetime
+		column 'Door to Doctor (min)'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: door_to_doctor_min
+
+		/// Minutes from arrival to departure (NULL if > 72 h or negative). Source: departure_datetime - arrival_datetime
+		column 'ED Length of Stay (min)'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: ed_los_min
+
+		/// 1 if seen within the triage compliance threshold, 0 if not, NULL if not triaged/seen. Source: derived with dim_triage.compliance_minutes
+		column 'Seen Within Target'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: seen_within_target
+
+		/// 1 if the patient left without being seen. Source: disposition = LWBS
+		column 'Is LWBS'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: is_lwbs
+
+		/// 1 if admitted to a ward from the ED. Source: disposition = ADM
+		column 'Is Admitted'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: is_admitted
+
+		/// 1 if the patient died in the department (incl. dead on arrival). Source: disposition = DIED
+		column 'Is Died'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: is_died
+
+		partition Attendance = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_fact_encounter.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_encounter"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"arrival_date_key", Int64.Type}, {"arrival_hour_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"patient_key", Int64.Type}, {"patient_durable_key", Int64.Type}, {"diagnosis_key", Int64.Type}, {"triage_key", Int64.Type}, {"encounter_profile_key", Int64.Type}, {"age_band_key", Int64.Type}, {"encounter_count", Int64.Type}, {"wait_to_triage_min", type number}, {"door_to_doctor_min", type number}, {"ed_los_min", type number}, {"seen_within_target", Int64.Type}, {"is_lwbs", Int64.Type}, {"is_admitted", Int64.Type}, {"is_died", Int64.Type}}, "en-US"),
+					    // incremental refresh window (RangeStart/RangeEnd folded to SQL as integer date keys)
+					    Filtered = Table.SelectRows(Typed, each [arrival_date_key] >= Int64.From(DateTime.ToText(RangeStart, "yyyyMMdd")) and [arrival_date_key] < Int64.From(DateTime.ToText(RangeEnd, "yyyyMMdd")))
+					in
+					    Filtered
+
+
+	/// Ward / department, SCD Type 2 on specialty and bed complement: facts carry the version valid on the event date (as-was).
+	table 'Care Unit'
+
+		/// Surrogate key of the unit version (-1 = Unknown). Source: generated
+		column 'Care Unit Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: care_unit_key
+
+		/// Durable natural key of the unit, e.g. RUN-MED1.
+		column 'Ward Code'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: unit_code
+
+		/// Unit name (Type 1). Source: master data
+		column Ward
+			dataType: string
+			summarizeBy: none
+			sourceColumn: unit_name
+
+		/// Inpatient ward, Emergency department or Outpatient clinic (Type 1). Source: master data
+		column 'Unit Type'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: unit_type
+
+		/// FK to dim_facility (snowflake). Source: master data facility_code
+		column 'Facility Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: facility_key
+
+		/// As-was specialty (e.g. WHK-MED2 was an isolation ward Jan-Mar 2022).
+		column Specialty
+			dataType: string
+			summarizeBy: none
+			sourceColumn: specialty
+
+		/// Official beds of this version.
+		column 'Bed Complement'
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: bed_complement
+
+		/// First day the version is valid. Source: Unit_History effective_date
+		column 'Effective From'
+			dataType: dateTime
+			formatString: d mmm yyyy
+			displayFolder: SCD history
+			summarizeBy: none
+			sourceColumn: scd_effective_from
+
+		/// Last day the version is valid (9999-12-31 for the current version). Source: ETL
+		column 'Effective To'
+			dataType: dateTime
+			formatString: d mmm yyyy
+			displayFolder: SCD history
+			summarizeBy: none
+			sourceColumn: scd_effective_to
+
+		/// True for the current version of the unit. Source: ETL
+		column 'Is Current Version'
+			dataType: boolean
+			displayFolder: SCD history
+			summarizeBy: none
+			sourceColumn: scd_is_current
+
+		/// Version number per unit (1 = first). Source: ETL
+		column 'SCD Version'
+			dataType: int64
+			displayFolder: SCD history
+			summarizeBy: none
+			sourceColumn: scd_version
+
+		hierarchy Unit
+
+			level 'Unit Type'
+				column: 'Unit Type'
+
+			level Specialty
+				column: Specialty
+
+			level 'Ward Code'
+				column: 'Ward Code'
+
+		partition 'Care Unit' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_care_unit.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_care_unit"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"care_unit_key", Int64.Type}, {"unit_code", type text}, {"unit_name", type text}, {"unit_type", type text}, {"facility_key", Int64.Type}, {"specialty", type text}, {"bed_complement", Int64.Type}, {"scd_effective_from", type date}, {"scd_effective_to", type date}, {"scd_is_current", type logical}, {"scd_version", Int64.Type}}, "en-US")
+					in
+					    Typed
+
+
+	/// Derived fact: facility catchment population per year = NSA regional population x catchment share (denominator of incidence).
+	table 'Catchment Population'
+
+		/// FK to dim_date = 1 July of the year (mid-year population). Source: derived
+		column 'Year Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: year_date_key
+
+		/// Surrogate key (-1 = Unknown). Source: generated
+		column 'Facility Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: facility_key
+
+		column 'Catchment Population'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: catchment_population
+
+		/// True for the census year itself, false for derived estimates. Source: ETL
+		column 'Is Census Year'
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_census_count
+
+		partition 'Catchment Population' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_fact_catchment_population.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_catchment_population"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"year_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"catchment_population", Int64.Type}, {"is_census_count", type logical}}, "en-US")
+					in
+					    Typed
+
+
+	/// IDSR priority condition (WHO AFRO IDSR technical guidelines) - conformed between PAS diagnoses and IDSR returns.
+	table Condition
+
+		/// Surrogate key (-1 = Unknown, -2 = Not a notifiable condition). Source: generated
+		column 'Condition Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: condition_key
+
+		/// GBHS IDSR condition code (MAL, COV, MEA ...). Source: master data, IDSR_Conditions sheet
+		column 'Condition Code'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: condition_code
+
+		/// Condition name. Source: master data
+		column Condition
+			dataType: string
+			summarizeBy: none
+			sourceColumn: condition_name
+
+		/// IDSR category (epidemic-prone, targeted for elimination, other priority). Source: master data (IDSR technical guidelines)
+		column 'IDSR Category'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: idsr_category
+
+		/// Notification timeline (immediate within 24 h or weekly). Source: master data
+		column Notification
+			dataType: string
+			summarizeBy: none
+			sourceColumn: notification
+
+		/// Alert threshold used by GBHS surveillance officers. Source: master data (GBHS SOP)
+		column 'Alert Threshold'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: alert_threshold
+
+		/// False only for the -2 member. Source: ETL
+		column 'Is Notifiable'
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_notifiable
+
+		partition Condition = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_condition.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_condition"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"condition_key", Int64.Type}, {"condition_code", type text}, {"condition_name", type text}, {"idsr_category", type text}, {"notification", type text}, {"alert_threshold", type text}, {"is_notifiable", type logical}}, "en-US")
+					in
+					    Typed
+
+
+	/// Data-quality rule catalogue with the number of issues logged (counts only, no record keys); disconnected.
+	table 'DQ Summary'
+
+		/// Data-quality rule identifier (catalogue audit.dq_rule).
+		column 'Rule Code'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: rule_code
+
+		/// What the rule detects.
+		column Rule
+			dataType: string
+			summarizeBy: none
+			sourceColumn: rule_name
+
+		/// Completeness, uniqueness, validity, accuracy, consistency or timeliness.
+		column 'DQ Dimension'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: dq_dimension
+
+		/// Source file or table the rule checks.
+		column 'Source Object'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: source_object
+
+		/// REJECT, CORRECT, MAP, IMPUTE, FLAG, KEEP LATEST or INFER.
+		column Action
+			dataType: string
+			summarizeBy: none
+			sourceColumn: action
+
+		/// Data steward accountable for the rule and its issue queue.
+		column 'Owner Role'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: owner_role
+
+		column Issues
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: issues
+
+		/// Latest load batch that logged an issue for the rule.
+		column 'Last Batch'
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: last_batch
+
+		partition 'DQ Summary' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dq_summary.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dq_summary"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"rule_code", type text}, {"rule_name", type text}, {"dq_dimension", type text}, {"source_object", type text}, {"action", type text}, {"owner_role", type text}, {"issues", Int64.Type}, {"last_batch", Int64.Type}}, "en-US")
+					in
+					    Typed
+
+
+	/// Conformed calendar (complete years 2021 to the latest data year) with calendar, ISO epidemiological week (IDSR), fiscal year (April-March) and rainy-season attributes. Marked as the date table.
+	table Date
+		dataCategory: Time
+
+		/// Smart surrogate key YYYYMMDD (-1 = unknown, -2 = not applicable / not yet happened). Source: generated by etl.sp_load_dim_date
+		column 'Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: date_key
+
+		/// Calendar date. Source: generated
+		column Date
+			dataType: dateTime
+			isKey
+			formatString: d mmm yyyy
+			summarizeBy: none
+			sourceColumn: full_date
+
+		/// Day number within the month (1-31). Source: derived
+		column 'Day of Month'
+			dataType: int64
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: day_of_month
+
+		/// ISO weekday number, Monday = 1 ... Sunday = 7 (sort key for day_name). Source: derived
+		column 'Day of Week'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: day_of_week_iso
+
+		/// Weekday name (Monday..Sunday). Source: derived
+		column 'Day Name'
+			dataType: string
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: day_name
+			sortByColumn: 'Day of Week'
+
+		/// Three-letter weekday abbreviation (sort by day_of_week_iso). Source: derived
+		column 'Day Short'
+			dataType: string
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: day_short
+			sortByColumn: 'Day of Week'
+
+		/// True for Saturday and Sunday. Source: derived
+		column 'Is Weekend'
+			dataType: boolean
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: is_weekend
+
+		/// Namibian public holiday (Public Holidays Act 26 of 1990, incl. Easter-based dates).
+		column 'Is Public Holiday'
+			dataType: boolean
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: is_public_holiday
+
+		/// Name of the Namibian public holiday, NULL otherwise. Source: etl.fn_namibian_holiday
+		column 'Holiday Name'
+			dataType: string
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: holiday_name
+
+		/// ISO year of the epidemiological week (Monday-Sunday) used by IDSR reporting.
+		column 'Epi Year'
+			dataType: int64
+			displayFolder: Epidemiological week (IDSR)
+			summarizeBy: none
+			sourceColumn: epi_year
+
+		/// Epidemiological week number 1-53 (ISO-8601, Monday-Sunday), as used for IDSR weekly reporting. Source: derived (IW)
+		column 'Epi Week'
+			dataType: int64
+			displayFolder: Epidemiological week (IDSR)
+			summarizeBy: none
+			sourceColumn: epi_week
+
+		/// e.g. 2026-W39.
+		column 'Epi Week Label'
+			dataType: string
+			displayFolder: Epidemiological week (IDSR)
+			summarizeBy: none
+			sourceColumn: epi_week_label
+			sortByColumn: 'Epi Week Key'
+
+		/// Integer YYYYWW (sort key for epi_week_label). Source: derived
+		column 'Epi Week Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: epi_week_key
+
+		/// Monday of the epi week; use as a continuous weekly axis.
+		column 'Epi Week Start'
+			dataType: dateTime
+			formatString: d mmm yyyy
+			displayFolder: Epidemiological week (IDSR)
+			summarizeBy: none
+			sourceColumn: epi_week_start
+
+		/// Calendar month number 1-12 (sort key for month_name). Source: derived
+		column 'Month Number'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: month_num
+
+		/// Calendar month name. Source: derived
+		column 'Month Name'
+			dataType: string
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: month_name
+			sortByColumn: 'Month Number'
+
+		/// Three-letter month abbreviation (sort by month_num). Source: derived
+		column 'Month Short'
+			dataType: string
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: month_short
+			sortByColumn: 'Month Number'
+
+		/// Year-month label YYYY-MM. Source: derived
+		column 'Year Month'
+			dataType: string
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: year_month
+			sortByColumn: 'Year Month Key'
+
+		/// Integer YYYYMM (sort key for year_month). Source: derived
+		column 'Year Month Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: year_month_key
+
+		/// First day of the month. Source: derived
+		column 'Month Start'
+			dataType: dateTime
+			formatString: mmm yyyy
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: month_start_date
+
+		/// Calendar quarter 1-4. Source: derived
+		column 'Quarter Number'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: quarter_num
+
+		/// Quarter label YYYY-Qn. Source: derived
+		column 'Year Quarter'
+			dataType: string
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: year_quarter
+
+		/// Calendar year (time-intelligence year for YTD and year-on-year measures). Source: derived
+		column 'Calendar Year'
+			dataType: int64
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: calendar_year
+
+		/// Fiscal year label FYyyyy/yy; the GBHS financial year runs 1 April - 31 March (aligned with the Namibian public sector). Source: derived
+		column 'Fiscal Year'
+			dataType: string
+			displayFolder: Fiscal (Apr-Mar)
+			summarizeBy: none
+			sourceColumn: fiscal_year_label
+			sortByColumn: 'Fiscal Year Start'
+
+		/// Calendar year in which the fiscal year starts (sort key for fiscal_year_label). Source: derived
+		column 'Fiscal Year Start'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: fiscal_year_start
+
+		/// July-June season label used for malaria transmission seasons.
+		column 'Rainy Season'
+			dataType: string
+			displayFolder: Seasons
+			summarizeBy: none
+			sourceColumn: rainy_season_label
+
+		/// January-May peak transmission months.
+		column 'Is Malaria Season'
+			dataType: boolean
+			displayFolder: Seasons
+			summarizeBy: none
+			sourceColumn: is_malaria_season
+
+		/// True for dates after the latest extract (no data yet).
+		column 'Is After Cut-off'
+			dataType: boolean
+			displayFolder: Calendar
+			summarizeBy: none
+			sourceColumn: is_after_cutoff
+
+		hierarchy Calendar
+
+			level 'Calendar Year'
+				column: 'Calendar Year'
+
+			level 'Year Quarter'
+				column: 'Year Quarter'
+
+			level 'Year Month'
+				column: 'Year Month'
+
+			level Date
+				column: Date
+
+		hierarchy Epidemiological
+
+			level 'Epi Year'
+				column: 'Epi Year'
+
+			level 'Epi Week Label'
+				column: 'Epi Week Label'
+
+			level Date
+				column: Date
+
+		hierarchy Fiscal
+
+			level 'Fiscal Year'
+				column: 'Fiscal Year'
+
+			level 'Year Month'
+				column: 'Year Month'
+
+			level Date
+				column: Date
+
+		partition Date = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_date.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_date"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"date_key", Int64.Type}, {"full_date", type date}, {"day_of_month", Int64.Type}, {"day_of_week_iso", Int64.Type}, {"day_name", type text}, {"day_short", type text}, {"is_weekend", type logical}, {"is_public_holiday", type logical}, {"holiday_name", type text}, {"epi_year", Int64.Type}, {"epi_week", Int64.Type}, {"epi_week_label", type text}, {"epi_week_key", Int64.Type}, {"epi_week_start", type date}, {"month_num", Int64.Type}, {"month_name", type text}, {"month_short", type text}, {"year_month", type text}, {"year_month_key", Int64.Type}, {"month_start_date", type date}, {"quarter_num", Int64.Type}, {"year_quarter", type text}, {"calendar_year", Int64.Type}, {"fiscal_year_label", type text}, {"fiscal_year_start", Int64.Type}, {"rainy_season_label", type text}, {"is_malaria_season", type logical}, {"is_after_cutoff", type logical}}, "en-US")
+					in
+					    Typed
+
+
+	/// ICD-10 (WHO) code > block > chapter, snowflaked to the IDSR Condition it notifies.
+	table Diagnosis
+
+		/// Surrogate key (-1 = Unknown / not coded). Source: generated
+		column 'Diagnosis Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: diagnosis_key
+
+		/// ICD-10 code (e.g. B50.9). Source: master data, ICD10_Codes sheet (MD06)
+		column 'ICD-10 Code'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: icd10_code
+
+		/// ICD-10 code and WHO title, e.g. B54 Unspecified malaria.
+		column Diagnosis
+			dataType: string
+			summarizeBy: none
+			sourceColumn: diagnosis_label
+
+		/// Three-character ICD-10 category (e.g. B50). Source: derived
+		column 'ICD-10 Category'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: icd10_category
+
+		/// ICD-10 block code range (e.g. B50-B64). Source: master data
+		column 'Block Range'
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: block_range
+
+		/// ICD-10 block range and title (WHO ICD-10 2019).
+		column 'ICD-10 Block'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: block_label
+			sortByColumn: 'Block Range'
+
+		/// ICD-10 chapter in Roman numerals (I-XXII). Source: master data
+		column 'Chapter Code'
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: chapter_code
+
+		/// Chapter number 1-22 (sort key for chapter labels). Source: derived
+		column 'Chapter Number'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: chapter_number
+
+		/// ICD-10 chapter number and title (WHO ICD-10 2019).
+		column 'ICD-10 Chapter'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: chapter_label
+			sortByColumn: 'Chapter Number'
+
+		/// GBHS severity class (minor, moderate, serious, critical) used for case-mix adjustment. Source: master data
+		column Severity
+			dataType: string
+			summarizeBy: none
+			sourceColumn: severity_class
+
+		/// Default admitting specialty. Source: master data
+		column 'Default Specialty'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: default_specialty
+
+		/// True for chronic conditions (readmission risk factor). Source: master data
+		column 'Is Chronic'
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_chronic
+
+		/// FK to dim_condition (snowflake); -2 when the code is not notifiable. Source: master data idsr_condition_code
+		column 'Condition Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: condition_key
+
+		hierarchy ICD-10
+
+			level 'ICD-10 Chapter'
+				column: 'ICD-10 Chapter'
+
+			level 'ICD-10 Block'
+				column: 'ICD-10 Block'
+
+			level Diagnosis
+				column: Diagnosis
+
+		partition Diagnosis = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_diagnosis.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_diagnosis"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"diagnosis_key", Int64.Type}, {"icd10_code", type text}, {"diagnosis_label", type text}, {"icd10_category", type text}, {"block_range", type text}, {"block_label", type text}, {"chapter_code", type text}, {"chapter_number", Int64.Type}, {"chapter_label", type text}, {"severity_class", type text}, {"default_specialty", type text}, {"is_chronic", type logical}, {"condition_key", Int64.Type}}, "en-US")
+					in
+					    Typed
+
+
+	/// Effects on door-to-doctor time from the OLS model on log waiting time (03_analytics/ed_wait_drivers.py); disconnected.
+	table 'ED Wait Drivers'
+
+		/// Explanatory variable of the waiting-time model.
+		column Driver
+			dataType: string
+			summarizeBy: none
+			sourceColumn: driver
+
+		column 'Effect %'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: effect_pct
+
+		column 'CI Low %'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: ci_low
+
+		column 'CI High %'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: ci_high
+
+		/// Two-sided p-value with HC3 robust standard errors.
+		column 'P Value'
+			dataType: double
+			formatString: 0.000
+			summarizeBy: none
+			sourceColumn: p_value
+
+		/// Model specification.
+		column Model
+			dataType: string
+			summarizeBy: none
+			sourceColumn: model
+
+		partition 'ED Wait Drivers' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("analytics_ed_drivers.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "analytics_ed_drivers"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"driver", type text}, {"effect_pct", type number}, {"ci_low", type number}, {"ci_high", type number}, {"p_value", type number}, {"model", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// Junk dimension: department x arrival mode x disposition.
+	table 'Encounter Profile'
+
+		/// Surrogate key. Source: generated (Cartesian product)
+		column 'Encounter Profile Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: encounter_profile_key
+
+		/// ED (emergency department) or OPD (clinic outpatient). Source: PAS department
+		column 'Department Code'
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: department_code
+
+		/// Department name. Source: generated
+		column Department
+			dataType: string
+			summarizeBy: none
+			sourceColumn: department_name
+
+		/// Arrival mode description. Source: ref.code_map
+		column 'Arrival Mode'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: arrival_mode_name
+
+		/// DIS, ADM, TRF, LWBS, DIED, REF or UNK. Source: PAS disposition via ref.code_map (EN09)
+		column 'Disposition Code'
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: disposition_code
+
+		/// Disposition description. Source: ref.code_map
+		column Disposition
+			dataType: string
+			summarizeBy: none
+			sourceColumn: disposition_name
+
+		/// Discharged, Admitted or transferred, Referred, Left / died, Unknown. Source: derived
+		column 'Disposition Group'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: disposition_group
+
+		partition 'Encounter Profile' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_encounter_profile.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_encounter_profile"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"encounter_profile_key", Int64.Type}, {"department_code", type text}, {"department_name", type text}, {"arrival_mode_name", type text}, {"disposition_code", type text}, {"disposition_name", type text}, {"disposition_group", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// GBHS hospitals and clinics (snowflaked to Region). Type 1 attributes (name corrections overwrite).
+	table Facility
+
+		/// Surrogate key (-1 = Unknown). Source: generated
+		column 'Facility Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: facility_key
+
+		/// Facility natural key (GBH- hospital, GBC- clinic). Source: master data, Facilities sheet
+		column 'Facility Code'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: facility_code
+
+		/// Facility name (Type 1). Source: master data, Facilities sheet
+		column 'Facility Name'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: facility_name
+
+		/// Short display name (town).
+		column Facility
+			dataType: string
+			summarizeBy: none
+			sourceColumn: facility_short_name
+
+		/// Referral hospital, District hospital or Clinic. Source: master data
+		column 'Facility Type'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: facility_type
+
+		/// FK to dim_region (snowflake). Source: master data region name mapped through ref.region_alias
+		column 'Region Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: region_key
+
+		/// Town where the facility is located. Source: master data
+		column Town
+			dataType: string
+			dataCategory: City
+			summarizeBy: none
+			sourceColumn: town
+
+		/// Latitude (decimal degrees), used for the NASA POWER weather point. Source: master data
+		column Latitude
+			dataType: double
+			dataCategory: Latitude
+			summarizeBy: none
+			sourceColumn: latitude
+
+		/// Longitude (decimal degrees). Source: master data
+		column Longitude
+			dataType: double
+			dataCategory: Longitude
+			summarizeBy: none
+			sourceColumn: longitude
+
+		/// True for hospitals with a 24-hour emergency department. Source: master data
+		column 'Has Emergency Department'
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: has_emergency_department
+
+		/// Share of the regional population that uses the facility (planning assumption, master data).
+		column 'Catchment Share'
+			dataType: double
+			formatString: 0%
+			summarizeBy: none
+			sourceColumn: catchment_share
+
+		partition Facility = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_facility.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_facility"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"facility_key", Int64.Type}, {"facility_code", type text}, {"facility_name", type text}, {"facility_short_name", type text}, {"facility_type", type text}, {"region_key", Int64.Type}, {"town", type text}, {"latitude", type number}, {"longitude", type number}, {"has_emergency_department", type logical}, {"catchment_share", type number}}, "en-US")
+					in
+					    Typed
+
+
+	/// Hour of arrival (0-23) with day-part band and nursing shift.
+	table Hour
+
+		/// Hour of day 0-23 (natural and surrogate key). Source: generated
+		column 'Hour Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: hour_key
+
+		/// Hour label HH:00. Source: generated
+		column Hour
+			dataType: string
+			summarizeBy: none
+			sourceColumn: hour_label
+			sortByColumn: 'Hour Key'
+
+		/// Part of day: Night 00-06, Morning 07-11, Afternoon 12-16, Evening 17-23. Source: generated
+		column 'Hour Band'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: hour_band
+			sortByColumn: 'Hour Band Sort'
+
+		/// Sort key for hour_band. Source: generated
+		column 'Hour Band Sort'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: hour_band_sort
+
+		/// Shift name (Day / Night). Source: generated
+		column Shift
+			dataType: string
+			summarizeBy: none
+			sourceColumn: shift_name
+
+		/// True outside 08:00-16:59 (reduced specialist cover). Source: generated
+		column 'Is After Hours'
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_after_hours
+
+		partition Hour = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_hour.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_hour"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"hour_key", Int64.Type}, {"hour_label", type text}, {"hour_band", type text}, {"hour_band_sort", Int64.Type}, {"shift_name", type text}, {"is_after_hours", type logical}}, "en-US")
+					in
+					    Typed
+
+
+	/// Report-coverage fact (grain: facility x epi week expected): completeness and timeliness of IDSR reporting.
+	table 'IDSR Report'
+
+		/// FK to dim_date = Monday of the epi week. Source: scaffold of expected weeks
+		column 'Epi Week Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: epi_week_date_key
+
+		/// FK to dim_facility. Source: scaffold of active facilities
+		column 'Facility Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: facility_key
+
+		/// Always 1 (denominator of completeness). Source: ETL
+		column 'Report Expected'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: report_expected
+
+		/// 1 if any version of the weekly report was received by the extract cut-off. Source: stg.idsr_submission
+		column 'Report Received'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: report_received
+
+		/// 1 if the first submission arrived by the due time (Tuesday 12:00 after the epi week). Source: derived (GBHS SOP)
+		column 'Report On Time'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: report_on_time
+
+		/// Hours between due time and first submission (negative = early; NULL if not received). Source: derived
+		column 'Hours After Due'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: hours_after_due
+
+		partition 'IDSR Report' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_fact_idsr_report.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_idsr_report"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"epi_week_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"report_expected", Int64.Type}, {"report_received", Int64.Type}, {"report_on_time", Int64.Type}, {"hours_after_due", type number}}, "en-US")
+					in
+					    Typed
+
+
+	/// North-East (Rundu, Katima Mulilo, Nkurenkuru) weekly malaria: actuals, rolling-origin back-test and 13-week forecast (03_analytics/forecasting.py).
+	table 'Malaria Forecast'
+
+		column 'Week Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: week_date_key
+
+		/// Actual, Back-test (1 week ahead) or Forecast.
+		column Series
+			dataType: string
+			summarizeBy: none
+			sourceColumn: kind
+
+		/// Forecasting model published to Power BI: the best of three by rolling-origin WAPE.
+		column Model
+			dataType: string
+			summarizeBy: none
+			sourceColumn: model
+
+		column Actual
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: actual
+
+		column Forecast
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: forecast
+
+		column 'Lower 80'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: lo
+
+		column 'Upper 80'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: hi
+
+		partition 'Malaria Forecast' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("analytics_malaria_forecast.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "analytics_malaria_forecast"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"week_date_key", Int64.Type}, {"kind", type text}, {"model", type text}, {"actual", type number}, {"forecast", type number}, {"lo", type number}, {"hi", type number}}, "en-US")
+					in
+					    Typed
+
+
+	/// Field parameter: lets users switch the metric shown in a visual.
+	table 'Metric Selector'
+
+		column Metric
+			summarizeBy: none
+			sourceColumn: [Value1]
+			sortByColumn: 'Metric Order'
+
+			relatedColumnDetails
+				groupByColumn: 'Metric Fields'
+
+		column 'Metric Fields'
+			isHidden
+			summarizeBy: none
+			sourceColumn: [Value2]
+			sortByColumn: 'Metric Order'
+
+			extendedProperty ParameterMetadata =
+					{
+					  "version": 3,
+					  "kind": 2
+					}
+
+		column 'Metric Order'
+			isHidden
+			summarizeBy: sum
+			sourceColumn: [Value3]
+
+		partition 'Metric Selector' = calculated
+			mode: import
+			source =
+					{
+					    ( "ED Attendances", NAMEOF ( '_Measures'[ED Attendances] ), 0 ),
+					    ( "Seen Within Target %", NAMEOF ( '_Measures'[Seen Within Target %] ), 1 ),
+					    ( "Median Door-to-Doctor (min)", NAMEOF ( '_Measures'[Median Door-to-Doctor (min)] ), 2 ),
+					    ( "LWBS Rate %", NAMEOF ( '_Measures'[LWBS Rate %] ), 3 ),
+					    ( "Bed Occupancy %", NAMEOF ( '_Measures'[Bed Occupancy %] ), 4 ),
+					    ( "ALOS (days)", NAMEOF ( '_Measures'[ALOS (days)] ), 5 ),
+					    ( "Readmission Rate 30d %", NAMEOF ( '_Measures'[Readmission Rate 30d %] ), 6 ),
+					    ( "NHPPD", NAMEOF ( '_Measures'[NHPPD] ), 7 ),
+					    ( "Malaria Cases", NAMEOF ( '_Measures'[Malaria Cases] ), 8 )
+					}
+
+
+	/// Weeks flagged by the outbreak-detection algorithms (EARS C2, CUSUM, historical limits; 03_analytics/outbreak_detection.py).
+	table 'Outbreak Alerts'
+
+		column 'Week Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: week_date_key
+
+		column 'Facility Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: facility_key
+
+		column 'Condition Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: condition_key
+
+		/// Detection algorithm: EARS C2, CUSUM or historical limits (malaria).
+		column Method
+			dataType: string
+			summarizeBy: none
+			sourceColumn: method
+
+		column Cases
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: cases
+
+		column Expected
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: expected
+
+		column Threshold
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: threshold_value
+
+		/// True if the week lies in one of the 12 outbreaks injected by the generator (ground truth for evaluation).
+		column 'Is Known Outbreak'
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_injected_outbreak
+
+		partition 'Outbreak Alerts' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("analytics_outbreak_alerts.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "analytics_outbreak_alerts"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"week_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"condition_key", Int64.Type}, {"method", type text}, {"cases", type number}, {"expected", type number}, {"threshold_value", type number}, {"is_injected_outbreak", type logical}}, "en-US")
+					in
+					    Typed
+
+
+	/// Pseudonymised patient, SCD Type 2 on residence region and payer. No name, ID number, pseudonym or birth date is loaded.
+	table Patient
+
+		/// Surrogate key of the patient version (-1 = Unknown / unidentified patient). Source: generated
+		column 'Patient Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: patient_key
+
+		/// Durable (supernatural) key: the surrogate key of the patient's first version, identical on every version - used to count distinct patients across SCD2 versions. Source: ETL
+		column 'Patient Durable Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: patient_durable_key
+
+		/// F, M or U (unknown) (Type 1). Source: PAS patient index, mapped via ref.code_map (MD02)
+		column 'Sex Code'
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: sex
+
+		/// Female, Male or Unknown (from the PAS sex code, rule MD02).
+		column Sex
+			dataType: string
+			summarizeBy: none
+			sourceColumn: sex_name
+
+		/// As-was region of residence (flattened; no relationship to Region to avoid an ambiguous filter path).
+		column 'Residence Region'
+			dataType: string
+			dataCategory: StateOrProvince
+			summarizeBy: none
+			sourceColumn: residence_region_name
+
+		/// Payer class valid for the version (Type 2): PSEMAS, PMA, SSC-MVA, MOHSS, CASH. Source: PAS patient index + change log (MD05)
+		column 'Payer Code'
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: payer_code
+
+		/// Payer class name. Source: master data, Payer_Classes sheet
+		column Payer
+			dataType: string
+			summarizeBy: none
+			sourceColumn: payer_name
+
+		/// Medical aid, Statutory, Government or Self-pay. Source: master data
+		column 'Payer Group'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: payer_group
+
+		/// Placeholder created for a late-arriving patient record (EN10).
+		column 'Is Inferred Member'
+			dataType: boolean
+			displayFolder: SCD history
+			summarizeBy: none
+			sourceColumn: is_inferred
+
+		/// True for the current version. Source: ETL
+		column 'Is Current Version'
+			dataType: boolean
+			displayFolder: SCD history
+			summarizeBy: none
+			sourceColumn: scd_is_current
+
+		partition Patient = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_patient.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_patient"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"patient_key", Int64.Type}, {"patient_durable_key", Int64.Type}, {"sex", type text}, {"sex_name", type text}, {"residence_region_name", type text}, {"payer_code", type text}, {"payer_name", type text}, {"payer_group", type text}, {"is_inferred", type logical}, {"scd_is_current", type logical}}, "en-US")
+					in
+					    Typed
+
+
+	/// Calibration of the 30-day readmission risk model on the 2025-26 test set (03_analytics/readmission_model.py); disconnected.
+	table 'Readmission Deciles'
+
+		/// Decile of predicted 30-day readmission risk in the test set (1 = lowest, 10 = highest).
+		column 'Risk Decile'
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: decile
+
+		column Spells
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: spells
+
+		column 'Mean Predicted'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: mean_predicted
+
+		column 'Observed Rate'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: observed
+
+		/// Model whose predictions are summarised.
+		column Model
+			dataType: string
+			summarizeBy: none
+			sourceColumn: model
+
+		partition 'Readmission Deciles' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("analytics_readmission_deciles.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "analytics_readmission_deciles"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"decile", Int64.Type}, {"spells", Int64.Type}, {"mean_predicted", type number}, {"observed", type number}, {"model", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// Odds ratios of the logistic readmission model (reference coding); disconnected.
+	table 'Readmission Drivers'
+
+		/// Feature of the logistic model (reference coding).
+		column Driver
+			dataType: string
+			summarizeBy: none
+			sourceColumn: driver
+
+		column 'Odds Ratio Value'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: odds_ratio
+
+		/// Raises or lowers the odds of readmission.
+		column Direction
+			dataType: string
+			summarizeBy: none
+			sourceColumn: direction
+
+		partition 'Readmission Drivers' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("analytics_readmission_drivers.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "analytics_readmission_drivers"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"driver", type text}, {"odds_ratio", type number}, {"direction", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// Reconciliation checks of the latest load batch (row counts, control totals, cross-source); disconnected.
+	table Reconciliation
+
+		/// Reconciliation check identifier (R01-R22).
+		column 'Check Code'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: check_code
+
+		/// What is compared.
+		column Check
+			dataType: string
+			summarizeBy: none
+			sourceColumn: check_name
+
+		/// Row count, control total, cross-source, integrity, completeness, referential or plausibility.
+		column 'Check Type'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: check_type
+
+		/// Value on the source / staging side.
+		column 'Source Value'
+			dataType: double
+			formatString: #,0
+			summarizeBy: none
+			sourceColumn: source_value
+
+		/// Value on the warehouse side.
+		column 'Target Value'
+			dataType: double
+			formatString: #,0
+			summarizeBy: none
+			sourceColumn: target_value
+
+		/// Target minus source.
+		column Difference
+			dataType: double
+			formatString: #,0
+			summarizeBy: none
+			sourceColumn: difference
+
+		/// PASS, WARN (explained, within tolerance) or FAIL (stops publication).
+		column Status
+			dataType: string
+			summarizeBy: none
+			sourceColumn: status
+
+		/// Business explanation of any difference.
+		column Explanation
+			dataType: string
+			summarizeBy: none
+			sourceColumn: explanation
+
+		partition Reconciliation = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_recon_latest.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_recon_latest"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"check_code", type text}, {"check_name", type text}, {"check_type", type text}, {"source_value", type number}, {"target_value", type number}, {"difference", type number}, {"status", type text}, {"explanation", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// Namibia's 14 regions (ISO 3166-2:NA) with GBHS management zone and malaria-endemicity stratum.
+	table Region
+
+		/// Surrogate key (-1 = Unknown). Source: generated
+		column 'Region Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: region_key
+
+		/// ISO 3166-2:NA region code (e.g. NA-KE). Source: master data, Regions sheet
+		column 'Region Code'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: region_code
+
+		/// Official region name. Source: master data, Regions sheet
+		column Region
+			dataType: string
+			dataCategory: StateOrProvince
+			summarizeBy: none
+			sourceColumn: region_name
+
+		/// GBHS management zone (North-East, North-Central, Central, West, South, East, North-West). Source: master data
+		column Zone
+			dataType: string
+			summarizeBy: none
+			sourceColumn: zone
+
+		/// Malaria planning stratum: Endemic - high, Endemic - low, Non-endemic (imported cases only). Source: master data (GBHS planning assumption based on MoHSS stratification)
+		column 'Malaria Stratum'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: malaria_stratum
+
+		hierarchy Geography
+
+			level Zone
+				column: Zone
+
+			level Region
+				column: Region
+
+		partition Region = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_region.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_region"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"region_key", Int64.Type}, {"region_code", type text}, {"region_name", type text}, {"zone", type text}, {"malaria_stratum", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// NSA 2023 Population and Housing Census by region (2023 = census count; other years projected). Semi-additive over time: never sum across years.
+	table 'Regional Population'
+
+		/// FK to dim_date = 1 July of the year (mid-year population). Source: derived
+		column 'Year Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: year_date_key
+
+		/// FK to dim_region. Source: NSA region name mapped through ref.region_alias
+		column 'Region Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: region_key
+
+		/// Population (semi-additive). 2023 = census count; other years = 2023 count x (1 + national intercensal growth 2011-2023)^(year-2023). Source: NSA 2023 PHC preliminary results (EX01)
+		column Population
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: population
+
+		/// True for the census year itself, false for derived estimates. Source: ETL
+		column 'Is Census Count'
+			dataType: boolean
+			summarizeBy: none
+			sourceColumn: is_census_count
+
+		/// Provenance text shown in report tooltips. Source: ETL
+		column 'Population Source'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: population_source
+
+		partition 'Regional Population' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_fact_population.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_population"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"year_date_key", Int64.Type}, {"region_key", Int64.Type}, {"population", Int64.Type}, {"is_census_count", type logical}, {"population_source", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// Dynamic RLS mapping: user principal name -> facility (disconnected; read only by the Facility Manager role).
+	table 'Security User Facility'
+		isHidden
+
+		/// Entra ID UPN in lower case, compared with LOWER(USERPRINCIPALNAME()).
+		column 'User Principal Name'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: user_principal_name
+
+		/// Surrogate key (-1 = Unknown). Source: generated
+		column 'Facility Key'
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: facility_key
+
+		partition 'Security User Facility' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_sec_user_facility.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_sec_user_facility"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"user_principal_name", type text}, {"facility_key", Int64.Type}}, "en-US")
+					in
+					    Typed
+
+
+	/// Nursing shift (Day 07:00-19:00, Night 19:00-07:00).
+	table Shift
+
+		/// Surrogate key. Source: generated
+		column 'Shift Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: shift_key
+
+		/// D or N. Source: e-roster shift via ref.code_map (RS01)
+		column 'Shift Code'
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: shift_code
+
+		/// Shift name. Source: ref.code_map
+		column Shift
+			dataType: string
+			summarizeBy: none
+			sourceColumn: shift_name
+			sortByColumn: 'Shift Key'
+
+		partition Shift = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_shift.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_shift"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"shift_key", Int64.Type}, {"shift_code", type text}, {"shift_name", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// E-roster shift summary (periodic snapshot; grain: unit x day x shift). Hours are additive; staff on duty are semi-additive.
+	table 'Staff Roster'
+
+		/// FK to dim_date (date the shift starts). Source: e-roster roster_date
+		column 'Roster Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: roster_date_key
+
+		/// FK to dim_care_unit version valid on the roster date. Source: e-roster unit_code
+		column 'Care Unit Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: care_unit_key
+
+		/// FK to dim_shift. Source: e-roster shift (RS01)
+		column 'Shift Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: shift_key
+
+		/// Nursing hours on the approved roster (additive). Source: e-roster
+		column 'Planned Nurse Hours'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: planned_nurse_hours
+
+		/// Total nursing hours worked = rn_hours + en_hours (additive; numerator of NHPPD). Source: derived
+		column 'Nurse Hours'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: nurse_hours
+
+		/// Registered-nurse hours worked (additive). Source: e-roster (RS02)
+		column 'RN Hours'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: rn_hours
+
+		/// Doctor hours worked in the unit (additive). Source: e-roster
+		column 'Doctor Hours'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: doctor_hours
+
+		/// Overtime nursing hours (additive; NULL when inconsistent, RS04). Source: e-roster
+		column 'Overtime Hours'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: overtime_hours
+
+		/// Agency (temporary) nursing hours (additive). Source: e-roster
+		column 'Agency Hours'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: agency_hours
+
+		/// Rostered hours lost to sick leave (additive). Source: e-roster
+		column 'Sick Leave Hours'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: sick_leave_hours
+
+		/// Nurses on duty during the shift (semi-additive). Source: e-roster
+		column 'Nurses on Duty'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: nurses_on_duty
+
+		/// Doctors on duty during the shift (semi-additive). Source: e-roster
+		column 'Doctors on Duty'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: doctors_on_duty
+
+		partition 'Staff Roster' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_fact_staff_roster.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_staff_roster"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"roster_date_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"shift_key", Int64.Type}, {"planned_nurse_hours", type number}, {"nurse_hours", type number}, {"rn_hours", type number}, {"doctor_hours", type number}, {"overtime_hours", type number}, {"agency_hours", type number}, {"sick_leave_hours", type number}, {"nurses_on_duty", Int64.Type}, {"doctors_on_duty", Int64.Type}}, "en-US")
+					in
+					    Typed
+
+
+	/// IDSR weekly returns (periodic snapshot; grain: facility x condition x epi week; key = Monday of the epi week).
+	table Surveillance
+
+		/// FK to dim_date = Monday of the ISO epi week. Source: IDSR epi_week (SV01)
+		column 'Epi Week Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: epi_week_date_key
+
+		/// FK to dim_facility (reporting facility). Source: IDSR facility_code
+		column 'Facility Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: facility_key
+
+		/// FK to dim_condition. Source: IDSR condition (SV03)
+		column 'Condition Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: condition_key
+
+		/// Cases in children under 5 (additive). Source: IDSR return (SV06, SV07)
+		column 'Cases Under 5'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: cases_under5
+
+		/// Cases aged 5 and over (additive). Source: IDSR return (SV06, SV07)
+		column 'Cases 5 Plus'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: cases_5plus
+
+		/// All cases = under 5 + 5 and over (additive). Source: derived
+		column 'Cases Total'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: cases_total
+
+		/// All deaths (additive). Source: derived
+		column 'Deaths Total'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: deaths_total
+
+		/// Malaria tests performed (RDT/microscopy); NULL for other conditions (additive). Source: IDSR return (SV05)
+		column 'Tests Done'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: tests_done
+
+		/// Positive malaria tests (additive). Source: IDSR return (SV05)
+		column 'Tests Positive'
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: tests_positive
+
+		partition Surveillance = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_fact_surveillance.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_surveillance"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"epi_week_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"condition_key", Int64.Type}, {"cases_under5", Int64.Type}, {"cases_5plus", Int64.Type}, {"cases_total", Int64.Type}, {"deaths_total", Int64.Type}, {"tests_done", Int64.Type}, {"tests_positive", Int64.Type}}, "en-US")
+					in
+					    Typed
+
+
+	/// South African Triage Scale (SATS) category with time-to-doctor target.
+	table Triage
+
+		/// Surrogate key = priority (-1 = not recorded). Source: generated
+		column 'Triage Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: triage_key
+
+		/// Triage colour code. Source: master data, Triage_Scale sheet
+		column 'Triage Code'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: triage_code
+			sortByColumn: Priority
+
+		/// Triage label (colour and urgency). Source: master data
+		column 'Triage Category'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: triage_label
+			sortByColumn: Priority
+
+		/// Clinical priority 1 (highest) - 9 (sort key). Source: master data
+		column Priority
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: priority
+
+		/// Target time from arrival to doctor in minutes (0 = immediate). Source: master data (SATS-style targets)
+		column 'Target (min)'
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: target_minutes
+
+		/// Minutes within which the patient counts as seen on time (RED: 5 minutes for 'immediate').
+		column 'Compliance Threshold (min)'
+			dataType: int64
+			summarizeBy: none
+			sourceColumn: compliance_minutes
+
+		/// Target in words. Source: master data
+		column Target
+			dataType: string
+			summarizeBy: none
+			sourceColumn: target_text
+
+		/// Display colour (used with text labels, never colour alone). Source: master data
+		column Colour
+			dataType: string
+			isHidden
+			summarizeBy: none
+			sourceColumn: colour_hex
+
+		partition Triage = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_dim_triage.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_triage"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"triage_key", Int64.Type}, {"triage_code", type text}, {"triage_label", type text}, {"priority", Int64.Type}, {"target_minutes", Int64.Type}, {"compliance_minutes", Int64.Type}, {"target_text", type text}, {"colour_hex", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// Midnight ward census (periodic snapshot; grain: ward x day). Occupied and available beds are semi-additive: sum over wards, never over days (summed over days they become patient days / bed days).
+	table 'Ward Census'
+
+		/// FK to dim_date (census date, midnight). Source: ward return census_date
+		column 'Census Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: census_date_key
+
+		/// FK to dim_care_unit version valid on the census date. Source: ward_code
+		column 'Care Unit Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: care_unit_key
+
+		/// Official beds of the ward version (semi-additive). Source: dim_care_unit.bed_complement
+		column 'Bed Complement'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: beds_complement
+
+		/// Beds closed (maintenance, staffing) (semi-additive). Source: ward return
+		column 'Beds Closed'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: beds_closed
+
+		/// Beds available = complement - closed (semi-additive; sum over days = available bed-days). Source: derived
+		column 'Beds Available'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: beds_available
+
+		/// Patients in the ward at midnight (semi-additive; sum over days = patient days). Source: ward return (WC02, WC04) or PAS imputation (WC01)
+		column 'Occupied Beds'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: occupied_beds
+
+		/// Admissions to the ward during the day (additive flow). Source: ward return
+		column Admissions
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: admissions
+
+		/// Discharges (incl. deaths and transfers out) during the day (additive flow). Source: ward return
+		column Discharges
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: discharges
+
+		/// In-ward deaths during the day (additive flow). Source: ward return
+		column Deaths
+			dataType: int64
+			isHidden
+			summarizeBy: sum
+			sourceColumn: deaths
+
+		/// Ward return, Corrected return or Imputed from PAS (lineage of each ward-day).
+		column 'Census Source'
+			dataType: string
+			summarizeBy: none
+			sourceColumn: census_source
+
+		partition 'Ward Census' = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_fact_ward_census.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_ward_census"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"census_date_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"beds_complement", Int64.Type}, {"beds_closed", Int64.Type}, {"beds_available", Int64.Type}, {"occupied_beds", Int64.Type}, {"admissions", Int64.Type}, {"discharges", Int64.Type}, {"deaths", Int64.Type}, {"census_source", type text}}, "en-US")
+					in
+					    Typed
+
+
+	/// NASA POWER daily weather at each facility (external; rainfall is averaged across locations, never summed).
+	table Weather
+
+		/// FK to dim_date. Source: NASA POWER date (YYYYMMDD)
+		column 'Weather Date Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: weather_date_key
+
+		/// FK to dim_facility (weather point = facility coordinates). Source: file name
+		column 'Facility Key'
+			dataType: int64
+			isHidden
+			summarizeBy: none
+			sourceColumn: facility_key
+
+		/// Corrected precipitation, mm/day (PRECTOTCORR). Source: NASA POWER (WE02)
+		column 'Rainfall (mm)'
+			dataType: double
+			isHidden
+			summarizeBy: sum
+			sourceColumn: rainfall_mm
+
+		/// Maximum temperature at 2 m, deg C (T2M_MAX). Source: NASA POWER (WE01)
+		column 'Max Temp (C)'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: tmax_c
+
+		/// Minimum temperature at 2 m, deg C (T2M_MIN). Source: NASA POWER (WE01)
+		column 'Min Temp (C)'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: tmin_c
+
+		/// Relative humidity at 2 m, % (RH2M). Source: NASA POWER (WE01)
+		column 'Relative Humidity (%)'
+			dataType: double
+			isHidden
+			summarizeBy: average
+			sourceColumn: rh_pct
+
+		partition Weather = m
+			mode: import
+			source =
+					let
+					    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+					    ReadCsv = (file as text) as table =>
+					        let
+					            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+					        in
+					            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+					    Source = if SourceMode = "CSV"
+					        then ReadCsv("v_fact_weather.csv.gz")
+					        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_weather"]}[Data],
+					    Typed = Table.TransformColumnTypes(Source, {{"weather_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"rainfall_mm", type number}, {"tmax_c", type number}, {"tmin_c", type number}, {"rh_pct", type number}}, "en-US")
+					in
+					    Typed
+
+
+	/// All business measures, organised in display folders.
+	table _Measures
+
+		/// KPI target: at least 80 % of triaged ED patients seen within their SATS target.
+		measure 'Target Seen Within Target %' = IF ( NOT ISBLANK ( [Seen Within Target %] ), 0.8 )
+			formatString: 0.0%
+			displayFolder: 0 Targets & Labels
+
+		/// KPI ceiling: no more than 3 % of ED patients leave without being seen.
+		measure 'Target LWBS Rate %' = IF ( NOT ISBLANK ( [LWBS Rate %] ), 0.03 )
+			formatString: 0.0%
+			displayFolder: 0 Targets & Labels
+
+		/// KPI ceiling: 85 % average bed occupancy (safe-occupancy threshold).
+		measure 'Target Bed Occupancy %' = IF ( NOT ISBLANK ( [Bed Occupancy %] ), 0.85 )
+			formatString: 0.0%
+			displayFolder: 0 Targets & Labels
+
+		/// KPI ceiling: 12 % emergency readmissions within 30 days.
+		measure 'Target Readmission Rate 30d %' = IF ( NOT ISBLANK ( [Readmission Rate 30d %] ), 0.12 )
+			formatString: 0.0%
+			displayFolder: 0 Targets & Labels
+
+		/// KPI target: 80 % completeness and 80 % timeliness of weekly IDSR reports (WHO AFRO IDSR).
+		measure 'Target IDSR Reporting %' = IF ( NOT ISBLANK ( [IDSR Completeness %] ), 0.8 )
+			formatString: 0.0%
+			displayFolder: 0 Targets & Labels
+
+		/// Text status with symbol (never colour alone) for the seen-within-target KPI.
+		measure 'ED Target Status' =
+				VAR _v = [Seen Within Target %]
+				RETURN
+				    IF ( NOT ISBLANK ( _v ), IF ( _v >= 0.8, "▲ On target (80 %)", "▼ Below target (80 %)" ) )
+			displayFolder: 0 Targets & Labels
+
+		/// Text status with symbol for bed occupancy against the 85 % ceiling.
+		measure 'Occupancy Status' =
+				VAR _v = [Bed Occupancy %]
+				RETURN
+				    IF ( NOT ISBLANK ( _v ), IF ( _v <= 0.85, "● Within 85 % ceiling", "▲ Above 85 % ceiling" ) )
+			displayFolder: 0 Targets & Labels
+
+		/// Freshness label for page headers (patient-flow data).
+		measure 'Data As Of' = "Data to " & FORMAT ( [Last Data Date], "d mmm yyyy" )
+			displayFolder: 0 Targets & Labels
+
+		/// Freshness label for the surveillance page (last epi week with IDSR returns).
+		measure 'Surveillance As Of' =
+				VAR _d = [Last Epi Week Start]
+				RETURN
+				    "IDSR returns to epi week " & CALCULATE ( SELECTEDVALUE ( 'Date'[Epi Week Label] ), REMOVEFILTERS ( 'Date' ), 'Date'[Date] = _d )
+			displayFolder: 0 Targets & Labels
+
+		/// Dynamic title of the drill-through page.
+		measure 'Facility Detail Title' = SELECTEDVALUE ( 'Facility'[Facility], "All facilities" ) & " - facility detail"
+			displayFolder: 0 Targets & Labels
+
+		/// All ED and clinic attendances (one row per attendance).
+		measure Attendances = SUM ( 'Attendance'[Encounter Count] )
+			formatString: #,0
+			displayFolder: 1 Patient Flow
+
+		/// Emergency-department attendances (CALCULATE with filter modification on the department).
+		measure 'ED Attendances' = CALCULATE ( [Attendances], KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+			formatString: #,0
+			displayFolder: 1 Patient Flow
+
+		/// Outpatient-clinic attendances.
+		measure 'Clinic Attendances' = CALCULATE ( [Attendances], KEEPFILTERS ( 'Encounter Profile'[Department Code] = "OPD" ) )
+			formatString: #,0
+			displayFolder: 1 Patient Flow
+
+		/// Share of triaged ED patients seen by a doctor within the SATS compliance time of their category (RED 5, ORANGE 10, YELLOW 60, GREEN 240 minutes).
+		measure 'Seen Within Target %' = DIVIDE ( SUM ( 'Attendance'[Seen Within Target] ), COUNT ( 'Attendance'[Seen Within Target] ) )
+			formatString: 0.0%
+			displayFolder: 1 Patient Flow
+
+		/// Median minutes from ED arrival to first doctor assessment (patients seen).
+		measure 'Median Door-to-Doctor (min)' = CALCULATE ( MEDIAN ( 'Attendance'[Door to Doctor (min)] ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+			formatString: #,0
+			displayFolder: 1 Patient Flow
+
+		/// 90th percentile of ED door-to-doctor minutes (the long tail that drives complaints and LWBS).
+		measure 'P90 Door-to-Doctor (min)' = CALCULATE ( PERCENTILE.INC ( 'Attendance'[Door to Doctor (min)], 0.9 ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+			formatString: #,0
+			displayFolder: 1 Patient Flow
+
+		/// Median minutes from ED arrival to triage.
+		measure 'Median Wait to Triage (min)' = CALCULATE ( MEDIAN ( 'Attendance'[Wait to Triage (min)] ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+			formatString: #,0
+			displayFolder: 1 Patient Flow
+
+		/// Share of ED attendances that left without being seen.
+		measure 'LWBS Rate %' = CALCULATE ( DIVIDE ( SUM ( 'Attendance'[Is LWBS] ), SUM ( 'Attendance'[Encounter Count] ) ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+			formatString: 0.0%
+			displayFolder: 1 Patient Flow
+
+		/// Share of ED attendances admitted to a ward (conversion rate).
+		measure 'ED Admission Rate %' = CALCULATE ( DIVIDE ( SUM ( 'Attendance'[Is Admitted] ), SUM ( 'Attendance'[Encounter Count] ) ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+			formatString: 0.0%
+			displayFolder: 1 Patient Flow
+
+		/// Share of ED attendances with a valid length of stay that left the department within 4 hours.
+		measure 'ED Stays Within 4 Hours %' =
+				VAR _within =
+				    CALCULATE (
+				        COUNTROWS ( 'Attendance' ),
+				        KEEPFILTERS ( NOT ISBLANK ( 'Attendance'[ED Length of Stay (min)] ) && 'Attendance'[ED Length of Stay (min)] <= 240 ),
+				        KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" )
+				    )
+				VAR _known =
+				    CALCULATE ( COUNT ( 'Attendance'[ED Length of Stay (min)] ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+				RETURN
+				    DIVIDE ( _within, _known )
+			formatString: 0.0%
+			displayFolder: 1 Patient Flow
+
+		/// Identified patients with an attendance (durable key, stable across SCD2 versions; unidentified attendances excluded).
+		measure 'Distinct Patients' = CALCULATE ( DISTINCTCOUNT ( 'Attendance'[Patient Durable Key] ), KEEPFILTERS ( 'Attendance'[Patient Durable Key] > 0 ) )
+			formatString: #,0
+			displayFolder: 1 Patient Flow
+
+		/// Identified attendances per distinct patient (frequent-attender signal).
+		measure 'Attendances per Patient' = DIVIDE ( CALCULATE ( [Attendances], KEEPFILTERS ( 'Attendance'[Patient Durable Key] > 0 ) ), [Distinct Patients] )
+			formatString: #,0.00
+			displayFolder: 1 Patient Flow
+
+		/// Inpatient spells by admission date.
+		measure Admissions = SUM ( 'Admission'[Admission Count] )
+			formatString: #,0
+			displayFolder: 2 Inpatient Care
+
+		/// Share of admissions that were unplanned (via ED, direct or transfer in).
+		measure 'Emergency Admission %' = DIVIDE ( CALCULATE ( [Admissions], KEEPFILTERS ( 'Admission Profile'[Is Emergency Admission] = TRUE () ) ), [Admissions] )
+			formatString: 0.0%
+			displayFolder: 2 Inpatient Care
+
+		/// Identified patients admitted (durable key).
+		measure 'Distinct Inpatients' = CALCULATE ( DISTINCTCOUNT ( 'Admission'[Patient Durable Key] ), KEEPFILTERS ( 'Admission'[Patient Durable Key] > 0 ) )
+			formatString: #,0
+			displayFolder: 2 Inpatient Care
+
+		/// Spells discharged, by DISCHARGE date (activates the inactive role-playing relationship).
+		measure Discharges = CALCULATE ( SUM ( 'Admission'[Is Discharged] ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ) )
+			formatString: #,0
+			displayFolder: 2 Inpatient Care
+
+		/// Average length of stay (midnights) of spells discharged in the period.
+		measure 'ALOS (days)' = CALCULATE ( AVERAGE ( 'Admission'[LOS (days)] ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ), KEEPFILTERS ( 'Admission'[Is Discharged] = 1 ) )
+			formatString: #,0.00
+			displayFolder: 2 Inpatient Care
+
+		/// Deaths in hospital as a share of discharges (by discharge date).
+		measure 'In-Hospital Mortality %' = CALCULATE ( DIVIDE ( SUM ( 'Admission'[Is Died] ), SUM ( 'Admission'[Is Discharged] ) ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ) )
+			formatString: 0.00%
+			displayFolder: 2 Inpatient Care
+
+		/// Eligible spells (alive home/AMA, not maternity, 30 days follow-up) followed by an emergency readmission within 30 days, by discharge date of the index spell.
+		measure 'Readmission Rate 30d %' = CALCULATE ( DIVIDE ( SUM ( 'Admission'[Readmitted Within 30d] ), SUM ( 'Admission'[Readmission Eligible] ) ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ) )
+			formatString: 0.0%
+			displayFolder: 2 Inpatient Care
+
+		/// Share of discharges completed before 12:00 (patient-flow KPI: frees beds for the afternoon ED peak).
+		measure 'Discharged Before Noon %' = CALCULATE ( AVERAGE ( 'Admission'[Discharged Before Noon] ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ), KEEPFILTERS ( 'Admission'[Is Discharged] = 1 ) )
+			formatString: 0.0%
+			displayFolder: 2 Inpatient Care
+
+		/// Share of discharges on Saturday or Sunday.
+		measure 'Weekend Discharge %' = CALCULATE ( AVERAGE ( 'Admission'[Is Weekend Discharge] ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ), KEEPFILTERS ( 'Admission'[Is Discharged] = 1 ) )
+			formatString: 0.0%
+			displayFolder: 2 Inpatient Care
+
+		/// Spells admitted in the period and not yet discharged at the extract.
+		measure 'Open Spells' = CALCULATE ( [Admissions], KEEPFILTERS ( 'Admission'[Is Discharged] = 0 ) )
+			formatString: #,0
+			displayFolder: 2 Inpatient Care
+
+		/// Occupied bed-days: midnight census summed over days.
+		measure 'Patient Days' = SUM ( 'Ward Census'[Occupied Beds] )
+			formatString: #,0
+			displayFolder: 3 Resource Utilisation
+
+		/// Open beds summed over days (complement minus closed beds).
+		measure 'Available Bed Days' = SUM ( 'Ward Census'[Beds Available] )
+			formatString: #,0
+			displayFolder: 3 Resource Utilisation
+
+		/// Patient days / available bed days.
+		measure 'Bed Occupancy %' = DIVIDE ( [Patient Days], [Available Bed Days] )
+			formatString: 0.0%
+			displayFolder: 3 Resource Utilisation
+
+		/// Average number of occupied beds per day (semi-additive: summed over wards, averaged over days).
+		measure 'Average Daily Census' = AVERAGEX ( VALUES ( 'Date'[Date] ), CALCULATE ( SUM ( 'Ward Census'[Occupied Beds] ) ) )
+			formatString: #,0.0
+			displayFolder: 3 Resource Utilisation
+
+		/// Occupied beds on the last census date in the period, across the selected wards (semi-additive closing balance).
+		measure 'Occupied Beds (Latest Day)' =
+				VAR _d =
+				    CALCULATE (
+				        MAX ( 'Ward Census'[Census Date Key] ),
+				        REMOVEFILTERS ( 'Care Unit' ), REMOVEFILTERS ( 'Facility' ), REMOVEFILTERS ( 'Region' )
+				    )
+				RETURN
+				    CALCULATE ( SUM ( 'Ward Census'[Occupied Beds] ), 'Ward Census'[Census Date Key] = _d )
+			formatString: #,0
+			displayFolder: 3 Resource Utilisation
+
+		/// Open beds on the last census date in the period.
+		measure 'Beds Available (Latest Day)' =
+				VAR _d =
+				    CALCULATE (
+				        MAX ( 'Ward Census'[Census Date Key] ),
+				        REMOVEFILTERS ( 'Care Unit' ), REMOVEFILTERS ( 'Facility' ), REMOVEFILTERS ( 'Region' )
+				    )
+				RETURN
+				    CALCULATE ( SUM ( 'Ward Census'[Beds Available] ), 'Ward Census'[Census Date Key] = _d )
+			formatString: #,0
+			displayFolder: 3 Resource Utilisation
+
+		/// Occupancy on the last census date in the period.
+		measure 'Bed Occupancy % (Latest Day)' = DIVIDE ( [Occupied Beds (Latest Day)], [Beds Available (Latest Day)] )
+			formatString: 0.0%
+			displayFolder: 3 Resource Utilisation
+
+		/// Nursing hours worked (registered + enrolled).
+		measure 'Nurse Hours' = SUM ( 'Staff Roster'[Nurse Hours] )
+			formatString: #,0
+			displayFolder: 3 Resource Utilisation
+
+		/// Nursing hours per patient day on inpatient wards (drill-across: e-roster x ward census through Date and Care Unit).
+		measure NHPPD = DIVIDE ( CALCULATE ( [Nurse Hours], KEEPFILTERS ( 'Care Unit'[Unit Type] = "Inpatient ward" ) ), [Patient Days] )
+			formatString: #,0.00
+			displayFolder: 3 Resource Utilisation
+
+		/// Overtime nursing hours as a share of nursing hours worked.
+		measure 'Overtime %' = DIVIDE ( SUM ( 'Staff Roster'[Overtime Hours] ), [Nurse Hours] )
+			formatString: 0.0%
+			displayFolder: 3 Resource Utilisation
+
+		/// Agency nursing hours as a share of nursing hours worked.
+		measure 'Agency %' = DIVIDE ( SUM ( 'Staff Roster'[Agency Hours] ), [Nurse Hours] )
+			formatString: 0.0%
+			displayFolder: 3 Resource Utilisation
+
+		/// Nursing hours worked as a share of the approved roster.
+		measure 'Roster Fill %' = DIVIDE ( [Nurse Hours], SUM ( 'Staff Roster'[Planned Nurse Hours] ) )
+			formatString: 0.0%
+			displayFolder: 3 Resource Utilisation
+
+		/// Rostered hours lost to sick leave.
+		measure 'Sick Leave %' = DIVIDE ( SUM ( 'Staff Roster'[Sick Leave Hours] ), SUM ( 'Staff Roster'[Planned Nurse Hours] ) )
+			formatString: 0.0%
+			displayFolder: 3 Resource Utilisation
+
+		/// Doctor-shifts worked in the emergency departments.
+		measure 'ED Doctor Shifts' = CALCULATE ( SUM ( 'Staff Roster'[Doctors on Duty] ), KEEPFILTERS ( 'Care Unit'[Unit Type] = "Emergency department" ) )
+			formatString: #,0
+			displayFolder: 3 Resource Utilisation
+
+		/// ED attendances per doctor-shift (drill-across: attendances x e-roster) - the strongest driver of waiting time.
+		measure 'ED Arrivals per Doctor Shift' = DIVIDE ( [ED Attendances], [ED Doctor Shifts] )
+			formatString: #,0.0
+			displayFolder: 3 Resource Utilisation
+
+		/// Cases reported in the weekly IDSR returns.
+		measure 'Notified Cases' = SUM ( 'Surveillance'[Cases Total] )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Deaths reported in the weekly IDSR returns.
+		measure 'Notified Deaths' = SUM ( 'Surveillance'[Deaths Total] )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Notified deaths / notified cases.
+		measure 'Case Fatality Rate %' = DIVIDE ( [Notified Deaths], [Notified Cases] )
+			formatString: 0.00%
+			displayFolder: 4 Disease Surveillance
+
+		/// Share of notified cases in children under five.
+		measure 'Under-5 Share of Cases %' = DIVIDE ( SUM ( 'Surveillance'[Cases Under 5] ), [Notified Cases] )
+			formatString: 0.0%
+			displayFolder: 4 Disease Surveillance
+
+		/// Confirmed malaria cases notified (IDSR condition MAL).
+		measure 'Malaria Cases' = CALCULATE ( [Notified Cases], KEEPFILTERS ( 'Condition'[Condition Code] = "MAL" ) )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Malaria deaths notified.
+		measure 'Malaria Deaths' = CALCULATE ( [Notified Deaths], KEEPFILTERS ( 'Condition'[Condition Code] = "MAL" ) )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Positive malaria tests (RDT/microscopy) / tests done.
+		measure 'Malaria Test Positivity %' = DIVIDE ( SUM ( 'Surveillance'[Tests Positive] ), SUM ( 'Surveillance'[Tests Done] ) )
+			formatString: 0.0%
+			displayFolder: 4 Disease Surveillance
+
+		/// Person-time at risk in the period: catchment population of each epi year x days of that year in context / 365, within the surveillance window.
+		measure 'Catchment Person-Years' =
+				VAR _first = [First Surveillance Date]
+				VAR _last = [Last Epi Week Start] + 6
+				RETURN
+				    SUMX (
+				        VALUES ( 'Date'[Epi Year] ),
+				        VAR _y = 'Date'[Epi Year]
+				        VAR _days =
+				            CALCULATE ( COUNTROWS ( 'Date' ), KEEPFILTERS ( 'Date'[Date] >= _first && 'Date'[Date] <= _last ) )
+				        VAR _pop =
+				            CALCULATE (
+				                SUM ( 'Catchment Population'[Catchment Population] ),
+				                REMOVEFILTERS ( 'Date' ),
+				                'Date'[Calendar Year] = _y
+				            )
+				        RETURN
+				            DIVIDE ( _pop * _days, 365 )
+				    )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Average catchment population over the period (NSA regional population x facility catchment share; time-weighted across epi years).
+		measure 'Catchment Population' =
+				VAR _first = [First Surveillance Date]
+				VAR _last = [Last Epi Week Start] + 6
+				VAR _days =
+				    CALCULATE ( COUNTROWS ( 'Date' ), KEEPFILTERS ( 'Date'[Date] >= _first && 'Date'[Date] <= _last ) )
+				RETURN
+				    DIVIDE ( [Catchment Person-Years] * 365, _days )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Malaria cases per 100 000 catchment population in the selected period (period incidence; equals the OLAP pivot by epi year).
+		measure 'Malaria Incidence per 100k' = DIVIDE ( [Malaria Cases] * 100000, [Catchment Population] )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Annualised malaria incidence: cases per 1 000 person-years at risk (comparable across periods of different length).
+		measure 'Malaria Incidence per 1,000 PY' = DIVIDE ( [Malaria Cases] * 1000, [Catchment Person-Years] )
+			formatString: #,0.0
+			displayFolder: 4 Disease Surveillance
+
+		/// NSA 2023 census count for the selected regions (all regions = 3 022 401).
+		measure 'Census Population 2023' = CALCULATE ( SUM ( 'Regional Population'[Population] ), REMOVEFILTERS ( 'Date' ), KEEPFILTERS ( 'Regional Population'[Is Census Count] = TRUE () ) )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Small-cell suppression for external sharing: counts of 1-4 are blanked to prevent re-identification.
+		measure 'Notified Cases (Suppressed)' =
+				VAR _c = [Notified Cases]
+				RETURN
+				    IF ( _c >= 1 && _c <= 4, BLANK (), _c )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Suppressed count as text: "<5" for 1-4 cases.
+		measure 'Notified Cases Label' =
+				VAR _c = [Notified Cases]
+				RETURN
+				    IF ( NOT ISBLANK ( _c ), IF ( _c >= 1 && _c <= 4, "<5", FORMAT ( _c, "#,0" ) ) )
+			displayFolder: 4 Disease Surveillance
+
+		/// Weekly reports due (facility x epi week).
+		measure 'IDSR Reports Expected' = SUM ( 'IDSR Report'[Report Expected] )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Reports received / reports expected.
+		measure 'IDSR Completeness %' = DIVIDE ( SUM ( 'IDSR Report'[Report Received] ), [IDSR Reports Expected] )
+			formatString: 0.0%
+			displayFolder: 4 Disease Surveillance
+
+		/// Reports received by Tuesday 12:00 after the epi week / reports expected.
+		measure 'IDSR Timeliness %' = DIVIDE ( SUM ( 'IDSR Report'[Report On Time] ), [IDSR Reports Expected] )
+			formatString: 0.0%
+			displayFolder: 4 Disease Surveillance
+
+		/// Rainfall total per location, averaged across the selected facility locations.
+		measure 'Rainfall (mm)' = AVERAGEX ( VALUES ( 'Facility'[Facility Code] ), CALCULATE ( SUM ( 'Weather'[Rainfall (mm)] ) ) )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Rainfall in the 28 days ending 4 weeks before the period starts (the lag used by the SARIMAX malaria model).
+		measure 'Rainfall 4-8 Weeks Earlier (mm)' =
+				VAR _start = MIN ( 'Date'[Date] )
+				RETURN
+				    IF (
+				        _start >= [First Surveillance Date] && _start <= [Last Epi Week Start] + 6,
+				        CALCULATE ( [Rainfall (mm)], DATESINPERIOD ( 'Date'[Date], _start - 29, -28, DAY ) )
+				    )
+			formatString: #,0
+			displayFolder: 4 Disease Surveillance
+
+		/// Mean daily maximum temperature.
+		measure 'Avg Max Temperature (C)' = AVERAGE ( 'Weather'[Max Temp (C)] )
+			formatString: #,0.0
+			displayFolder: 4 Disease Surveillance
+
+		/// Latest attendance date in the model (ignores all filters except RLS).
+		measure 'Last Data Date' =
+				VAR _k =
+				    CALCULATE ( MAX ( 'Attendance'[Arrival Date Key] ), REMOVEFILTERS () )
+				RETURN
+				    IF ( NOT ISBLANK ( _k ), DATE ( INT ( _k / 10000 ), MOD ( INT ( _k / 100 ), 100 ), MOD ( _k, 100 ) ) )
+			formatString: d mmm yyyy
+			displayFolder: 5 Time Intelligence
+
+		/// Monday of the first epi week with IDSR returns.
+		measure 'First Surveillance Date' =
+				VAR _k =
+				    CALCULATE ( MIN ( 'Surveillance'[Epi Week Date Key] ), REMOVEFILTERS () )
+				RETURN
+				    IF ( NOT ISBLANK ( _k ), DATE ( INT ( _k / 10000 ), MOD ( INT ( _k / 100 ), 100 ), MOD ( _k, 100 ) ) )
+			formatString: d mmm yyyy
+			displayFolder: 5 Time Intelligence
+
+		/// Monday of the latest epi week with IDSR returns.
+		measure 'Last Epi Week Start' =
+				VAR _k =
+				    CALCULATE ( MAX ( 'Surveillance'[Epi Week Date Key] ), REMOVEFILTERS () )
+				RETURN
+				    IF ( NOT ISBLANK ( _k ), DATE ( INT ( _k / 10000 ), MOD ( INT ( _k / 100 ), 100 ), MOD ( _k, 100 ) ) )
+			formatString: d mmm yyyy
+			displayFolder: 5 Time Intelligence
+
+		/// Calendar year-to-date ED attendances, no future guard (helper).
+		measure 'ED Attendances YTD Raw' = TOTALYTD ( [ED Attendances], 'Date'[Date] )
+			formatString: #,0
+			isHidden
+			displayFolder: 5 Time Intelligence
+
+		/// Year-to-date ED attendances; blank for periods after the last data date.
+		measure 'ED Attendances YTD' = IF ( MIN ( 'Date'[Date] ) <= [Last Data Date], [ED Attendances YTD Raw] )
+			formatString: #,0
+			displayFolder: 5 Time Intelligence
+
+		/// Same year-to-date window one year earlier, cut at the same day (like-for-like).
+		measure 'ED Attendances YTD PY' =
+				VAR _cutoffPY =
+				    EDATE ( [Last Data Date], -12 )
+				RETURN
+				    CALCULATE (
+				        [ED Attendances YTD Raw],
+				        SAMEPERIODLASTYEAR ( 'Date'[Date] ),
+				        KEEPFILTERS ( 'Date'[Date] <= _cutoffPY )
+				    )
+			formatString: #,0
+			displayFolder: 5 Time Intelligence
+
+		/// Year-to-date growth versus the like-for-like prior-year window.
+		measure 'ED Attendances YTD YoY %' = DIVIDE ( [ED Attendances YTD] - [ED Attendances YTD PY], [ED Attendances YTD PY] )
+			formatString: +0.0%;-0.0%;0.0%
+			displayFolder: 5 Time Intelligence
+
+		/// Seen-within-target share in the same period last year.
+		measure 'Seen Within Target % PY' = IF ( MIN ( 'Date'[Date] ) <= [Last Data Date], CALCULATE ( [Seen Within Target %], SAMEPERIODLASTYEAR ( 'Date'[Date] ) ) )
+			formatString: 0.0%
+			displayFolder: 5 Time Intelligence
+
+		/// Change versus the same period last year, in percentage points.
+		measure 'Seen Within Target Change (pp)' =
+				VAR _cur = [Seen Within Target %]
+				VAR _py = [Seen Within Target % PY]
+				RETURN
+				    IF ( NOT ISBLANK ( _cur ) && NOT ISBLANK ( _py ), ( _cur - _py ) * 100 )
+			formatString: +0.0;-0.0;0.0
+			displayFolder: 5 Time Intelligence
+
+		/// Occupancy over the trailing 12 months ending at the context end (capped at the last data date).
+		measure 'Bed Occupancy % Rolling 12M' =
+				VAR _last = [Last Data Date]
+				VAR _end =
+				    MIN ( MAX ( 'Date'[Date] ), _last )
+				RETURN
+				    IF (
+				        MIN ( 'Date'[Date] ) <= _last,
+				        CALCULATE ( [Bed Occupancy %], DATESINPERIOD ( 'Date'[Date], _end, -12, MONTH ) )
+				    )
+			formatString: 0.0%
+			displayFolder: 5 Time Intelligence
+
+		/// Malaria cases from epi week 1 of the epi year to the end of the context (capped at the last reported week).
+		measure 'Malaria Cases Epi-YTD' =
+				VAR _end =
+				    MIN ( MAX ( 'Date'[Date] ), [Last Epi Week Start] + 6 )
+				VAR _y =
+				    CALCULATE ( MAX ( 'Date'[Epi Year] ), REMOVEFILTERS ( 'Date' ), 'Date'[Date] = _end )
+				RETURN
+				    IF (
+				        MIN ( 'Date'[Date] ) <= _end,
+				        CALCULATE ( [Malaria Cases], REMOVEFILTERS ( 'Date' ), 'Date'[Epi Year] = _y, 'Date'[Date] <= _end )
+				    )
+			formatString: #,0
+			displayFolder: 5 Time Intelligence
+
+		/// Same number of epi weeks one epi year earlier (like-for-like).
+		measure 'Malaria Cases Epi-YTD PY' =
+				VAR _end =
+				    MIN ( MAX ( 'Date'[Date] ), [Last Epi Week Start] + 6 )
+				VAR _y =
+				    CALCULATE ( MAX ( 'Date'[Epi Year] ), REMOVEFILTERS ( 'Date' ), 'Date'[Date] = _end )
+				VAR _endPY = _end - 364
+				RETURN
+				    IF (
+				        MIN ( 'Date'[Date] ) <= _end,
+				        CALCULATE ( [Malaria Cases], REMOVEFILTERS ( 'Date' ), 'Date'[Epi Year] = _y - 1, 'Date'[Date] <= _endPY )
+				    )
+			formatString: #,0
+			displayFolder: 5 Time Intelligence
+
+		/// Epi-year-to-date growth versus the like-for-like prior-year window.
+		measure 'Malaria Cases Epi-YTD YoY %' = DIVIDE ( [Malaria Cases Epi-YTD] - [Malaria Cases Epi-YTD PY], [Malaria Cases Epi-YTD PY] )
+			formatString: +0.0%;-0.0%;0.0%
+			displayFolder: 5 Time Intelligence
+
+		/// Malaria cases 52 weeks (364 days) earlier: the same epi week of the previous year.
+		measure 'Malaria Cases Same Week Last Year' =
+				IF (
+				    MIN ( 'Date'[Date] ) <= [Last Epi Week Start] + 6,
+				    CALCULATE ( [Malaria Cases], DATEADD ( 'Date'[Date], -364, DAY ) )
+				)
+			formatString: #,0
+			displayFolder: 5 Time Intelligence
+
+		/// Average weekly malaria cases over the four epi weeks ending at the context end.
+		measure 'Malaria Cases 4-Week Average' =
+				VAR _end =
+				    MIN ( MAX ( 'Date'[Date] ), [Last Epi Week Start] + 6 )
+				RETURN
+				    DIVIDE ( CALCULATE ( [Malaria Cases], DATESINPERIOD ( 'Date'[Date], _end, -28, DAY ) ), 4 )
+			formatString: #,0.0
+			displayFolder: 5 Time Intelligence
+
+		/// 13-week forward forecast of North-East malaria cases (Holt-Winters ETS on log cases).
+		measure 'Forecast Cases' = CALCULATE ( SUM ( 'Malaria Forecast'[Forecast] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Forecast" ) )
+			formatString: #,0
+			displayFolder: 6 Advanced Analytics
+
+		/// Lower bound of the 80 % prediction interval.
+		measure 'Forecast Lower 80' = CALCULATE ( SUM ( 'Malaria Forecast'[Lower 80] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Forecast" ) )
+			formatString: #,0
+			displayFolder: 6 Advanced Analytics
+
+		/// Upper bound of the 80 % prediction interval.
+		measure 'Forecast Upper 80' = CALCULATE ( SUM ( 'Malaria Forecast'[Upper 80] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Forecast" ) )
+			formatString: #,0
+			displayFolder: 6 Advanced Analytics
+
+		/// Weekly North-East malaria cases the model was trained and tested on (PAS-coded attendances).
+		measure 'Model Actual Cases' = CALCULATE ( SUM ( 'Malaria Forecast'[Actual] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Actual" ) )
+			formatString: #,0
+			displayFolder: 6 Advanced Analytics
+
+		/// One-week-ahead forecasts made at each rolling origin of the back-test.
+		measure 'Backtest Forecast' = CALCULATE ( SUM ( 'Malaria Forecast'[Forecast] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Back-test (1 week ahead)" ) )
+			formatString: #,0
+			displayFolder: 6 Advanced Analytics
+
+		/// Weighted absolute percentage error of the one-week-ahead back-test forecasts.
+		measure 'Backtest WAPE % (1 Week Ahead)' =
+				VAR _rows =
+				    FILTER ( 'Malaria Forecast', 'Malaria Forecast'[Series] = "Back-test (1 week ahead)" )
+				RETURN
+				    DIVIDE (
+				        SUMX ( _rows, ABS ( 'Malaria Forecast'[Actual] - 'Malaria Forecast'[Forecast] ) ),
+				        SUMX ( _rows, ABS ( 'Malaria Forecast'[Actual] ) )
+				    )
+			formatString: 0.0%
+			displayFolder: 6 Advanced Analytics
+
+		/// Observed 30-day readmission rate in the test set (spell-weighted).
+		measure 'Readmission Observed %' = DIVIDE ( SUMX ( 'Readmission Deciles', 'Readmission Deciles'[Observed Rate] * 'Readmission Deciles'[Spells] ), SUM ( 'Readmission Deciles'[Spells] ) )
+			formatString: 0.0%
+			displayFolder: 6 Advanced Analytics
+
+		/// Mean predicted readmission probability (spell-weighted) - compare with observed for calibration.
+		measure 'Readmission Predicted %' =
+				DIVIDE (
+				    SUMX ( 'Readmission Deciles', 'Readmission Deciles'[Mean Predicted] * 'Readmission Deciles'[Spells] ),
+				    SUM ( 'Readmission Deciles'[Spells] )
+				)
+			formatString: 0.0%
+			displayFolder: 6 Advanced Analytics
+
+		/// Share of all readmissions that fall in the two highest risk deciles (who to call after discharge).
+		measure 'Top-20% Risk Capture %' =
+				VAR _all = SUMX ( 'Readmission Deciles', 'Readmission Deciles'[Observed Rate] * 'Readmission Deciles'[Spells] )
+				VAR _top =
+				    CALCULATE ( SUMX ( 'Readmission Deciles', 'Readmission Deciles'[Observed Rate] * 'Readmission Deciles'[Spells] ), KEEPFILTERS ( 'Readmission Deciles'[Risk Decile] >= 9 ) )
+				RETURN
+				    DIVIDE ( _top, _all )
+			formatString: 0.0%
+			displayFolder: 6 Advanced Analytics
+
+		/// Odds ratio of a readmission driver (logistic regression, reference coding).
+		measure 'Odds Ratio' = AVERAGE ( 'Readmission Drivers'[Odds Ratio Value] )
+			formatString: #,0.00
+			displayFolder: 6 Advanced Analytics
+
+		/// % change in door-to-doctor time associated with the driver (OLS on log waiting time).
+		measure 'Wait Effect %' = DIVIDE ( AVERAGE ( 'ED Wait Drivers'[Effect %] ), 100 )
+			formatString: +0.0%;-0.0%;0.0%
+			displayFolder: 6 Advanced Analytics
+
+		/// Wait effect of the drivers management can act on (case-mix controls such as triage category excluded).
+		measure 'Wait Effect % (Operational)' = CALCULATE ( [Wait Effect %], KEEPFILTERS ( LEFT ( 'ED Wait Drivers'[Driver], 6 ) <> "Triage" ) )
+			formatString: +0.0%;-0.0%;0.0%
+			displayFolder: 6 Advanced Analytics
+
+		/// Lower 95 % confidence limit of the effect.
+		measure 'Wait Effect Lower 95%' = DIVIDE ( AVERAGE ( 'ED Wait Drivers'[CI Low %] ), 100 )
+			formatString: +0.0%;-0.0%;0.0%
+			displayFolder: 6 Advanced Analytics
+
+		/// Upper 95 % confidence limit of the effect.
+		measure 'Wait Effect Upper 95%' = DIVIDE ( AVERAGE ( 'ED Wait Drivers'[CI High %] ), 100 )
+			formatString: +0.0%;-0.0%;0.0%
+			displayFolder: 6 Advanced Analytics
+
+		/// Facility-condition-weeks flagged by the selected detection method(s).
+		measure 'Outbreak Alerts' = COUNTROWS ( 'Outbreak Alerts' )
+			formatString: #,0
+			displayFolder: 6 Advanced Analytics
+
+		/// Share of alerts that fall in weeks of a known (injected) outbreak - a positive-predictive-value proxy.
+		measure 'Alerts in Known Outbreak Weeks %' = DIVIDE ( CALCULATE ( [Outbreak Alerts], KEEPFILTERS ( 'Outbreak Alerts'[Is Known Outbreak] = TRUE () ) ), [Outbreak Alerts] )
+			formatString: 0.0%
+			displayFolder: 6 Advanced Analytics
+
+		/// Data-quality issues logged by the ETL rules (all batches).
+		measure 'DQ Issues Logged' = SUM ( 'DQ Summary'[Issues] )
+			formatString: #,0
+			displayFolder: 7 Data Quality & Security
+
+		/// Rules that logged at least one issue.
+		measure 'DQ Rules Triggered' = CALCULATE ( COUNTROWS ( 'DQ Summary' ), KEEPFILTERS ( 'DQ Summary'[Issues] > 0 ) )
+			formatString: #,0
+			displayFolder: 7 Data Quality & Security
+
+		/// Share of reconciliation checks of the latest batch with status PASS.
+		measure 'Reconciliation Pass %' = DIVIDE ( CALCULATE ( COUNTROWS ( 'Reconciliation' ), KEEPFILTERS ( 'Reconciliation'[Status] = "PASS" ) ), COUNTROWS ( 'Reconciliation' ) )
+			formatString: 0.0%
+			displayFolder: 7 Data Quality & Security
+
+		/// Checks with status WARN (explained differences).
+		measure 'Reconciliation Warnings' = CALCULATE ( COUNTROWS ( 'Reconciliation' ), KEEPFILTERS ( 'Reconciliation'[Status] = "WARN" ) )
+			formatString: #,0
+			displayFolder: 7 Data Quality & Security
+
+		/// Ward-days whose census was imputed from PAS spells (missing ward return, rule WC01).
+		measure 'Imputed Census Days %' = DIVIDE ( CALCULATE ( COUNTROWS ( 'Ward Census' ), KEEPFILTERS ( 'Ward Census'[Census Source] = "Imputed from PAS" ) ), COUNTROWS ( 'Ward Census' ) )
+			formatString: 0.00%
+			displayFolder: 7 Data Quality & Security
+
+		/// Attendances without a valid ICD-10 code (rules EN07-EN08).
+		measure 'Uncoded Diagnosis %' = DIVIDE ( CALCULATE ( [Attendances], KEEPFILTERS ( 'Diagnosis'[ICD-10 Code] = "UNK" ) ), [Attendances] )
+			formatString: 0.00%
+			displayFolder: 7 Data Quality & Security
+
+		/// Attendances without a patient identifier (rule EN11).
+		measure 'Unidentified Attendances' = CALCULATE ( [Attendances], KEEPFILTERS ( 'Attendance'[Patient Durable Key] < 0 ) )
+			formatString: #,0
+			displayFolder: 7 Data Quality & Security
+
+		/// Spells still open more than 60 days after admission (probable missing discharge, rule AD06).
+		measure 'Open Spells Over 60 Days' = SUM ( 'Admission'[Is Open Over 60d] )
+			formatString: #,0
+			displayFolder: 7 Data Quality & Security
+
+		/// Facilities visible to the current user (RLS test).
+		measure 'Visible Facilities' = CALCULATE ( DISTINCTCOUNT ( 'Facility'[Facility Code] ), KEEPFILTERS ( 'Facility'[Facility Key] > 0 ) )
+			formatString: #,0
+			displayFolder: 7 Data Quality & Security
+
+		/// User principal name evaluated by row-level security.
+		measure 'Current User' = USERPRINCIPALNAME ()
+			displayFolder: 7 Data Quality & Security
+
+		column 'Measure Group'
+			isHidden
+			isNameInferred
+			sourceColumn: [Measure Group]
+
+		partition _Measures = calculated
+			mode: import
+			source = ROW ( "Measure Group", "Measures" )
+
+
+	relationship 'Attendance[Arrival Date Key] -> Date'
+		fromColumn: Attendance.'Arrival Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Attendance[Arrival Hour Key] -> Hour'
+		fromColumn: Attendance.'Arrival Hour Key'
+		toColumn: Hour.'Hour Key'
+
+	relationship 'Attendance[Care Unit Key] -> Care Unit'
+		fromColumn: Attendance.'Care Unit Key'
+		toColumn: 'Care Unit'.'Care Unit Key'
+
+	relationship 'Attendance[Patient Key] -> Patient'
+		fromColumn: Attendance.'Patient Key'
+		toColumn: Patient.'Patient Key'
+
+	relationship 'Attendance[Diagnosis Key] -> Diagnosis'
+		fromColumn: Attendance.'Diagnosis Key'
+		toColumn: Diagnosis.'Diagnosis Key'
+
+	relationship 'Attendance[Triage Key] -> Triage'
+		fromColumn: Attendance.'Triage Key'
+		toColumn: Triage.'Triage Key'
+
+	relationship 'Attendance[Encounter Profile Key] -> Encounter Profile'
+		fromColumn: Attendance.'Encounter Profile Key'
+		toColumn: 'Encounter Profile'.'Encounter Profile Key'
+
+	relationship 'Attendance[Age Band Key] -> Age Band'
+		fromColumn: Attendance.'Age Band Key'
+		toColumn: 'Age Band'.'Age Band Key'
+
+	relationship 'Admission[Admission Date Key] -> Date'
+		fromColumn: Admission.'Admission Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Admission[Discharge Date Key] -> Date'
+		isActive: false
+		fromColumn: Admission.'Discharge Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Admission[Care Unit Key] -> Care Unit'
+		fromColumn: Admission.'Care Unit Key'
+		toColumn: 'Care Unit'.'Care Unit Key'
+
+	relationship 'Admission[Patient Key] -> Patient'
+		fromColumn: Admission.'Patient Key'
+		toColumn: Patient.'Patient Key'
+
+	relationship 'Admission[Diagnosis Key] -> Diagnosis'
+		fromColumn: Admission.'Diagnosis Key'
+		toColumn: Diagnosis.'Diagnosis Key'
+
+	relationship 'Admission[Admission Profile Key] -> Admission Profile'
+		fromColumn: Admission.'Admission Profile Key'
+		toColumn: 'Admission Profile'.'Admission Profile Key'
+
+	relationship 'Admission[Age Band Key] -> Age Band'
+		fromColumn: Admission.'Age Band Key'
+		toColumn: 'Age Band'.'Age Band Key'
+
+	relationship 'Ward Census[Census Date Key] -> Date'
+		fromColumn: 'Ward Census'.'Census Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Ward Census[Care Unit Key] -> Care Unit'
+		fromColumn: 'Ward Census'.'Care Unit Key'
+		toColumn: 'Care Unit'.'Care Unit Key'
+
+	relationship 'Staff Roster[Roster Date Key] -> Date'
+		fromColumn: 'Staff Roster'.'Roster Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Staff Roster[Care Unit Key] -> Care Unit'
+		fromColumn: 'Staff Roster'.'Care Unit Key'
+		toColumn: 'Care Unit'.'Care Unit Key'
+
+	relationship 'Staff Roster[Shift Key] -> Shift'
+		fromColumn: 'Staff Roster'.'Shift Key'
+		toColumn: Shift.'Shift Key'
+
+	relationship 'Surveillance[Epi Week Date Key] -> Date'
+		fromColumn: Surveillance.'Epi Week Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Surveillance[Facility Key] -> Facility'
+		fromColumn: Surveillance.'Facility Key'
+		toColumn: Facility.'Facility Key'
+
+	relationship 'Surveillance[Condition Key] -> Condition'
+		fromColumn: Surveillance.'Condition Key'
+		toColumn: Condition.'Condition Key'
+
+	relationship 'IDSR Report[Epi Week Date Key] -> Date'
+		fromColumn: 'IDSR Report'.'Epi Week Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'IDSR Report[Facility Key] -> Facility'
+		fromColumn: 'IDSR Report'.'Facility Key'
+		toColumn: Facility.'Facility Key'
+
+	relationship 'Regional Population[Year Date Key] -> Date'
+		fromColumn: 'Regional Population'.'Year Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Regional Population[Region Key] -> Region'
+		fromColumn: 'Regional Population'.'Region Key'
+		toColumn: Region.'Region Key'
+
+	relationship 'Catchment Population[Year Date Key] -> Date'
+		fromColumn: 'Catchment Population'.'Year Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Catchment Population[Facility Key] -> Facility'
+		fromColumn: 'Catchment Population'.'Facility Key'
+		toColumn: Facility.'Facility Key'
+
+	relationship 'Weather[Weather Date Key] -> Date'
+		fromColumn: Weather.'Weather Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Weather[Facility Key] -> Facility'
+		fromColumn: Weather.'Facility Key'
+		toColumn: Facility.'Facility Key'
+
+	relationship 'Malaria Forecast[Week Date Key] -> Date'
+		fromColumn: 'Malaria Forecast'.'Week Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Outbreak Alerts[Week Date Key] -> Date'
+		fromColumn: 'Outbreak Alerts'.'Week Date Key'
+		toColumn: Date.'Date Key'
+
+	relationship 'Outbreak Alerts[Facility Key] -> Facility'
+		fromColumn: 'Outbreak Alerts'.'Facility Key'
+		toColumn: Facility.'Facility Key'
+
+	relationship 'Outbreak Alerts[Condition Key] -> Condition'
+		fromColumn: 'Outbreak Alerts'.'Condition Key'
+		toColumn: Condition.'Condition Key'
+
+	relationship 'Care Unit[Facility Key] -> Facility'
+		fromColumn: 'Care Unit'.'Facility Key'
+		toColumn: Facility.'Facility Key'
+
+	relationship 'Facility[Region Key] -> Region'
+		fromColumn: Facility.'Region Key'
+		toColumn: Region.'Region Key'
+
+	relationship 'Diagnosis[Condition Key] -> Condition'
+		fromColumn: Diagnosis.'Condition Key'
+		toColumn: Condition.'Condition Key'
+
+
+	/// Unrestricted read for the executive committee, the CEO and the BI team.
+	role 'Executive (all facilities)'
+		modelPermission: read
+
+
+	/// Dynamic RLS: users see the facilities mapped to their UPN in sec.user_facility_access (and every ward, attendance, spell, roster, census and surveillance row of those facilities). They can read only their own mapping rows.
+	role 'Facility Manager (dynamic)'
+		modelPermission: read
+
+		tablePermission Facility =
+				'Facility'[Facility Key]
+				    IN CALCULATETABLE (
+				        VALUES ( 'Security User Facility'[Facility Key] ),
+				        'Security User Facility'[User Principal Name] = LOWER ( USERPRINCIPALNAME () )
+				    )
+
+		tablePermission 'Security User Facility' = 'Security User Facility'[User Principal Name] = LOWER ( USERPRINCIPALNAME () )
+
+
+	/// Static RLS: the North-East malaria task team sees Zambezi and the two Kavango regions only.
+	role 'North-East Zone (static)'
+		modelPermission: read
+
+		tablePermission Region = 'Region'[Zone] = "North-East"
+
+
+	/// Object-level security for the MoHSS surveillance unit: patient-level tables (attendances, spells, patients, model outputs on patients, the access list) are invisible - not just empty. Aggregated IDSR, population and weather data only.
+	role 'Surveillance Partner (aggregate only)'
+		modelPermission: read
+
+		tablePermission Attendance
+			metadataPermission: none
+
+		tablePermission Admission
+			metadataPermission: none
+
+		tablePermission Patient
+			metadataPermission: none
+
+		tablePermission 'Readmission Deciles'
+			metadataPermission: none
+
+		tablePermission 'Readmission Drivers'
+			metadataPermission: none
+
+		tablePermission 'Security User Facility'
+			metadataPermission: none
+

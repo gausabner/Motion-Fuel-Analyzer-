@@ -1,0 +1,68 @@
+/// Data-quality rule catalogue with the number of issues logged (counts only, no record keys); disconnected.
+table 'DQ Summary'
+
+	/// Data-quality rule identifier (catalogue audit.dq_rule).
+	column 'Rule Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: rule_code
+
+	/// What the rule detects.
+	column Rule
+		dataType: string
+		summarizeBy: none
+		sourceColumn: rule_name
+
+	/// Completeness, uniqueness, validity, accuracy, consistency or timeliness.
+	column 'DQ Dimension'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: dq_dimension
+
+	/// Source file or table the rule checks.
+	column 'Source Object'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: source_object
+
+	/// REJECT, CORRECT, MAP, IMPUTE, FLAG, KEEP LATEST or INFER.
+	column Action
+		dataType: string
+		summarizeBy: none
+		sourceColumn: action
+
+	/// Data steward accountable for the rule and its issue queue.
+	column 'Owner Role'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: owner_role
+
+	column Issues
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: issues
+
+	/// Latest load batch that logged an issue for the rule.
+	column 'Last Batch'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: last_batch
+
+	partition 'DQ Summary' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dq_summary.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dq_summary"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"rule_code", type text}, {"rule_name", type text}, {"dq_dimension", type text}, {"source_object", type text}, {"action", type text}, {"owner_role", type text}, {"issues", Int64.Type}, {"last_batch", Int64.Type}}, "en-US")
+				in
+				    Typed
+

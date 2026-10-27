@@ -1,0 +1,62 @@
+/// North-East (Rundu, Katima Mulilo, Nkurenkuru) weekly malaria: actuals, rolling-origin back-test and 13-week forecast (03_analytics/forecasting.py).
+table 'Malaria Forecast'
+
+	column 'Week Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: week_date_key
+
+	/// Actual, Back-test (1 week ahead) or Forecast.
+	column Series
+		dataType: string
+		summarizeBy: none
+		sourceColumn: kind
+
+	/// Forecasting model published to Power BI: the best of three by rolling-origin WAPE.
+	column Model
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model
+
+	column Actual
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: actual
+
+	column Forecast
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: forecast
+
+	column 'Lower 80'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: lo
+
+	column 'Upper 80'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: hi
+
+	partition 'Malaria Forecast' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("analytics_malaria_forecast.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "analytics_malaria_forecast"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"week_date_key", Int64.Type}, {"kind", type text}, {"model", type text}, {"actual", type number}, {"forecast", type number}, {"lo", type number}, {"hi", type number}}, "en-US")
+				in
+				    Typed
+

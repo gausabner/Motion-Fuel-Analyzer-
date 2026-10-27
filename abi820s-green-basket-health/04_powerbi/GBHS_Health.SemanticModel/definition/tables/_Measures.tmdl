@@ -1,0 +1,689 @@
+/// All business measures, organised in display folders.
+table _Measures
+
+	/// KPI target: at least 80 % of triaged ED patients seen within their SATS target.
+	measure 'Target Seen Within Target %' = IF ( NOT ISBLANK ( [Seen Within Target %] ), 0.8 )
+		formatString: 0.0%
+		displayFolder: 0 Targets & Labels
+
+	/// KPI ceiling: no more than 3 % of ED patients leave without being seen.
+	measure 'Target LWBS Rate %' = IF ( NOT ISBLANK ( [LWBS Rate %] ), 0.03 )
+		formatString: 0.0%
+		displayFolder: 0 Targets & Labels
+
+	/// KPI ceiling: 85 % average bed occupancy (safe-occupancy threshold).
+	measure 'Target Bed Occupancy %' = IF ( NOT ISBLANK ( [Bed Occupancy %] ), 0.85 )
+		formatString: 0.0%
+		displayFolder: 0 Targets & Labels
+
+	/// KPI ceiling: 12 % emergency readmissions within 30 days.
+	measure 'Target Readmission Rate 30d %' = IF ( NOT ISBLANK ( [Readmission Rate 30d %] ), 0.12 )
+		formatString: 0.0%
+		displayFolder: 0 Targets & Labels
+
+	/// KPI target: 80 % completeness and 80 % timeliness of weekly IDSR reports (WHO AFRO IDSR).
+	measure 'Target IDSR Reporting %' = IF ( NOT ISBLANK ( [IDSR Completeness %] ), 0.8 )
+		formatString: 0.0%
+		displayFolder: 0 Targets & Labels
+
+	/// Text status with symbol (never colour alone) for the seen-within-target KPI.
+	measure 'ED Target Status' =
+			VAR _v = [Seen Within Target %]
+			RETURN
+			    IF ( NOT ISBLANK ( _v ), IF ( _v >= 0.8, "▲ On target (80 %)", "▼ Below target (80 %)" ) )
+		displayFolder: 0 Targets & Labels
+
+	/// Text status with symbol for bed occupancy against the 85 % ceiling.
+	measure 'Occupancy Status' =
+			VAR _v = [Bed Occupancy %]
+			RETURN
+			    IF ( NOT ISBLANK ( _v ), IF ( _v <= 0.85, "● Within 85 % ceiling", "▲ Above 85 % ceiling" ) )
+		displayFolder: 0 Targets & Labels
+
+	/// Freshness label for page headers (patient-flow data).
+	measure 'Data As Of' = "Data to " & FORMAT ( [Last Data Date], "d mmm yyyy" )
+		displayFolder: 0 Targets & Labels
+
+	/// Freshness label for the surveillance page (last epi week with IDSR returns).
+	measure 'Surveillance As Of' =
+			VAR _d = [Last Epi Week Start]
+			RETURN
+			    "IDSR returns to epi week " & CALCULATE ( SELECTEDVALUE ( 'Date'[Epi Week Label] ), REMOVEFILTERS ( 'Date' ), 'Date'[Date] = _d )
+		displayFolder: 0 Targets & Labels
+
+	/// Dynamic title of the drill-through page.
+	measure 'Facility Detail Title' = SELECTEDVALUE ( 'Facility'[Facility], "All facilities" ) & " - facility detail"
+		displayFolder: 0 Targets & Labels
+
+	/// All ED and clinic attendances (one row per attendance).
+	measure Attendances = SUM ( 'Attendance'[Encounter Count] )
+		formatString: #,0
+		displayFolder: 1 Patient Flow
+
+	/// Emergency-department attendances (CALCULATE with filter modification on the department).
+	measure 'ED Attendances' = CALCULATE ( [Attendances], KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+		formatString: #,0
+		displayFolder: 1 Patient Flow
+
+	/// Outpatient-clinic attendances.
+	measure 'Clinic Attendances' = CALCULATE ( [Attendances], KEEPFILTERS ( 'Encounter Profile'[Department Code] = "OPD" ) )
+		formatString: #,0
+		displayFolder: 1 Patient Flow
+
+	/// Share of triaged ED patients seen by a doctor within the SATS compliance time of their category (RED 5, ORANGE 10, YELLOW 60, GREEN 240 minutes).
+	measure 'Seen Within Target %' = DIVIDE ( SUM ( 'Attendance'[Seen Within Target] ), COUNT ( 'Attendance'[Seen Within Target] ) )
+		formatString: 0.0%
+		displayFolder: 1 Patient Flow
+
+	/// Median minutes from ED arrival to first doctor assessment (patients seen).
+	measure 'Median Door-to-Doctor (min)' = CALCULATE ( MEDIAN ( 'Attendance'[Door to Doctor (min)] ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+		formatString: #,0
+		displayFolder: 1 Patient Flow
+
+	/// 90th percentile of ED door-to-doctor minutes (the long tail that drives complaints and LWBS).
+	measure 'P90 Door-to-Doctor (min)' = CALCULATE ( PERCENTILE.INC ( 'Attendance'[Door to Doctor (min)], 0.9 ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+		formatString: #,0
+		displayFolder: 1 Patient Flow
+
+	/// Median minutes from ED arrival to triage.
+	measure 'Median Wait to Triage (min)' = CALCULATE ( MEDIAN ( 'Attendance'[Wait to Triage (min)] ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+		formatString: #,0
+		displayFolder: 1 Patient Flow
+
+	/// Share of ED attendances that left without being seen.
+	measure 'LWBS Rate %' = CALCULATE ( DIVIDE ( SUM ( 'Attendance'[Is LWBS] ), SUM ( 'Attendance'[Encounter Count] ) ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+		formatString: 0.0%
+		displayFolder: 1 Patient Flow
+
+	/// Share of ED attendances admitted to a ward (conversion rate).
+	measure 'ED Admission Rate %' = CALCULATE ( DIVIDE ( SUM ( 'Attendance'[Is Admitted] ), SUM ( 'Attendance'[Encounter Count] ) ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+		formatString: 0.0%
+		displayFolder: 1 Patient Flow
+
+	/// Share of ED attendances with a valid length of stay that left the department within 4 hours.
+	measure 'ED Stays Within 4 Hours %' =
+			VAR _within =
+			    CALCULATE (
+			        COUNTROWS ( 'Attendance' ),
+			        KEEPFILTERS ( NOT ISBLANK ( 'Attendance'[ED Length of Stay (min)] ) && 'Attendance'[ED Length of Stay (min)] <= 240 ),
+			        KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" )
+			    )
+			VAR _known =
+			    CALCULATE ( COUNT ( 'Attendance'[ED Length of Stay (min)] ), KEEPFILTERS ( 'Encounter Profile'[Department Code] = "ED" ) )
+			RETURN
+			    DIVIDE ( _within, _known )
+		formatString: 0.0%
+		displayFolder: 1 Patient Flow
+
+	/// Identified patients with an attendance (durable key, stable across SCD2 versions; unidentified attendances excluded).
+	measure 'Distinct Patients' = CALCULATE ( DISTINCTCOUNT ( 'Attendance'[Patient Durable Key] ), KEEPFILTERS ( 'Attendance'[Patient Durable Key] > 0 ) )
+		formatString: #,0
+		displayFolder: 1 Patient Flow
+
+	/// Identified attendances per distinct patient (frequent-attender signal).
+	measure 'Attendances per Patient' = DIVIDE ( CALCULATE ( [Attendances], KEEPFILTERS ( 'Attendance'[Patient Durable Key] > 0 ) ), [Distinct Patients] )
+		formatString: #,0.00
+		displayFolder: 1 Patient Flow
+
+	/// Inpatient spells by admission date.
+	measure Admissions = SUM ( 'Admission'[Admission Count] )
+		formatString: #,0
+		displayFolder: 2 Inpatient Care
+
+	/// Share of admissions that were unplanned (via ED, direct or transfer in).
+	measure 'Emergency Admission %' = DIVIDE ( CALCULATE ( [Admissions], KEEPFILTERS ( 'Admission Profile'[Is Emergency Admission] = TRUE () ) ), [Admissions] )
+		formatString: 0.0%
+		displayFolder: 2 Inpatient Care
+
+	/// Identified patients admitted (durable key).
+	measure 'Distinct Inpatients' = CALCULATE ( DISTINCTCOUNT ( 'Admission'[Patient Durable Key] ), KEEPFILTERS ( 'Admission'[Patient Durable Key] > 0 ) )
+		formatString: #,0
+		displayFolder: 2 Inpatient Care
+
+	/// Spells discharged, by DISCHARGE date (activates the inactive role-playing relationship).
+	measure Discharges = CALCULATE ( SUM ( 'Admission'[Is Discharged] ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ) )
+		formatString: #,0
+		displayFolder: 2 Inpatient Care
+
+	/// Average length of stay (midnights) of spells discharged in the period.
+	measure 'ALOS (days)' = CALCULATE ( AVERAGE ( 'Admission'[LOS (days)] ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ), KEEPFILTERS ( 'Admission'[Is Discharged] = 1 ) )
+		formatString: #,0.00
+		displayFolder: 2 Inpatient Care
+
+	/// Deaths in hospital as a share of discharges (by discharge date).
+	measure 'In-Hospital Mortality %' = CALCULATE ( DIVIDE ( SUM ( 'Admission'[Is Died] ), SUM ( 'Admission'[Is Discharged] ) ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ) )
+		formatString: 0.00%
+		displayFolder: 2 Inpatient Care
+
+	/// Eligible spells (alive home/AMA, not maternity, 30 days follow-up) followed by an emergency readmission within 30 days, by discharge date of the index spell.
+	measure 'Readmission Rate 30d %' = CALCULATE ( DIVIDE ( SUM ( 'Admission'[Readmitted Within 30d] ), SUM ( 'Admission'[Readmission Eligible] ) ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ) )
+		formatString: 0.0%
+		displayFolder: 2 Inpatient Care
+
+	/// Share of discharges completed before 12:00 (patient-flow KPI: frees beds for the afternoon ED peak).
+	measure 'Discharged Before Noon %' = CALCULATE ( AVERAGE ( 'Admission'[Discharged Before Noon] ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ), KEEPFILTERS ( 'Admission'[Is Discharged] = 1 ) )
+		formatString: 0.0%
+		displayFolder: 2 Inpatient Care
+
+	/// Share of discharges on Saturday or Sunday.
+	measure 'Weekend Discharge %' = CALCULATE ( AVERAGE ( 'Admission'[Is Weekend Discharge] ), USERELATIONSHIP ( 'Admission'[Discharge Date Key], 'Date'[Date Key] ), KEEPFILTERS ( 'Admission'[Is Discharged] = 1 ) )
+		formatString: 0.0%
+		displayFolder: 2 Inpatient Care
+
+	/// Spells admitted in the period and not yet discharged at the extract.
+	measure 'Open Spells' = CALCULATE ( [Admissions], KEEPFILTERS ( 'Admission'[Is Discharged] = 0 ) )
+		formatString: #,0
+		displayFolder: 2 Inpatient Care
+
+	/// Occupied bed-days: midnight census summed over days.
+	measure 'Patient Days' = SUM ( 'Ward Census'[Occupied Beds] )
+		formatString: #,0
+		displayFolder: 3 Resource Utilisation
+
+	/// Open beds summed over days (complement minus closed beds).
+	measure 'Available Bed Days' = SUM ( 'Ward Census'[Beds Available] )
+		formatString: #,0
+		displayFolder: 3 Resource Utilisation
+
+	/// Patient days / available bed days.
+	measure 'Bed Occupancy %' = DIVIDE ( [Patient Days], [Available Bed Days] )
+		formatString: 0.0%
+		displayFolder: 3 Resource Utilisation
+
+	/// Average number of occupied beds per day (semi-additive: summed over wards, averaged over days).
+	measure 'Average Daily Census' = AVERAGEX ( VALUES ( 'Date'[Date] ), CALCULATE ( SUM ( 'Ward Census'[Occupied Beds] ) ) )
+		formatString: #,0.0
+		displayFolder: 3 Resource Utilisation
+
+	/// Occupied beds on the last census date in the period, across the selected wards (semi-additive closing balance).
+	measure 'Occupied Beds (Latest Day)' =
+			VAR _d =
+			    CALCULATE (
+			        MAX ( 'Ward Census'[Census Date Key] ),
+			        REMOVEFILTERS ( 'Care Unit' ), REMOVEFILTERS ( 'Facility' ), REMOVEFILTERS ( 'Region' )
+			    )
+			RETURN
+			    CALCULATE ( SUM ( 'Ward Census'[Occupied Beds] ), 'Ward Census'[Census Date Key] = _d )
+		formatString: #,0
+		displayFolder: 3 Resource Utilisation
+
+	/// Open beds on the last census date in the period.
+	measure 'Beds Available (Latest Day)' =
+			VAR _d =
+			    CALCULATE (
+			        MAX ( 'Ward Census'[Census Date Key] ),
+			        REMOVEFILTERS ( 'Care Unit' ), REMOVEFILTERS ( 'Facility' ), REMOVEFILTERS ( 'Region' )
+			    )
+			RETURN
+			    CALCULATE ( SUM ( 'Ward Census'[Beds Available] ), 'Ward Census'[Census Date Key] = _d )
+		formatString: #,0
+		displayFolder: 3 Resource Utilisation
+
+	/// Occupancy on the last census date in the period.
+	measure 'Bed Occupancy % (Latest Day)' = DIVIDE ( [Occupied Beds (Latest Day)], [Beds Available (Latest Day)] )
+		formatString: 0.0%
+		displayFolder: 3 Resource Utilisation
+
+	/// Nursing hours worked (registered + enrolled).
+	measure 'Nurse Hours' = SUM ( 'Staff Roster'[Nurse Hours] )
+		formatString: #,0
+		displayFolder: 3 Resource Utilisation
+
+	/// Nursing hours per patient day on inpatient wards (drill-across: e-roster x ward census through Date and Care Unit).
+	measure NHPPD = DIVIDE ( CALCULATE ( [Nurse Hours], KEEPFILTERS ( 'Care Unit'[Unit Type] = "Inpatient ward" ) ), [Patient Days] )
+		formatString: #,0.00
+		displayFolder: 3 Resource Utilisation
+
+	/// Overtime nursing hours as a share of nursing hours worked.
+	measure 'Overtime %' = DIVIDE ( SUM ( 'Staff Roster'[Overtime Hours] ), [Nurse Hours] )
+		formatString: 0.0%
+		displayFolder: 3 Resource Utilisation
+
+	/// Agency nursing hours as a share of nursing hours worked.
+	measure 'Agency %' = DIVIDE ( SUM ( 'Staff Roster'[Agency Hours] ), [Nurse Hours] )
+		formatString: 0.0%
+		displayFolder: 3 Resource Utilisation
+
+	/// Nursing hours worked as a share of the approved roster.
+	measure 'Roster Fill %' = DIVIDE ( [Nurse Hours], SUM ( 'Staff Roster'[Planned Nurse Hours] ) )
+		formatString: 0.0%
+		displayFolder: 3 Resource Utilisation
+
+	/// Rostered hours lost to sick leave.
+	measure 'Sick Leave %' = DIVIDE ( SUM ( 'Staff Roster'[Sick Leave Hours] ), SUM ( 'Staff Roster'[Planned Nurse Hours] ) )
+		formatString: 0.0%
+		displayFolder: 3 Resource Utilisation
+
+	/// Doctor-shifts worked in the emergency departments.
+	measure 'ED Doctor Shifts' = CALCULATE ( SUM ( 'Staff Roster'[Doctors on Duty] ), KEEPFILTERS ( 'Care Unit'[Unit Type] = "Emergency department" ) )
+		formatString: #,0
+		displayFolder: 3 Resource Utilisation
+
+	/// ED attendances per doctor-shift (drill-across: attendances x e-roster) - the strongest driver of waiting time.
+	measure 'ED Arrivals per Doctor Shift' = DIVIDE ( [ED Attendances], [ED Doctor Shifts] )
+		formatString: #,0.0
+		displayFolder: 3 Resource Utilisation
+
+	/// Cases reported in the weekly IDSR returns.
+	measure 'Notified Cases' = SUM ( 'Surveillance'[Cases Total] )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Deaths reported in the weekly IDSR returns.
+	measure 'Notified Deaths' = SUM ( 'Surveillance'[Deaths Total] )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Notified deaths / notified cases.
+	measure 'Case Fatality Rate %' = DIVIDE ( [Notified Deaths], [Notified Cases] )
+		formatString: 0.00%
+		displayFolder: 4 Disease Surveillance
+
+	/// Share of notified cases in children under five.
+	measure 'Under-5 Share of Cases %' = DIVIDE ( SUM ( 'Surveillance'[Cases Under 5] ), [Notified Cases] )
+		formatString: 0.0%
+		displayFolder: 4 Disease Surveillance
+
+	/// Confirmed malaria cases notified (IDSR condition MAL).
+	measure 'Malaria Cases' = CALCULATE ( [Notified Cases], KEEPFILTERS ( 'Condition'[Condition Code] = "MAL" ) )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Malaria deaths notified.
+	measure 'Malaria Deaths' = CALCULATE ( [Notified Deaths], KEEPFILTERS ( 'Condition'[Condition Code] = "MAL" ) )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Positive malaria tests (RDT/microscopy) / tests done.
+	measure 'Malaria Test Positivity %' = DIVIDE ( SUM ( 'Surveillance'[Tests Positive] ), SUM ( 'Surveillance'[Tests Done] ) )
+		formatString: 0.0%
+		displayFolder: 4 Disease Surveillance
+
+	/// Person-time at risk in the period: catchment population of each epi year x days of that year in context / 365, within the surveillance window.
+	measure 'Catchment Person-Years' =
+			VAR _first = [First Surveillance Date]
+			VAR _last = [Last Epi Week Start] + 6
+			RETURN
+			    SUMX (
+			        VALUES ( 'Date'[Epi Year] ),
+			        VAR _y = 'Date'[Epi Year]
+			        VAR _days =
+			            CALCULATE ( COUNTROWS ( 'Date' ), KEEPFILTERS ( 'Date'[Date] >= _first && 'Date'[Date] <= _last ) )
+			        VAR _pop =
+			            CALCULATE (
+			                SUM ( 'Catchment Population'[Catchment Population] ),
+			                REMOVEFILTERS ( 'Date' ),
+			                'Date'[Calendar Year] = _y
+			            )
+			        RETURN
+			            DIVIDE ( _pop * _days, 365 )
+			    )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Average catchment population over the period (NSA regional population x facility catchment share; time-weighted across epi years).
+	measure 'Catchment Population' =
+			VAR _first = [First Surveillance Date]
+			VAR _last = [Last Epi Week Start] + 6
+			VAR _days =
+			    CALCULATE ( COUNTROWS ( 'Date' ), KEEPFILTERS ( 'Date'[Date] >= _first && 'Date'[Date] <= _last ) )
+			RETURN
+			    DIVIDE ( [Catchment Person-Years] * 365, _days )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Malaria cases per 100 000 catchment population in the selected period (period incidence; equals the OLAP pivot by epi year).
+	measure 'Malaria Incidence per 100k' = DIVIDE ( [Malaria Cases] * 100000, [Catchment Population] )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Annualised malaria incidence: cases per 1 000 person-years at risk (comparable across periods of different length).
+	measure 'Malaria Incidence per 1,000 PY' = DIVIDE ( [Malaria Cases] * 1000, [Catchment Person-Years] )
+		formatString: #,0.0
+		displayFolder: 4 Disease Surveillance
+
+	/// NSA 2023 census count for the selected regions (all regions = 3 022 401).
+	measure 'Census Population 2023' = CALCULATE ( SUM ( 'Regional Population'[Population] ), REMOVEFILTERS ( 'Date' ), KEEPFILTERS ( 'Regional Population'[Is Census Count] = TRUE () ) )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Small-cell suppression for external sharing: counts of 1-4 are blanked to prevent re-identification.
+	measure 'Notified Cases (Suppressed)' =
+			VAR _c = [Notified Cases]
+			RETURN
+			    IF ( _c >= 1 && _c <= 4, BLANK (), _c )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Suppressed count as text: "<5" for 1-4 cases.
+	measure 'Notified Cases Label' =
+			VAR _c = [Notified Cases]
+			RETURN
+			    IF ( NOT ISBLANK ( _c ), IF ( _c >= 1 && _c <= 4, "<5", FORMAT ( _c, "#,0" ) ) )
+		displayFolder: 4 Disease Surveillance
+
+	/// Weekly reports due (facility x epi week).
+	measure 'IDSR Reports Expected' = SUM ( 'IDSR Report'[Report Expected] )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Reports received / reports expected.
+	measure 'IDSR Completeness %' = DIVIDE ( SUM ( 'IDSR Report'[Report Received] ), [IDSR Reports Expected] )
+		formatString: 0.0%
+		displayFolder: 4 Disease Surveillance
+
+	/// Reports received by Tuesday 12:00 after the epi week / reports expected.
+	measure 'IDSR Timeliness %' = DIVIDE ( SUM ( 'IDSR Report'[Report On Time] ), [IDSR Reports Expected] )
+		formatString: 0.0%
+		displayFolder: 4 Disease Surveillance
+
+	/// Rainfall total per location, averaged across the selected facility locations.
+	measure 'Rainfall (mm)' = AVERAGEX ( VALUES ( 'Facility'[Facility Code] ), CALCULATE ( SUM ( 'Weather'[Rainfall (mm)] ) ) )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Rainfall in the 28 days ending 4 weeks before the period starts (the lag used by the SARIMAX malaria model).
+	measure 'Rainfall 4-8 Weeks Earlier (mm)' =
+			VAR _start = MIN ( 'Date'[Date] )
+			RETURN
+			    IF (
+			        _start >= [First Surveillance Date] && _start <= [Last Epi Week Start] + 6,
+			        CALCULATE ( [Rainfall (mm)], DATESINPERIOD ( 'Date'[Date], _start - 29, -28, DAY ) )
+			    )
+		formatString: #,0
+		displayFolder: 4 Disease Surveillance
+
+	/// Mean daily maximum temperature.
+	measure 'Avg Max Temperature (C)' = AVERAGE ( 'Weather'[Max Temp (C)] )
+		formatString: #,0.0
+		displayFolder: 4 Disease Surveillance
+
+	/// Latest attendance date in the model (ignores all filters except RLS).
+	measure 'Last Data Date' =
+			VAR _k =
+			    CALCULATE ( MAX ( 'Attendance'[Arrival Date Key] ), REMOVEFILTERS () )
+			RETURN
+			    IF ( NOT ISBLANK ( _k ), DATE ( INT ( _k / 10000 ), MOD ( INT ( _k / 100 ), 100 ), MOD ( _k, 100 ) ) )
+		formatString: d mmm yyyy
+		displayFolder: 5 Time Intelligence
+
+	/// Monday of the first epi week with IDSR returns.
+	measure 'First Surveillance Date' =
+			VAR _k =
+			    CALCULATE ( MIN ( 'Surveillance'[Epi Week Date Key] ), REMOVEFILTERS () )
+			RETURN
+			    IF ( NOT ISBLANK ( _k ), DATE ( INT ( _k / 10000 ), MOD ( INT ( _k / 100 ), 100 ), MOD ( _k, 100 ) ) )
+		formatString: d mmm yyyy
+		displayFolder: 5 Time Intelligence
+
+	/// Monday of the latest epi week with IDSR returns.
+	measure 'Last Epi Week Start' =
+			VAR _k =
+			    CALCULATE ( MAX ( 'Surveillance'[Epi Week Date Key] ), REMOVEFILTERS () )
+			RETURN
+			    IF ( NOT ISBLANK ( _k ), DATE ( INT ( _k / 10000 ), MOD ( INT ( _k / 100 ), 100 ), MOD ( _k, 100 ) ) )
+		formatString: d mmm yyyy
+		displayFolder: 5 Time Intelligence
+
+	/// Calendar year-to-date ED attendances, no future guard (helper).
+	measure 'ED Attendances YTD Raw' = TOTALYTD ( [ED Attendances], 'Date'[Date] )
+		formatString: #,0
+		isHidden
+		displayFolder: 5 Time Intelligence
+
+	/// Year-to-date ED attendances; blank for periods after the last data date.
+	measure 'ED Attendances YTD' = IF ( MIN ( 'Date'[Date] ) <= [Last Data Date], [ED Attendances YTD Raw] )
+		formatString: #,0
+		displayFolder: 5 Time Intelligence
+
+	/// Same year-to-date window one year earlier, cut at the same day (like-for-like).
+	measure 'ED Attendances YTD PY' =
+			VAR _cutoffPY =
+			    EDATE ( [Last Data Date], -12 )
+			RETURN
+			    CALCULATE (
+			        [ED Attendances YTD Raw],
+			        SAMEPERIODLASTYEAR ( 'Date'[Date] ),
+			        KEEPFILTERS ( 'Date'[Date] <= _cutoffPY )
+			    )
+		formatString: #,0
+		displayFolder: 5 Time Intelligence
+
+	/// Year-to-date growth versus the like-for-like prior-year window.
+	measure 'ED Attendances YTD YoY %' = DIVIDE ( [ED Attendances YTD] - [ED Attendances YTD PY], [ED Attendances YTD PY] )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 5 Time Intelligence
+
+	/// Seen-within-target share in the same period last year.
+	measure 'Seen Within Target % PY' = IF ( MIN ( 'Date'[Date] ) <= [Last Data Date], CALCULATE ( [Seen Within Target %], SAMEPERIODLASTYEAR ( 'Date'[Date] ) ) )
+		formatString: 0.0%
+		displayFolder: 5 Time Intelligence
+
+	/// Change versus the same period last year, in percentage points.
+	measure 'Seen Within Target Change (pp)' =
+			VAR _cur = [Seen Within Target %]
+			VAR _py = [Seen Within Target % PY]
+			RETURN
+			    IF ( NOT ISBLANK ( _cur ) && NOT ISBLANK ( _py ), ( _cur - _py ) * 100 )
+		formatString: +0.0;-0.0;0.0
+		displayFolder: 5 Time Intelligence
+
+	/// Occupancy over the trailing 12 months ending at the context end (capped at the last data date).
+	measure 'Bed Occupancy % Rolling 12M' =
+			VAR _last = [Last Data Date]
+			VAR _end =
+			    MIN ( MAX ( 'Date'[Date] ), _last )
+			RETURN
+			    IF (
+			        MIN ( 'Date'[Date] ) <= _last,
+			        CALCULATE ( [Bed Occupancy %], DATESINPERIOD ( 'Date'[Date], _end, -12, MONTH ) )
+			    )
+		formatString: 0.0%
+		displayFolder: 5 Time Intelligence
+
+	/// Malaria cases from epi week 1 of the epi year to the end of the context (capped at the last reported week).
+	measure 'Malaria Cases Epi-YTD' =
+			VAR _end =
+			    MIN ( MAX ( 'Date'[Date] ), [Last Epi Week Start] + 6 )
+			VAR _y =
+			    CALCULATE ( MAX ( 'Date'[Epi Year] ), REMOVEFILTERS ( 'Date' ), 'Date'[Date] = _end )
+			RETURN
+			    IF (
+			        MIN ( 'Date'[Date] ) <= _end,
+			        CALCULATE ( [Malaria Cases], REMOVEFILTERS ( 'Date' ), 'Date'[Epi Year] = _y, 'Date'[Date] <= _end )
+			    )
+		formatString: #,0
+		displayFolder: 5 Time Intelligence
+
+	/// Same number of epi weeks one epi year earlier (like-for-like).
+	measure 'Malaria Cases Epi-YTD PY' =
+			VAR _end =
+			    MIN ( MAX ( 'Date'[Date] ), [Last Epi Week Start] + 6 )
+			VAR _y =
+			    CALCULATE ( MAX ( 'Date'[Epi Year] ), REMOVEFILTERS ( 'Date' ), 'Date'[Date] = _end )
+			VAR _endPY = _end - 364
+			RETURN
+			    IF (
+			        MIN ( 'Date'[Date] ) <= _end,
+			        CALCULATE ( [Malaria Cases], REMOVEFILTERS ( 'Date' ), 'Date'[Epi Year] = _y - 1, 'Date'[Date] <= _endPY )
+			    )
+		formatString: #,0
+		displayFolder: 5 Time Intelligence
+
+	/// Epi-year-to-date growth versus the like-for-like prior-year window.
+	measure 'Malaria Cases Epi-YTD YoY %' = DIVIDE ( [Malaria Cases Epi-YTD] - [Malaria Cases Epi-YTD PY], [Malaria Cases Epi-YTD PY] )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 5 Time Intelligence
+
+	/// Malaria cases 52 weeks (364 days) earlier: the same epi week of the previous year.
+	measure 'Malaria Cases Same Week Last Year' =
+			IF (
+			    MIN ( 'Date'[Date] ) <= [Last Epi Week Start] + 6,
+			    CALCULATE ( [Malaria Cases], DATEADD ( 'Date'[Date], -364, DAY ) )
+			)
+		formatString: #,0
+		displayFolder: 5 Time Intelligence
+
+	/// Average weekly malaria cases over the four epi weeks ending at the context end.
+	measure 'Malaria Cases 4-Week Average' =
+			VAR _end =
+			    MIN ( MAX ( 'Date'[Date] ), [Last Epi Week Start] + 6 )
+			RETURN
+			    DIVIDE ( CALCULATE ( [Malaria Cases], DATESINPERIOD ( 'Date'[Date], _end, -28, DAY ) ), 4 )
+		formatString: #,0.0
+		displayFolder: 5 Time Intelligence
+
+	/// 13-week forward forecast of North-East malaria cases (Holt-Winters ETS on log cases).
+	measure 'Forecast Cases' = CALCULATE ( SUM ( 'Malaria Forecast'[Forecast] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Forecast" ) )
+		formatString: #,0
+		displayFolder: 6 Advanced Analytics
+
+	/// Lower bound of the 80 % prediction interval.
+	measure 'Forecast Lower 80' = CALCULATE ( SUM ( 'Malaria Forecast'[Lower 80] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Forecast" ) )
+		formatString: #,0
+		displayFolder: 6 Advanced Analytics
+
+	/// Upper bound of the 80 % prediction interval.
+	measure 'Forecast Upper 80' = CALCULATE ( SUM ( 'Malaria Forecast'[Upper 80] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Forecast" ) )
+		formatString: #,0
+		displayFolder: 6 Advanced Analytics
+
+	/// Weekly North-East malaria cases the model was trained and tested on (PAS-coded attendances).
+	measure 'Model Actual Cases' = CALCULATE ( SUM ( 'Malaria Forecast'[Actual] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Actual" ) )
+		formatString: #,0
+		displayFolder: 6 Advanced Analytics
+
+	/// One-week-ahead forecasts made at each rolling origin of the back-test.
+	measure 'Backtest Forecast' = CALCULATE ( SUM ( 'Malaria Forecast'[Forecast] ), KEEPFILTERS ( 'Malaria Forecast'[Series] = "Back-test (1 week ahead)" ) )
+		formatString: #,0
+		displayFolder: 6 Advanced Analytics
+
+	/// Weighted absolute percentage error of the one-week-ahead back-test forecasts.
+	measure 'Backtest WAPE % (1 Week Ahead)' =
+			VAR _rows =
+			    FILTER ( 'Malaria Forecast', 'Malaria Forecast'[Series] = "Back-test (1 week ahead)" )
+			RETURN
+			    DIVIDE (
+			        SUMX ( _rows, ABS ( 'Malaria Forecast'[Actual] - 'Malaria Forecast'[Forecast] ) ),
+			        SUMX ( _rows, ABS ( 'Malaria Forecast'[Actual] ) )
+			    )
+		formatString: 0.0%
+		displayFolder: 6 Advanced Analytics
+
+	/// Observed 30-day readmission rate in the test set (spell-weighted).
+	measure 'Readmission Observed %' = DIVIDE ( SUMX ( 'Readmission Deciles', 'Readmission Deciles'[Observed Rate] * 'Readmission Deciles'[Spells] ), SUM ( 'Readmission Deciles'[Spells] ) )
+		formatString: 0.0%
+		displayFolder: 6 Advanced Analytics
+
+	/// Mean predicted readmission probability (spell-weighted) - compare with observed for calibration.
+	measure 'Readmission Predicted %' =
+			DIVIDE (
+			    SUMX ( 'Readmission Deciles', 'Readmission Deciles'[Mean Predicted] * 'Readmission Deciles'[Spells] ),
+			    SUM ( 'Readmission Deciles'[Spells] )
+			)
+		formatString: 0.0%
+		displayFolder: 6 Advanced Analytics
+
+	/// Share of all readmissions that fall in the two highest risk deciles (who to call after discharge).
+	measure 'Top-20% Risk Capture %' =
+			VAR _all = SUMX ( 'Readmission Deciles', 'Readmission Deciles'[Observed Rate] * 'Readmission Deciles'[Spells] )
+			VAR _top =
+			    CALCULATE ( SUMX ( 'Readmission Deciles', 'Readmission Deciles'[Observed Rate] * 'Readmission Deciles'[Spells] ), KEEPFILTERS ( 'Readmission Deciles'[Risk Decile] >= 9 ) )
+			RETURN
+			    DIVIDE ( _top, _all )
+		formatString: 0.0%
+		displayFolder: 6 Advanced Analytics
+
+	/// Odds ratio of a readmission driver (logistic regression, reference coding).
+	measure 'Odds Ratio' = AVERAGE ( 'Readmission Drivers'[Odds Ratio Value] )
+		formatString: #,0.00
+		displayFolder: 6 Advanced Analytics
+
+	/// % change in door-to-doctor time associated with the driver (OLS on log waiting time).
+	measure 'Wait Effect %' = DIVIDE ( AVERAGE ( 'ED Wait Drivers'[Effect %] ), 100 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 6 Advanced Analytics
+
+	/// Wait effect of the drivers management can act on (case-mix controls such as triage category excluded).
+	measure 'Wait Effect % (Operational)' = CALCULATE ( [Wait Effect %], KEEPFILTERS ( LEFT ( 'ED Wait Drivers'[Driver], 6 ) <> "Triage" ) )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 6 Advanced Analytics
+
+	/// Lower 95 % confidence limit of the effect.
+	measure 'Wait Effect Lower 95%' = DIVIDE ( AVERAGE ( 'ED Wait Drivers'[CI Low %] ), 100 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 6 Advanced Analytics
+
+	/// Upper 95 % confidence limit of the effect.
+	measure 'Wait Effect Upper 95%' = DIVIDE ( AVERAGE ( 'ED Wait Drivers'[CI High %] ), 100 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 6 Advanced Analytics
+
+	/// Facility-condition-weeks flagged by the selected detection method(s).
+	measure 'Outbreak Alerts' = COUNTROWS ( 'Outbreak Alerts' )
+		formatString: #,0
+		displayFolder: 6 Advanced Analytics
+
+	/// Share of alerts that fall in weeks of a known (injected) outbreak - a positive-predictive-value proxy.
+	measure 'Alerts in Known Outbreak Weeks %' = DIVIDE ( CALCULATE ( [Outbreak Alerts], KEEPFILTERS ( 'Outbreak Alerts'[Is Known Outbreak] = TRUE () ) ), [Outbreak Alerts] )
+		formatString: 0.0%
+		displayFolder: 6 Advanced Analytics
+
+	/// Data-quality issues logged by the ETL rules (all batches).
+	measure 'DQ Issues Logged' = SUM ( 'DQ Summary'[Issues] )
+		formatString: #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// Rules that logged at least one issue.
+	measure 'DQ Rules Triggered' = CALCULATE ( COUNTROWS ( 'DQ Summary' ), KEEPFILTERS ( 'DQ Summary'[Issues] > 0 ) )
+		formatString: #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// Share of reconciliation checks of the latest batch with status PASS.
+	measure 'Reconciliation Pass %' = DIVIDE ( CALCULATE ( COUNTROWS ( 'Reconciliation' ), KEEPFILTERS ( 'Reconciliation'[Status] = "PASS" ) ), COUNTROWS ( 'Reconciliation' ) )
+		formatString: 0.0%
+		displayFolder: 7 Data Quality & Security
+
+	/// Checks with status WARN (explained differences).
+	measure 'Reconciliation Warnings' = CALCULATE ( COUNTROWS ( 'Reconciliation' ), KEEPFILTERS ( 'Reconciliation'[Status] = "WARN" ) )
+		formatString: #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// Ward-days whose census was imputed from PAS spells (missing ward return, rule WC01).
+	measure 'Imputed Census Days %' = DIVIDE ( CALCULATE ( COUNTROWS ( 'Ward Census' ), KEEPFILTERS ( 'Ward Census'[Census Source] = "Imputed from PAS" ) ), COUNTROWS ( 'Ward Census' ) )
+		formatString: 0.00%
+		displayFolder: 7 Data Quality & Security
+
+	/// Attendances without a valid ICD-10 code (rules EN07-EN08).
+	measure 'Uncoded Diagnosis %' = DIVIDE ( CALCULATE ( [Attendances], KEEPFILTERS ( 'Diagnosis'[ICD-10 Code] = "UNK" ) ), [Attendances] )
+		formatString: 0.00%
+		displayFolder: 7 Data Quality & Security
+
+	/// Attendances without a patient identifier (rule EN11).
+	measure 'Unidentified Attendances' = CALCULATE ( [Attendances], KEEPFILTERS ( 'Attendance'[Patient Durable Key] < 0 ) )
+		formatString: #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// Spells still open more than 60 days after admission (probable missing discharge, rule AD06).
+	measure 'Open Spells Over 60 Days' = SUM ( 'Admission'[Is Open Over 60d] )
+		formatString: #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// Facilities visible to the current user (RLS test).
+	measure 'Visible Facilities' = CALCULATE ( DISTINCTCOUNT ( 'Facility'[Facility Code] ), KEEPFILTERS ( 'Facility'[Facility Key] > 0 ) )
+		formatString: #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// User principal name evaluated by row-level security.
+	measure 'Current User' = USERPRINCIPALNAME ()
+		displayFolder: 7 Data Quality & Security
+
+	column 'Measure Group'
+		isHidden
+		isNameInferred
+		sourceColumn: [Measure Group]
+
+	partition _Measures = calculated
+		mode: import
+		source = ROW ( "Measure Group", "Measures" )
+

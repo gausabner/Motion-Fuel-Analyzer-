@@ -1,0 +1,42 @@
+%%{init: {"er": {"layoutDirection": "LR"}}}%%
+erDiagram
+  DIM_DATE ||--o{ FACT_SURVEILLANCE_WEEKLY : epi_week_date_key
+  DIM_FACILITY ||--o{ FACT_SURVEILLANCE_WEEKLY : facility_key
+  DIM_CONDITION ||--o{ FACT_SURVEILLANCE_WEEKLY : condition_key
+  DIM_DATE ||--o{ FACT_IDSR_REPORT : epi_week_date_key
+  DIM_FACILITY ||--o{ FACT_IDSR_REPORT : facility_key
+  DIM_CONDITION ||--o{ DIM_DIAGNOSIS : condition_key
+  FACT_SURVEILLANCE_WEEKLY {
+    int epi_week_date_key PK, FK "Monday of the epi week"
+    int facility_key PK, FK
+    int condition_key PK, FK
+    int cases_total "additive"
+    int deaths_total "additive"
+    int tests_done "malaria only"
+    int tests_positive
+    smallint report_version "latest wins"
+  }
+  FACT_IDSR_REPORT {
+    int epi_week_date_key PK, FK "factless coverage"
+    int facility_key PK, FK
+    smallint report_expected "1"
+    smallint report_received "0/1"
+    smallint report_on_time "0/1, first receipt"
+  }
+  DIM_DATE {
+    int date_key PK "YYYYMMDD"
+    smallint epi_year "ISO"
+    char epi_week_label "e.g. 2026-W39"
+    date epi_week_start "Monday"
+  }
+  DIM_CONDITION {
+    int condition_key PK
+    varchar condition_code "IDSR code"
+    varchar notification "immediate / weekly"
+    varchar alert_threshold
+  }
+  DIM_DIAGNOSIS {
+    int diagnosis_key PK
+    varchar icd10_code "natural key"
+    int condition_key FK "-2 = not notifiable"
+  }

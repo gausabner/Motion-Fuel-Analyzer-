@@ -1,0 +1,40 @@
+flowchart LR
+  subgraph SRC["Sources S1-S9"]
+    direction TB
+    S1["S1 PAS attendances<br/>5 yearly gz CSV, overlapping"]
+    S2["S2 PAS inpatient spells<br/>CDC export"]
+    S3["S3 PAS patient index<br/>+ change log"]
+    S4["S4 Ward midnight returns"]
+    S5["S5 Nursing e-roster"]
+    S6["S6 IDSR weekly returns"]
+    S7["S7 Master data workbook<br/>10 sheets + day-2 delta"]
+    S8["S8 NSA 2023 census CSV"]
+    S9["S9 NASA POWER JSON"]
+    S1 ~~~ S2 ~~~ S3 ~~~ S4 ~~~ S5 ~~~ S6 ~~~ S7 ~~~ S8 ~~~ S9
+  end
+  subgraph PG["PostgreSQL 16 - gbhs_health_dw"]
+    direction TB
+    L["stg.*_raw - landing<br/>all text, lossless,<br/>source_file + row_num + batch"]
+    C["stg.*_clean - typed,<br/>conformed codes,<br/>latest version wins"]
+    R["ref.* - code maps,<br/>region / condition /<br/>payer aliases"]
+    W["dw.* - 8 facts,<br/>13 conformed dims,<br/>SCD2, special members"]
+    M["mart.* - BI views,<br/>analytics outputs,<br/>aggregate MV"]
+    A["audit.* - batches, steps,<br/>44 DQ rules + issue log,<br/>22 reconciliation checks"]
+    SEC["sec.* - RLS mapping<br/>UPN to facility"]
+    L --> C --> W --> M
+    R --> C
+    C -.-> A
+    W -.-> A
+    SEC --> M
+  end
+  subgraph AN["Python analytics"]
+    direction TB
+    PY["malaria forecast, readmission model,<br/>outbreak detection, ED wait drivers"]
+  end
+  subgraph PBI["Power BI"]
+    direction TB
+    SMD["Semantic model, Import<br/>108 measures, RLS + OLS,<br/>incremental refresh"] --> RP["Report: 4 pages +<br/>drill-through + tooltip; app"]
+  end
+  SRC --> PG
+  PG <--> AN
+  PG --> PBI

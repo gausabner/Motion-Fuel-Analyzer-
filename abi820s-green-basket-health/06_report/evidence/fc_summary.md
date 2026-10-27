@@ -1,0 +1,1 @@
+Best model by WAPE: **Holt-Winters (ETS)**. Series: 247 weeks; test: last 52 weeks, 52 rolling-origin forecasts per model. Annual totals: 2022: 3,766, 2023: 3,644, 2024: 3,220, 2025: 12,778, 2026: 15,210.

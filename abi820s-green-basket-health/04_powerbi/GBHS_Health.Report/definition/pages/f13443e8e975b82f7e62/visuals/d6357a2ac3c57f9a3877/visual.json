@@ -1,0 +1,103 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "d6357a2ac3c57f9a3877",
+  "position": {
+    "x": 24,
+    "y": 230,
+    "z": 0,
+    "width": 820,
+    "height": 240,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Date"
+                    }
+                  },
+                  "Property": "Epi Week Start"
+                }
+              },
+              "queryRef": "Date.Epi Week Start"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Malaria Cases"
+                }
+              },
+              "queryRef": "_Measures.Malaria Cases",
+              "displayName": "Malaria cases"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Malaria Cases Same Week Last Year"
+                }
+              },
+              "queryRef": "_Measures.Malaria Cases Same Week Last Year",
+              "displayName": "Same week last year"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Weekly confirmed malaria cases vs the same epi week last year'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Line chart of weekly confirmed malaria cases with last year''s curve for the same epi weeks; the 2025 and 2026 seasons peak far above 2024.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

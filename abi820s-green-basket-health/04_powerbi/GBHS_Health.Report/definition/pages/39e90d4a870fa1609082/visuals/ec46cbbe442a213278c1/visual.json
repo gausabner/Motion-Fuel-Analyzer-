@@ -1,0 +1,103 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "ec46cbbe442a213278c1",
+  "position": {
+    "x": 660,
+    "y": 126,
+    "z": 0,
+    "width": 596,
+    "height": 290,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Readmission Deciles"
+                    }
+                  },
+                  "Property": "Risk Decile"
+                }
+              },
+              "queryRef": "Readmission Deciles.Risk Decile"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Readmission Predicted %"
+                }
+              },
+              "queryRef": "_Measures.Readmission Predicted %",
+              "displayName": "Predicted"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Readmission Observed %"
+                }
+              },
+              "queryRef": "_Measures.Readmission Observed %",
+              "displayName": "Observed"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Readmission risk model: predicted vs observed by risk decile'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Column chart of predicted and observed 30-day readmission rates in each risk decile of the test set; the bars track each other (good calibration).'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

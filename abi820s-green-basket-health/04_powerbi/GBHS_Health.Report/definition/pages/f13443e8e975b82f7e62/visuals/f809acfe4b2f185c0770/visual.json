@@ -1,0 +1,89 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "f809acfe4b2f185c0770",
+  "position": {
+    "x": 24,
+    "y": 482,
+    "z": 0,
+    "width": 410,
+    "height": 222,
+    "tabOrder": 14000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Date"
+                    }
+                  },
+                  "Property": "Epi Week Start"
+                }
+              },
+              "queryRef": "Date.Epi Week Start"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Rainfall 4-8 Weeks Earlier (mm)"
+                }
+              },
+              "queryRef": "_Measures.Rainfall 4-8 Weeks Earlier (mm)",
+              "displayName": "Rainfall 4-8 weeks earlier (mm)"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Rainfall 4-8 weeks earlier (malaria lead indicator)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Line chart of rainfall in the four weeks that ended four weeks before each epi week, averaged over the selected facilities.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

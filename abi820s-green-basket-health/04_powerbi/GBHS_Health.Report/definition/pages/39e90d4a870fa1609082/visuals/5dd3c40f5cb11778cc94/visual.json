@@ -1,0 +1,145 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "5dd3c40f5cb11778cc94",
+  "position": {
+    "x": 24,
+    "y": 126,
+    "z": 0,
+    "width": 620,
+    "height": 290,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Date"
+                    }
+                  },
+                  "Property": "Epi Week Start"
+                }
+              },
+              "queryRef": "Date.Epi Week Start"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Model Actual Cases"
+                }
+              },
+              "queryRef": "_Measures.Model Actual Cases",
+              "displayName": "Actual"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Backtest Forecast"
+                }
+              },
+              "queryRef": "_Measures.Backtest Forecast",
+              "displayName": "Back-test (1 week ahead)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Forecast Cases"
+                }
+              },
+              "queryRef": "_Measures.Forecast Cases",
+              "displayName": "Forecast"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Forecast Lower 80"
+                }
+              },
+              "queryRef": "_Measures.Forecast Lower 80",
+              "displayName": "80 % lower"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Forecast Upper 80"
+                }
+              },
+              "queryRef": "_Measures.Forecast Upper 80",
+              "displayName": "80 % upper"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'North-East malaria: weekly cases, back-test and 13-week forecast'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Line chart of weekly malaria cases in Rundu, Katima Mulilo and Nkurenkuru with one-week-ahead back-test forecasts and a 13-week Holt-Winters forecast with its 80 percent prediction interval.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

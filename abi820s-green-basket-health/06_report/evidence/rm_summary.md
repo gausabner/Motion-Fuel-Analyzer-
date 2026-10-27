@@ -1,0 +1,1 @@
+Eligible spells: 79,457 (train 58,012 discharged before 2025-07-01, test 21,388 up to 2026-08-31). Test prevalence 13.6 %. Best model by ROC AUC: **Gradient boosting**. Operating threshold = top 20 % of predicted risk (p >= 0.192).

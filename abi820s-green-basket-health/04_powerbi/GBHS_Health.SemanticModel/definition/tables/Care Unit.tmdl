@@ -1,0 +1,105 @@
+/// Ward / department, SCD Type 2 on specialty and bed complement: facts carry the version valid on the event date (as-was).
+table 'Care Unit'
+
+	/// Surrogate key of the unit version (-1 = Unknown). Source: generated
+	column 'Care Unit Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: care_unit_key
+
+	/// Durable natural key of the unit, e.g. RUN-MED1.
+	column 'Ward Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: unit_code
+
+	/// Unit name (Type 1). Source: master data
+	column Ward
+		dataType: string
+		summarizeBy: none
+		sourceColumn: unit_name
+
+	/// Inpatient ward, Emergency department or Outpatient clinic (Type 1). Source: master data
+	column 'Unit Type'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: unit_type
+
+	/// FK to dim_facility (snowflake). Source: master data facility_code
+	column 'Facility Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: facility_key
+
+	/// As-was specialty (e.g. WHK-MED2 was an isolation ward Jan-Mar 2022).
+	column Specialty
+		dataType: string
+		summarizeBy: none
+		sourceColumn: specialty
+
+	/// Official beds of this version.
+	column 'Bed Complement'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: bed_complement
+
+	/// First day the version is valid. Source: Unit_History effective_date
+	column 'Effective From'
+		dataType: dateTime
+		formatString: d mmm yyyy
+		displayFolder: SCD history
+		summarizeBy: none
+		sourceColumn: scd_effective_from
+
+	/// Last day the version is valid (9999-12-31 for the current version). Source: ETL
+	column 'Effective To'
+		dataType: dateTime
+		formatString: d mmm yyyy
+		displayFolder: SCD history
+		summarizeBy: none
+		sourceColumn: scd_effective_to
+
+	/// True for the current version of the unit. Source: ETL
+	column 'Is Current Version'
+		dataType: boolean
+		displayFolder: SCD history
+		summarizeBy: none
+		sourceColumn: scd_is_current
+
+	/// Version number per unit (1 = first). Source: ETL
+	column 'SCD Version'
+		dataType: int64
+		displayFolder: SCD history
+		summarizeBy: none
+		sourceColumn: scd_version
+
+	hierarchy Unit
+
+		level 'Unit Type'
+			column: 'Unit Type'
+
+		level Specialty
+			column: Specialty
+
+		level 'Ward Code'
+			column: 'Ward Code'
+
+	partition 'Care Unit' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_care_unit.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_care_unit"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"care_unit_key", Int64.Type}, {"unit_code", type text}, {"unit_name", type text}, {"unit_type", type text}, {"facility_key", Int64.Type}, {"specialty", type text}, {"bed_complement", Int64.Type}, {"scd_effective_from", type date}, {"scd_effective_to", type date}, {"scd_is_current", type logical}, {"scd_version", Int64.Type}}, "en-US")
+				in
+				    Typed
+

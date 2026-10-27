@@ -1,0 +1,87 @@
+/// Pseudonymised patient, SCD Type 2 on residence region and payer. No name, ID number, pseudonym or birth date is loaded.
+table Patient
+
+	/// Surrogate key of the patient version (-1 = Unknown / unidentified patient). Source: generated
+	column 'Patient Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: patient_key
+
+	/// Durable (supernatural) key: the surrogate key of the patient's first version, identical on every version - used to count distinct patients across SCD2 versions. Source: ETL
+	column 'Patient Durable Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: patient_durable_key
+
+	/// F, M or U (unknown) (Type 1). Source: PAS patient index, mapped via ref.code_map (MD02)
+	column 'Sex Code'
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: sex
+
+	/// Female, Male or Unknown (from the PAS sex code, rule MD02).
+	column Sex
+		dataType: string
+		summarizeBy: none
+		sourceColumn: sex_name
+
+	/// As-was region of residence (flattened; no relationship to Region to avoid an ambiguous filter path).
+	column 'Residence Region'
+		dataType: string
+		dataCategory: StateOrProvince
+		summarizeBy: none
+		sourceColumn: residence_region_name
+
+	/// Payer class valid for the version (Type 2): PSEMAS, PMA, SSC-MVA, MOHSS, CASH. Source: PAS patient index + change log (MD05)
+	column 'Payer Code'
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: payer_code
+
+	/// Payer class name. Source: master data, Payer_Classes sheet
+	column Payer
+		dataType: string
+		summarizeBy: none
+		sourceColumn: payer_name
+
+	/// Medical aid, Statutory, Government or Self-pay. Source: master data
+	column 'Payer Group'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: payer_group
+
+	/// Placeholder created for a late-arriving patient record (EN10).
+	column 'Is Inferred Member'
+		dataType: boolean
+		displayFolder: SCD history
+		summarizeBy: none
+		sourceColumn: is_inferred
+
+	/// True for the current version. Source: ETL
+	column 'Is Current Version'
+		dataType: boolean
+		displayFolder: SCD history
+		summarizeBy: none
+		sourceColumn: scd_is_current
+
+	partition Patient = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_patient.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_patient"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"patient_key", Int64.Type}, {"patient_durable_key", Int64.Type}, {"sex", type text}, {"sex_name", type text}, {"residence_region_name", type text}, {"payer_code", type text}, {"payer_name", type text}, {"payer_group", type text}, {"is_inferred", type logical}, {"scd_is_current", type logical}}, "en-US")
+				in
+				    Typed
+

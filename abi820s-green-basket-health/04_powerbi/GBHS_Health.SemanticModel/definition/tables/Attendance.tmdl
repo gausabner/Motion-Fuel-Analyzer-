@@ -1,0 +1,164 @@
+/// ED and clinic attendances (transaction fact; grain: one row per attendance). Import with incremental refresh on Arrival Date Key.
+table Attendance
+
+	refreshPolicy
+		policyType: basic
+		rollingWindowGranularity: year
+		rollingWindowPeriods: 5
+		incrementalGranularity: day
+		incrementalPeriods: 10
+		sourceExpression =
+			let
+			    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+			    ReadCsv = (file as text) as table =>
+			        let
+			            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+			        in
+			            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+			    Source = if SourceMode = "CSV"
+			        then ReadCsv("v_fact_encounter.csv.gz")
+			        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_encounter"]}[Data],
+			    Typed = Table.TransformColumnTypes(Source, {{"arrival_date_key", Int64.Type}, {"arrival_hour_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"patient_key", Int64.Type}, {"patient_durable_key", Int64.Type}, {"diagnosis_key", Int64.Type}, {"triage_key", Int64.Type}, {"encounter_profile_key", Int64.Type}, {"age_band_key", Int64.Type}, {"encounter_count", Int64.Type}, {"wait_to_triage_min", type number}, {"door_to_doctor_min", type number}, {"ed_los_min", type number}, {"seen_within_target", Int64.Type}, {"is_lwbs", Int64.Type}, {"is_admitted", Int64.Type}, {"is_died", Int64.Type}}, "en-US"),
+			    // incremental refresh window (RangeStart/RangeEnd folded to SQL as integer date keys)
+			    Filtered = Table.SelectRows(Typed, each [arrival_date_key] >= Int64.From(DateTime.ToText(RangeStart, "yyyyMMdd")) and [arrival_date_key] < Int64.From(DateTime.ToText(RangeEnd, "yyyyMMdd")))
+			in
+			    Filtered
+
+	/// FK to dim_date (arrival date). Source: PAS arrival_datetime (EN02, EN12)
+	column 'Arrival Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: arrival_date_key
+
+	/// FK to dim_hour (arrival hour). Source: PAS arrival_datetime
+	column 'Arrival Hour Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: arrival_hour_key
+
+	/// FK to dim_care_unit version valid on the arrival date (ED or clinic unit). Source: PAS facility_code + department (EN03)
+	column 'Care Unit Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: care_unit_key
+
+	/// FK to dim_patient version valid on the arrival date (-1 unidentified). Source: PAS patient_id (EN10, EN11)
+	column 'Patient Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: patient_key
+
+	/// First surrogate key of the patient: stable across SCD2 versions (distinct patient counts).
+	column 'Patient Durable Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: patient_durable_key
+
+	/// FK to dim_diagnosis (primary diagnosis, -1 not coded/invalid). Source: PAS primary_icd10 (EN07, EN08)
+	column 'Diagnosis Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: diagnosis_key
+
+	/// FK to dim_triage (-1 not recorded; 9 clinic attendance). Source: PAS triage_category (EN04, EN09)
+	column 'Triage Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: triage_key
+
+	/// FK to the department x arrival mode x disposition junk dimension. Source: PAS department, arrival_mode, disposition
+	column 'Encounter Profile Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: encounter_profile_key
+
+	/// FK to dim_age_band (age at arrival). Source: derived from birth year
+	column 'Age Band Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: age_band_key
+
+	/// Always 1; additive count of attendances. Source: ETL
+	column 'Encounter Count'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: encounter_count
+
+	/// Minutes from arrival to triage (ED only; NULL if invalid). Source: triage_datetime - arrival_datetime
+	column 'Wait to Triage (min)'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: wait_to_triage_min
+
+	/// Minutes from arrival to first assessment by a doctor/clinician (NULL if not seen or invalid, EN05/EN06). Source: seen_datetime - arrival_datetime
+	column 'Door to Doctor (min)'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: door_to_doctor_min
+
+	/// Minutes from arrival to departure (NULL if > 72 h or negative). Source: departure_datetime - arrival_datetime
+	column 'ED Length of Stay (min)'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: ed_los_min
+
+	/// 1 if seen within the triage compliance threshold, 0 if not, NULL if not triaged/seen. Source: derived with dim_triage.compliance_minutes
+	column 'Seen Within Target'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: seen_within_target
+
+	/// 1 if the patient left without being seen. Source: disposition = LWBS
+	column 'Is LWBS'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: is_lwbs
+
+	/// 1 if admitted to a ward from the ED. Source: disposition = ADM
+	column 'Is Admitted'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: is_admitted
+
+	/// 1 if the patient died in the department (incl. dead on arrival). Source: disposition = DIED
+	column 'Is Died'
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: is_died
+
+	partition Attendance = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_encounter.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_encounter"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"arrival_date_key", Int64.Type}, {"arrival_hour_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"patient_key", Int64.Type}, {"patient_durable_key", Int64.Type}, {"diagnosis_key", Int64.Type}, {"triage_key", Int64.Type}, {"encounter_profile_key", Int64.Type}, {"age_band_key", Int64.Type}, {"encounter_count", Int64.Type}, {"wait_to_triage_min", type number}, {"door_to_doctor_min", type number}, {"ed_los_min", type number}, {"seen_within_target", Int64.Type}, {"is_lwbs", Int64.Type}, {"is_admitted", Int64.Type}, {"is_died", Int64.Type}}, "en-US"),
+				    // incremental refresh window (RangeStart/RangeEnd folded to SQL as integer date keys)
+				    Filtered = Table.SelectRows(Typed, each [arrival_date_key] >= Int64.From(DateTime.ToText(RangeStart, "yyyyMMdd")) and [arrival_date_key] < Int64.From(DateTime.ToText(RangeEnd, "yyyyMMdd")))
+				in
+				    Filtered
+

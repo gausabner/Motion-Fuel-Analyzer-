@@ -1,0 +1,89 @@
+/// Midnight ward census (periodic snapshot; grain: ward x day). Occupied and available beds are semi-additive: sum over wards, never over days (summed over days they become patient days / bed days).
+table 'Ward Census'
+
+	/// FK to dim_date (census date, midnight). Source: ward return census_date
+	column 'Census Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: census_date_key
+
+	/// FK to dim_care_unit version valid on the census date. Source: ward_code
+	column 'Care Unit Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: care_unit_key
+
+	/// Official beds of the ward version (semi-additive). Source: dim_care_unit.bed_complement
+	column 'Bed Complement'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: beds_complement
+
+	/// Beds closed (maintenance, staffing) (semi-additive). Source: ward return
+	column 'Beds Closed'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: beds_closed
+
+	/// Beds available = complement - closed (semi-additive; sum over days = available bed-days). Source: derived
+	column 'Beds Available'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: beds_available
+
+	/// Patients in the ward at midnight (semi-additive; sum over days = patient days). Source: ward return (WC02, WC04) or PAS imputation (WC01)
+	column 'Occupied Beds'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: occupied_beds
+
+	/// Admissions to the ward during the day (additive flow). Source: ward return
+	column Admissions
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: admissions
+
+	/// Discharges (incl. deaths and transfers out) during the day (additive flow). Source: ward return
+	column Discharges
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: discharges
+
+	/// In-ward deaths during the day (additive flow). Source: ward return
+	column Deaths
+		dataType: int64
+		isHidden
+		summarizeBy: sum
+		sourceColumn: deaths
+
+	/// Ward return, Corrected return or Imputed from PAS (lineage of each ward-day).
+	column 'Census Source'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: census_source
+
+	partition 'Ward Census' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_ward_census.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_ward_census"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"census_date_key", Int64.Type}, {"care_unit_key", Int64.Type}, {"beds_complement", Int64.Type}, {"beds_closed", Int64.Type}, {"beds_available", Int64.Type}, {"occupied_beds", Int64.Type}, {"admissions", Int64.Type}, {"discharges", Int64.Type}, {"deaths", Int64.Type}, {"census_source", type text}}, "en-US")
+				in
+				    Typed
+

@@ -1,0 +1,63 @@
+/// IDSR priority condition (WHO AFRO IDSR technical guidelines) - conformed between PAS diagnoses and IDSR returns.
+table Condition
+
+	/// Surrogate key (-1 = Unknown, -2 = Not a notifiable condition). Source: generated
+	column 'Condition Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: condition_key
+
+	/// GBHS IDSR condition code (MAL, COV, MEA ...). Source: master data, IDSR_Conditions sheet
+	column 'Condition Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: condition_code
+
+	/// Condition name. Source: master data
+	column Condition
+		dataType: string
+		summarizeBy: none
+		sourceColumn: condition_name
+
+	/// IDSR category (epidemic-prone, targeted for elimination, other priority). Source: master data (IDSR technical guidelines)
+	column 'IDSR Category'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: idsr_category
+
+	/// Notification timeline (immediate within 24 h or weekly). Source: master data
+	column Notification
+		dataType: string
+		summarizeBy: none
+		sourceColumn: notification
+
+	/// Alert threshold used by GBHS surveillance officers. Source: master data (GBHS SOP)
+	column 'Alert Threshold'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: alert_threshold
+
+	/// False only for the -2 member. Source: ETL
+	column 'Is Notifiable'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_notifiable
+
+	partition Condition = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_condition.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_condition"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"condition_key", Int64.Type}, {"condition_code", type text}, {"condition_name", type text}, {"idsr_category", type text}, {"notification", type text}, {"alert_threshold", type text}, {"is_notifiable", type logical}}, "en-US")
+				in
+				    Typed
+

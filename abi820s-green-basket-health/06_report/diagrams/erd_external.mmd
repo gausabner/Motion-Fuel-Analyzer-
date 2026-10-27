@@ -1,0 +1,26 @@
+%%{init: {"er": {"layoutDirection": "LR"}}}%%
+erDiagram
+  DIM_DATE ||--o{ FACT_POPULATION : year_date_key
+  DIM_REGION ||--o{ FACT_POPULATION : region_key
+  DIM_DATE ||--o{ FACT_WEATHER_DAILY : weather_date_key
+  DIM_FACILITY ||--o{ FACT_WEATHER_DAILY : facility_key
+  DIM_REGION ||--o{ DIM_FACILITY : region_key
+  FACT_POPULATION {
+    int year_date_key PK, FK "1 July (mid-year)"
+    int region_key PK, FK
+    int population "semi-additive"
+    boolean is_census_count "2023 = census"
+  }
+  FACT_WEATHER_DAILY {
+    int weather_date_key PK, FK
+    int facility_key PK, FK
+    numeric rainfall_mm
+    numeric tmax_c
+    boolean is_imputed "WE01 / WE02"
+  }
+  DIM_FACILITY {
+    int facility_key PK
+    varchar facility_code "natural key"
+    int region_key FK "snowflake"
+    numeric catchment_share
+  }

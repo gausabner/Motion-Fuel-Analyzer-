@@ -1,0 +1,116 @@
+/// ICD-10 (WHO) code > block > chapter, snowflaked to the IDSR Condition it notifies.
+table Diagnosis
+
+	/// Surrogate key (-1 = Unknown / not coded). Source: generated
+	column 'Diagnosis Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: diagnosis_key
+
+	/// ICD-10 code (e.g. B50.9). Source: master data, ICD10_Codes sheet (MD06)
+	column 'ICD-10 Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: icd10_code
+
+	/// ICD-10 code and WHO title, e.g. B54 Unspecified malaria.
+	column Diagnosis
+		dataType: string
+		summarizeBy: none
+		sourceColumn: diagnosis_label
+
+	/// Three-character ICD-10 category (e.g. B50). Source: derived
+	column 'ICD-10 Category'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: icd10_category
+
+	/// ICD-10 block code range (e.g. B50-B64). Source: master data
+	column 'Block Range'
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: block_range
+
+	/// ICD-10 block range and title (WHO ICD-10 2019).
+	column 'ICD-10 Block'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: block_label
+		sortByColumn: 'Block Range'
+
+	/// ICD-10 chapter in Roman numerals (I-XXII). Source: master data
+	column 'Chapter Code'
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: chapter_code
+
+	/// Chapter number 1-22 (sort key for chapter labels). Source: derived
+	column 'Chapter Number'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: chapter_number
+
+	/// ICD-10 chapter number and title (WHO ICD-10 2019).
+	column 'ICD-10 Chapter'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: chapter_label
+		sortByColumn: 'Chapter Number'
+
+	/// GBHS severity class (minor, moderate, serious, critical) used for case-mix adjustment. Source: master data
+	column Severity
+		dataType: string
+		summarizeBy: none
+		sourceColumn: severity_class
+
+	/// Default admitting specialty. Source: master data
+	column 'Default Specialty'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: default_specialty
+
+	/// True for chronic conditions (readmission risk factor). Source: master data
+	column 'Is Chronic'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_chronic
+
+	/// FK to dim_condition (snowflake); -2 when the code is not notifiable. Source: master data idsr_condition_code
+	column 'Condition Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: condition_key
+
+	hierarchy ICD-10
+
+		level 'ICD-10 Chapter'
+			column: 'ICD-10 Chapter'
+
+		level 'ICD-10 Block'
+			column: 'ICD-10 Block'
+
+		level Diagnosis
+			column: Diagnosis
+
+	partition Diagnosis = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_dim_diagnosis.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_dim_diagnosis"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"diagnosis_key", Int64.Type}, {"icd10_code", type text}, {"diagnosis_label", type text}, {"icd10_category", type text}, {"block_range", type text}, {"block_label", type text}, {"chapter_code", type text}, {"chapter_number", Int64.Type}, {"chapter_label", type text}, {"severity_class", type text}, {"default_specialty", type text}, {"is_chronic", type logical}, {"condition_key", Int64.Type}}, "en-US")
+				in
+				    Typed
+

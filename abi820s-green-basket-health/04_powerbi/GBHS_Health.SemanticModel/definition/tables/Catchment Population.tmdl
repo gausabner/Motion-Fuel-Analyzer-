@@ -1,0 +1,46 @@
+/// Derived fact: facility catchment population per year = NSA regional population x catchment share (denominator of incidence).
+table 'Catchment Population'
+
+	/// FK to dim_date = 1 July of the year (mid-year population). Source: derived
+	column 'Year Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: year_date_key
+
+	/// Surrogate key (-1 = Unknown). Source: generated
+	column 'Facility Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: facility_key
+
+	column 'Catchment Population'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: catchment_population
+
+	/// True for the census year itself, false for derived estimates. Source: ETL
+	column 'Is Census Year'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_census_count
+
+	partition 'Catchment Population' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("v_fact_catchment_population.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "v_fact_catchment_population"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"year_date_key", Int64.Type}, {"facility_key", Int64.Type}, {"catchment_population", Int64.Type}, {"is_census_count", type logical}}, "en-US")
+				in
+				    Typed
+
