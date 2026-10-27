@@ -1,0 +1,268 @@
+/// Conformed calendar (2020-2027) with calendar, fiscal (Apr-Mar) and agricultural season (Oct-Sep) attributes. Marked as date table.
+table Date
+	dataCategory: Time
+
+	column 'Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: dd mmm yyyy
+		summarizeBy: none
+		sourceColumn: full_date
+
+	column 'Day of Month'
+		dataType: int64
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: day_of_month
+
+	column 'Day of Week'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: day_of_week_iso
+
+	column 'Day Name'
+		dataType: string
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: day_name
+		sortByColumn: 'Day of Week'
+
+	column 'Day Short'
+		dataType: string
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: day_short
+		sortByColumn: 'Day of Week'
+
+	column 'Is Weekend'
+		dataType: boolean
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+	column 'Is Public Holiday'
+		dataType: boolean
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: is_public_holiday
+
+	column 'Holiday Name'
+		dataType: string
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: holiday_name
+
+	column 'Is Working Day'
+		dataType: boolean
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: is_working_day
+
+	column 'ISO Week'
+		dataType: int64
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: iso_week
+
+	column 'Week Start'
+		dataType: dateTime
+		formatString: dd mmm yyyy
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: week_start_date
+
+	column 'Month Number'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: month_num
+
+	column 'Month Name'
+		dataType: string
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: month_name
+		sortByColumn: 'Month Number'
+
+	column 'Month Short'
+		dataType: string
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: month_short
+		sortByColumn: 'Month Number'
+
+	column 'Year Month'
+		dataType: string
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: year_month
+		sortByColumn: 'Year Month Key'
+
+	column 'Year Month Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: year_month_key
+
+	column 'Month Start'
+		dataType: dateTime
+		formatString: mmm yyyy
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: month_start_date
+
+	column 'Month End'
+		dataType: dateTime
+		formatString: dd mmm yyyy
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: month_end_date
+
+	column 'Is Month End'
+		dataType: boolean
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: is_month_end
+
+	column 'Quarter Number'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: quarter_num
+
+	column 'Year Quarter'
+		dataType: string
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: year_quarter
+
+	column 'Calendar Year'
+		dataType: int64
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: calendar_year
+
+	column 'Fiscal Year Number'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: fiscal_year
+
+	column 'Fiscal Year'
+		dataType: string
+		displayFolder: Fiscal (Apr-Mar)
+		summarizeBy: none
+		sourceColumn: fiscal_year_label
+
+	column 'Fiscal Quarter Number'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: fiscal_quarter_num
+
+	column 'Fiscal Quarter'
+		dataType: string
+		displayFolder: Fiscal (Apr-Mar)
+		summarizeBy: none
+		sourceColumn: fiscal_quarter_label
+
+	column 'Fiscal Month Number'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: fiscal_month_num
+
+	column 'Fiscal Month'
+		dataType: string
+		displayFolder: Fiscal (Apr-Mar)
+		summarizeBy: none
+		sourceColumn: fiscal_month_name
+		sortByColumn: 'Fiscal Month Number'
+
+	column 'Crop Season Start Year'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: crop_season_start_year
+
+	column 'Crop Season'
+		dataType: string
+		displayFolder: Agricultural season (Oct-Sep)
+		summarizeBy: none
+		sourceColumn: crop_season_label
+
+	column 'Season Month Number'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: season_month_num
+
+	column 'Is Current Month'
+		dataType: boolean
+		displayFolder: Calendar
+		summarizeBy: none
+		sourceColumn: is_current_month
+
+	hierarchy 'Fiscal Calendar'
+
+		level 'Fiscal Year'
+			column: 'Fiscal Year'
+
+		level 'Fiscal Quarter'
+			column: 'Fiscal Quarter'
+
+		level 'Year Month'
+			column: 'Year Month'
+
+		level Date
+			column: Date
+
+	hierarchy Calendar
+
+		level 'Calendar Year'
+			column: 'Calendar Year'
+
+		level 'Year Quarter'
+			column: 'Year Quarter'
+
+		level 'Year Month'
+			column: 'Year Month'
+
+		level Date
+			column: Date
+
+	hierarchy 'Agricultural Season'
+
+		level 'Crop Season'
+			column: 'Crop Season'
+
+		level 'Year Month'
+			column: 'Year Month'
+
+		level Date
+			column: Date
+
+	partition Date = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("dim_date.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "dim_date"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"date_key", Int64.Type}, {"full_date", type date}, {"day_of_month", Int64.Type}, {"day_of_week_iso", Int64.Type}, {"day_name", type text}, {"day_short", type text}, {"is_weekend", type logical}, {"is_public_holiday", type logical}, {"holiday_name", type text}, {"is_working_day", type logical}, {"iso_week", Int64.Type}, {"week_start_date", type date}, {"month_num", Int64.Type}, {"month_name", type text}, {"month_short", type text}, {"year_month", type text}, {"year_month_key", Int64.Type}, {"month_start_date", type date}, {"month_end_date", type date}, {"is_month_end", type logical}, {"quarter_num", Int64.Type}, {"year_quarter", type text}, {"calendar_year", Int64.Type}, {"fiscal_year", Int64.Type}, {"fiscal_year_label", type text}, {"fiscal_quarter_num", Int64.Type}, {"fiscal_quarter_label", type text}, {"fiscal_month_num", Int64.Type}, {"fiscal_month_name", type text}, {"crop_season_start_year", Int64.Type}, {"crop_season_label", type text}, {"season_month_num", Int64.Type}, {"is_current_month", type logical}}, "en-US")
+				in
+				    Typed
+

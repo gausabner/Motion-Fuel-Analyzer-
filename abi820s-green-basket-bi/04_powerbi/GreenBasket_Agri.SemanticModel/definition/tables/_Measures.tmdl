@@ -1,0 +1,553 @@
+/// All business measures, organised in display folders.
+table _Measures
+
+	/// Invoice + credit-note revenue after discount, N$ (FX-converted).
+	measure 'Net Revenue' = SUM ( 'Sales'[Net Revenue] )
+		formatString: "N$" #,0
+		displayFolder: 1 Sales
+
+	/// Revenue before discount, N$.
+	measure 'Gross Revenue' = SUM ( 'Sales'[Gross Revenue] )
+		formatString: "N$" #,0
+		displayFolder: 1 Sales
+
+	/// Discounts granted, N$.
+	measure Discount = SUM ( 'Sales'[Discount] )
+		formatString: "N$" #,0
+		displayFolder: 1 Sales
+
+	/// Standard cost of goods sold, N$.
+	measure COGS = SUM ( 'Sales'[COGS] )
+		formatString: "N$" #,0
+		displayFolder: 1 Sales
+
+	/// Outbound freight borne by Green Basket, N$.
+	measure 'Freight Cost' = SUM ( 'Sales'[Freight Cost] )
+		formatString: "N$" #,0
+		displayFolder: 1 Sales
+
+	/// Net revenue less COGS.
+	measure 'Gross Margin' = [Net Revenue] - [COGS]
+		formatString: "N$" #,0
+		displayFolder: 1 Sales
+
+	/// Gross margin as a share of net revenue.
+	measure 'Gross Margin %' = DIVIDE ( [Gross Margin], [Net Revenue] )
+		formatString: 0.0%
+		displayFolder: 1 Sales
+
+	/// Gross margin less outbound freight.
+	measure 'Contribution after Freight' = [Gross Margin] - [Freight Cost]
+		formatString: "N$" #,0
+		displayFolder: 1 Sales
+
+	/// Tonnes invoiced (net of credit notes).
+	measure 'Sales Volume (t)' = DIVIDE ( SUM ( 'Sales'[Quantity (kg)] ), 1000 )
+		formatString: #,0
+		displayFolder: 1 Sales
+
+	/// Net revenue per kg sold.
+	measure 'Avg Realised Price (N$/kg)' = DIVIDE ( [Net Revenue], SUM ( 'Sales'[Quantity (kg)] ) )
+		formatString: "N$" #,0.00
+		displayFolder: 1 Sales
+
+	/// Number of document lines.
+	measure 'Invoice Lines' = COUNTROWS ( 'Sales' )
+		formatString: #,0
+		displayFolder: 1 Sales
+
+	/// Distinct invoices and credit notes.
+	measure Invoices = DISTINCTCOUNT ( 'Sales'[Invoice ID] )
+		formatString: #,0
+		displayFolder: 1 Sales
+
+	/// Distinct customers (durable code) with sales in the context.
+	measure 'Active Customers' = CALCULATE ( DISTINCTCOUNT ( 'Customer'[Customer Code] ), 'Sales' )
+		formatString: #,0
+		displayFolder: 1 Sales
+
+	/// Value credited for quality claims (positive number).
+	measure 'Credit Notes' = - CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Sales'[Document Type] = "CRN" ) )
+		formatString: "N$" #,0
+		displayFolder: 1 Sales
+
+	/// Credit notes as a share of invoiced revenue.
+	measure 'Credit Note Rate %' = DIVIDE ( [Credit Notes], CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Sales'[Document Type] = "INV" ) ) )
+		formatString: 0.00%
+		displayFolder: 1 Sales
+
+	/// Net revenue from customers in the Export channel (CALCULATE with filter modification).
+	measure 'Export Revenue' = CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Customer'[Channel] = "Export" ) )
+		formatString: "N$" #,0
+		displayFolder: 1 Sales
+
+	/// Export revenue as a share of net revenue.
+	measure 'Export Share %' = DIVIDE ( [Export Revenue], [Net Revenue] )
+		formatString: 0.0%
+		displayFolder: 1 Sales
+
+	/// Share of the selection in total revenue across all crops (filters on the product hierarchy removed).
+	measure 'Revenue Share of All Crops %' =
+			DIVIDE (
+			    [Net Revenue],
+			    CALCULATE ( [Net Revenue], REMOVEFILTERS ( 'Product' ), REMOVEFILTERS ( 'Crop' ), REMOVEFILTERS ( 'Crop Category' ) )
+			)
+		formatString: 0.0%
+		displayFolder: 1 Sales
+
+	/// Revenue concentration: share of the ten largest customers in the context.
+	measure 'Top 10 Customer Share %' =
+			VAR _top10 =
+			    TOPN ( 10, VALUES ( 'Customer'[Customer Code] ), [Net Revenue] )
+			RETURN
+			    DIVIDE ( CALCULATE ( [Net Revenue], _top10 ), [Net Revenue] )
+		formatString: 0.0%
+		displayFolder: 1 Sales
+
+	/// Latest invoice date in the model (ignores date filters).
+	measure 'Last Sales Date' =
+			VAR _k =
+			    CALCULATE ( MAX ( 'Sales'[Invoice Date Key] ), REMOVEFILTERS ( 'Date' ) )
+			RETURN
+			    IF ( NOT ISBLANK ( _k ), DATE ( INT ( _k / 10000 ), MOD ( INT ( _k / 100 ), 100 ), MOD ( _k, 100 ) ) )
+		formatString: dd mmm yyyy
+		displayFolder: 2 Time Intelligence
+
+	/// Fiscal year-to-date (year ends 31 March), no future guard.
+	measure 'Net Revenue FYTD Raw' = TOTALYTD ( [Net Revenue], 'Date'[Date], "3/31" )
+		formatString: "N$" #,0
+		displayFolder: 2 Time Intelligence
+
+	/// Fiscal year-to-date net revenue; blank for periods after the last sale.
+	measure 'Net Revenue FYTD' = IF ( MIN ( 'Date'[Date] ) <= [Last Sales Date], [Net Revenue FYTD Raw] )
+		formatString: "N$" #,0
+		displayFolder: 2 Time Intelligence
+
+	/// Same fiscal-YTD window one year earlier, cut at the same day (like-for-like).
+	measure 'Net Revenue FYTD PY' =
+			VAR _cutoffPY =
+			    EDATE ( [Last Sales Date], -12 )
+			RETURN
+			    CALCULATE (
+			        [Net Revenue FYTD Raw],
+			        SAMEPERIODLASTYEAR ( 'Date'[Date] ),
+			        KEEPFILTERS ( 'Date'[Date] <= _cutoffPY )
+			    )
+		formatString: "N$" #,0
+		displayFolder: 2 Time Intelligence
+
+	/// Fiscal-YTD growth versus the like-for-like prior-year window.
+	measure 'Net Revenue FYTD YoY %' = DIVIDE ( [Net Revenue FYTD] - [Net Revenue FYTD PY], [Net Revenue FYTD PY] )
+		formatString: 0.0%
+		displayFolder: 2 Time Intelligence
+
+	/// Net revenue in the same period last year.
+	measure 'Net Revenue PY' = CALCULATE ( [Net Revenue], SAMEPERIODLASTYEAR ( 'Date'[Date] ) )
+		formatString: "N$" #,0
+		displayFolder: 2 Time Intelligence
+
+	/// Change versus the same period last year, N$.
+	measure 'Net Revenue YoY' =
+			VAR _cur = [Net Revenue]
+			VAR _py = [Net Revenue PY]
+			RETURN
+			    IF ( NOT ISBLANK ( _cur ) && NOT ISBLANK ( _py ), _cur - _py )
+		formatString: "N$" #,0
+		displayFolder: 2 Time Intelligence
+
+	/// Growth versus the same period last year.
+	measure 'Net Revenue YoY %' =
+			VAR _cur = [Net Revenue]
+			VAR _py = [Net Revenue PY]
+			RETURN
+			    IF ( NOT ISBLANK ( _cur ) && NOT ISBLANK ( _py ), DIVIDE ( _cur - _py, _py ) )
+		formatString: 0.0%
+		displayFolder: 2 Time Intelligence
+
+	/// Moving annual total: trailing 12 months ending at the context end (capped at the last sale).
+	measure 'Net Revenue MAT' =
+			VAR _end =
+			    MIN ( MAX ( 'Date'[Date] ), [Last Sales Date] )
+			RETURN
+			    IF (
+			        MIN ( 'Date'[Date] ) <= [Last Sales Date],
+			        CALCULATE ( [Net Revenue], DATESINPERIOD ( 'Date'[Date], _end, -12, MONTH ) )
+			    )
+		formatString: "N$" #,0
+		displayFolder: 2 Time Intelligence
+
+	/// Average monthly net revenue over the trailing three months.
+	measure 'Net Revenue 3M Rolling Avg' =
+			VAR _end =
+			    MIN ( MAX ( 'Date'[Date] ), [Last Sales Date] )
+			RETURN
+			    IF (
+			        MIN ( 'Date'[Date] ) <= [Last Sales Date],
+			        DIVIDE ( CALCULATE ( [Net Revenue], DATESINPERIOD ( 'Date'[Date], _end, -3, MONTH ) ), 3 )
+			    )
+		formatString: "N$" #,0
+		displayFolder: 2 Time Intelligence
+
+	/// Gross margin % in the same period last year.
+	measure 'Gross Margin % PY' = CALCULATE ( [Gross Margin %], SAMEPERIODLASTYEAR ( 'Date'[Date] ) )
+		formatString: 0.0%
+		displayFolder: 2 Time Intelligence
+
+	/// Tonnes by DISPATCH date - activates the inactive role-playing relationship.
+	measure 'Dispatched Volume (t)' =
+			CALCULATE (
+			    DIVIDE ( SUM ( 'Sales'[Quantity (kg)] ), 1000 ),
+			    USERELATIONSHIP ( 'Sales'[Dispatch Date Key], 'Date'[Date Key] ),
+			    KEEPFILTERS ( 'Sales'[Document Type] = "INV" )
+			)
+		formatString: #,0
+		displayFolder: 2 Time Intelligence
+
+	/// Field harvest in tonnes by harvest date.
+	measure 'Harvest (t)' = DIVIDE ( SUM ( 'Harvest'[Harvested (kg)] ), 1000 )
+		formatString: #,0
+		displayFolder: 3 Production & Yield
+
+	/// Area planted (by planting date).
+	measure 'Planted Area (ha)' = SUM ( 'Crop Cycle'[Planted (ha)] )
+		formatString: #,0
+		displayFolder: 3 Production & Yield
+
+	/// Harvest of completed cycles, by agricultural season of harvest.
+	measure 'Completed Harvest (t)' =
+			CALCULATE (
+			    DIVIDE ( SUM ( 'Crop Cycle'[Harvested (kg)] ), 1000 ),
+			    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = "Completed" ),
+			    USERELATIONSHIP ( 'Crop Cycle'[Harvest Season End Date Key], 'Date'[Date Key] )
+			)
+		formatString: #,0
+		displayFolder: 3 Production & Yield
+
+	/// Harvested area of completed cycles, by season of harvest.
+	measure 'Harvested Area (ha)' =
+			CALCULATE (
+			    SUM ( 'Crop Cycle'[Harvested (ha)] ),
+			    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = "Completed" ),
+			    USERELATIONSHIP ( 'Crop Cycle'[Harvest Season End Date Key], 'Date'[Date Key] )
+			)
+		formatString: #,0
+		displayFolder: 3 Production & Yield
+
+	/// Tonnes per harvested hectare (completed cycles).
+	measure 'Yield (t/ha)' = DIVIDE ( [Completed Harvest (t)], [Harvested Area (ha)] )
+		formatString: #,0.00
+		displayFolder: 3 Production & Yield
+
+	/// Budgeted yield of the same completed cycles.
+	measure 'Planned Yield (t/ha)' =
+			CALCULATE (
+			    DIVIDE ( SUM ( 'Crop Cycle'[Planned Production (kg)] ) / 1000, SUM ( 'Crop Cycle'[Planted (ha)] ) ),
+			    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = "Completed" ),
+			    USERELATIONSHIP ( 'Crop Cycle'[Harvest Season End Date Key], 'Date'[Date Key] )
+			)
+		formatString: #,0.00
+		displayFolder: 3 Production & Yield
+
+	/// Actual yield relative to plan.
+	measure 'Yield vs Plan %' =
+			VAR _plan = [Planned Yield (t/ha)]
+			RETURN
+			    IF ( NOT ISBLANK ( _plan ), DIVIDE ( [Yield (t/ha)], _plan ) - 1 )
+		formatString: 0.0%
+		displayFolder: 3 Production & Yield
+
+	/// NSA commercial-sector yield for the same region/crop/season (drill-across).
+	measure 'Benchmark Yield (t/ha)' =
+			VAR _prod =
+			    CALCULATE ( SUM ( 'Crop Estimate'[Production (t)] ), KEEPFILTERS ( 'Crop Estimate'[Farming Sector] = "Commercial" ) )
+			VAR _area =
+			    CALCULATE ( SUM ( 'Crop Estimate'[Area Planted (ha)] ), KEEPFILTERS ( 'Crop Estimate'[Farming Sector] = "Commercial" ) )
+			RETURN
+			    DIVIDE ( _prod, _area )
+		formatString: #,0.00
+		displayFolder: 3 Production & Yield
+
+	/// Green Basket yield minus the NSA commercial benchmark.
+	measure 'Yield Gap vs Benchmark (t/ha)' =
+			VAR _y = [Yield (t/ha)]
+			VAR _b = [Benchmark Yield (t/ha)]
+			RETURN
+			    IF ( NOT ISBLANK ( _y ) && NOT ISBLANK ( _b ), _y - _b )
+		formatString: #,0.00
+		displayFolder: 3 Production & Yield
+
+	/// Crop-cycle direct cost per tonne harvested (completed cycles).
+	measure 'Direct Cost per Tonne' =
+			CALCULATE (
+			    DIVIDE ( SUM ( 'Crop Cycle'[Direct Cost] ), SUM ( 'Crop Cycle'[Harvested (kg)] ) / 1000 ),
+			    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = "Completed" ),
+			    USERELATIONSHIP ( 'Crop Cycle'[Harvest Season End Date Key], 'Date'[Date Key] )
+			)
+		formatString: "N$" #,0
+		displayFolder: 3 Production & Yield
+
+	/// Posted production cost (incl. overheads) by posting date.
+	measure 'Production Cost' = SUM ( 'Production Cost'[Amount] )
+		formatString: "N$" #,0
+		displayFolder: 3 Production & Yield
+
+	/// Fertiliser applied per planted hectare.
+	measure 'Fertiliser Rate (kg/ha)' = DIVIDE ( SUM ( 'Crop Cycle'[Fertiliser (kg)] ), SUM ( 'Crop Cycle'[Planted (ha)] ) )
+		formatString: #,0
+		displayFolder: 3 Production & Yield
+
+	/// Share of planted area abandoned (crop failure).
+	measure 'Failed Area %' = DIVIDE ( CALCULATE ( [Planted Area (ha)], KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = "Failed" ) ), [Planted Area (ha)] )
+		formatString: 0.0%
+		displayFolder: 3 Production & Yield
+
+	/// Area still growing or being harvested.
+	measure 'Area in Progress (ha)' = CALCULATE ( [Planted Area (ha)], KEEPFILTERS ( 'Crop Cycle'[Cycle Status] IN { "Growing", "Harvesting" } ) )
+		formatString: #,0
+		displayFolder: 3 Production & Yield
+
+	/// Distinct crop cycles completed, by last-harvest date.
+	measure 'Cycles Completed' =
+			CALCULATE (
+			    DISTINCTCOUNT ( 'Crop Cycle'[Cycle ID] ),
+			    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = "Completed" ),
+			    USERELATIONSHIP ( 'Crop Cycle'[Last Harvest Date Key], 'Date'[Date Key] )
+			)
+		formatString: #,0
+		displayFolder: 3 Production & Yield
+
+	/// Stock on hand at the LAST month-end snapshot in the period across all farms/products (semi-additive).
+	measure 'Closing Stock (t)' =
+			VAR _last =
+			    CALCULATE (
+			        MAX ( 'Inventory'[Snapshot Date Key] ),
+			        REMOVEFILTERS ( 'Farm' ), REMOVEFILTERS ( 'Region' ), REMOVEFILTERS ( 'Product' ), REMOVEFILTERS ( 'Crop' ), REMOVEFILTERS ( 'Crop Category' )
+			    )
+			RETURN
+			    DIVIDE ( CALCULATE ( SUM ( 'Inventory'[Closing Stock (kg)] ), 'Inventory'[Snapshot Date Key] = _last ), 1000 )
+		formatString: #,0
+		displayFolder: 4 Inventory
+
+	/// Closing stock at standard cost, last snapshot in the period.
+	measure 'Closing Stock Value' =
+			VAR _last =
+			    CALCULATE (
+			        MAX ( 'Inventory'[Snapshot Date Key] ),
+			        REMOVEFILTERS ( 'Farm' ), REMOVEFILTERS ( 'Region' ), REMOVEFILTERS ( 'Product' ), REMOVEFILTERS ( 'Crop' ), REMOVEFILTERS ( 'Crop Category' )
+			    )
+			RETURN
+			    CALCULATE ( SUM ( 'Inventory'[Closing Stock Value] ), 'Inventory'[Snapshot Date Key] = _last )
+		formatString: "N$" #,0
+		displayFolder: 4 Inventory
+
+	/// Stock on hand at the FIRST snapshot in the period.
+	measure 'Opening Stock (t)' =
+			VAR _first =
+			    CALCULATE (
+			        MIN ( 'Inventory'[Snapshot Date Key] ),
+			        REMOVEFILTERS ( 'Farm' ), REMOVEFILTERS ( 'Region' ), REMOVEFILTERS ( 'Product' ), REMOVEFILTERS ( 'Crop' ), REMOVEFILTERS ( 'Crop Category' )
+			    )
+			RETURN
+			    DIVIDE ( CALCULATE ( SUM ( 'Inventory'[Opening Stock (kg)] ), 'Inventory'[Snapshot Date Key] = _first ), 1000 )
+		formatString: #,0
+		displayFolder: 4 Inventory
+
+	/// Graded produce received into stock.
+	measure 'Stock Received (t)' = DIVIDE ( SUM ( 'Inventory'[Received (kg)] ), 1000 )
+		formatString: #,0
+		displayFolder: 4 Inventory
+
+	/// Produce dispatched per the stock system.
+	measure 'Stock Dispatched (t)' = DIVIDE ( SUM ( 'Inventory'[Dispatched (kg)] ), 1000 )
+		formatString: #,0
+		displayFolder: 4 Inventory
+
+	/// Post-harvest losses.
+	measure 'Shrinkage (t)' = DIVIDE ( SUM ( 'Inventory'[Shrinkage (kg)] ), 1000 )
+		formatString: #,0.0
+		displayFolder: 4 Inventory
+
+	/// Losses relative to stock available (opening + received).
+	measure 'Shrinkage %' = DIVIDE ( [Shrinkage (t)], [Opening Stock (t)] + [Stock Received (t)] )
+		formatString: 0.0%
+		displayFolder: 4 Inventory
+
+	/// Average tonnes invoiced per day over the last 90 days of the context.
+	measure 'Avg Daily Dispatch L90D (t)' =
+			VAR _end =
+			    MIN ( MAX ( 'Date'[Date] ), [Last Sales Date] )
+			RETURN
+			    DIVIDE (
+			        CALCULATE (
+			            SUM ( 'Sales'[Quantity (kg)] ),
+			            DATESINPERIOD ( 'Date'[Date], _end, -90, DAY ),
+			            KEEPFILTERS ( 'Sales'[Document Type] = "INV" )
+			        ),
+			        90 * 1000
+			    )
+		formatString: #,0.0
+		displayFolder: 4 Inventory
+
+	/// Days of sales covered by closing stock.
+	measure 'Stock Cover (days)' = DIVIDE ( [Closing Stock (t)], [Avg Daily Dispatch L90D (t)] )
+		formatString: #,0
+		displayFolder: 4 Inventory
+
+	/// Rainfall total per location, averaged across the selected farm locations.
+	measure 'Rainfall (mm)' = AVERAGEX ( VALUES ( 'Farm'[Farm Code] ), CALCULATE ( SUM ( 'Weather'[Rainfall (mm)] ) ) )
+		formatString: #,0
+		displayFolder: 5 Weather & Markets
+
+	/// Rainfall per agricultural season (Oct-Sep) per location: comparable whether one or several seasons are selected.
+	measure 'Rainfall per Season (mm)' =
+			VAR _seasons =
+			    CALCULATE ( DISTINCTCOUNT ( 'Date'[Crop Season] ), 'Weather' )
+			RETURN
+			    DIVIDE ( [Rainfall (mm)], _seasons )
+		formatString: #,0
+		displayFolder: 5 Weather & Markets
+
+	/// Days with Tmax >= 35 C per location, averaged across locations.
+	measure 'Heat Days' = AVERAGEX ( VALUES ( 'Farm'[Farm Code] ), CALCULATE ( SUM ( 'Weather'[Heat Day] ) ) )
+		formatString: #,0
+		displayFolder: 5 Weather & Markets
+
+	/// Mean daily maximum temperature.
+	measure 'Avg Max Temp (C)' = AVERAGE ( 'Weather'[Max Temp (C)] )
+		formatString: #,0.0
+		displayFolder: 5 Weather & Markets
+
+	/// Average international price converted to N$ (select one crop/commodity).
+	measure 'World Price (N$/t)' = AVERAGE ( 'Market Price'[Price (N$)] )
+		formatString: "N$" #,0
+		displayFolder: 5 Weather & Markets
+
+	/// Average international price in USD per published unit.
+	measure 'World Price (USD)' = AVERAGE ( 'Market Price'[Price (USD)] )
+		formatString: #,0.00
+		displayFolder: 5 Weather & Markets
+
+	/// Green Basket realised price per tonne.
+	measure 'Realised Price (N$/t)' = [Avg Realised Price (N$/kg)] * 1000
+		formatString: "N$" #,0
+		displayFolder: 5 Weather & Markets
+
+	/// Realised price relative to the international price (one crop selected).
+	measure 'Local Premium over World Price %' =
+			VAR _w = [World Price (N$/t)]
+			RETURN
+			    IF ( HASONEVALUE ( 'Crop'[Crop] ) && NOT ISBLANK ( _w ), DIVIDE ( [Realised Price (N$/t)], _w ) - 1 )
+		formatString: 0.0%
+		displayFolder: 5 Weather & Markets
+
+	/// Forward forecast of net revenue for the selected model (default: seasonal naive).
+	measure 'Forecast Revenue' =
+			VAR _model =
+			    SELECTEDVALUE ( 'Forecast'[Model], "Seasonal naive" )
+			RETURN
+			    CALCULATE (
+			        SUM ( 'Forecast'[Forecast] ),
+			        KEEPFILTERS ( 'Forecast'[Scenario] = "Forecast" ),
+			        'Forecast'[Model] = _model
+			    )
+		formatString: "N$" #,0
+		displayFolder: 6 Forecast
+
+	/// Lower bound of the 80 % prediction interval (sum of category bounds - approximate at total level).
+	measure 'Forecast Lower 80' =
+			VAR _model =
+			    SELECTEDVALUE ( 'Forecast'[Model], "Seasonal naive" )
+			RETURN
+			    CALCULATE ( SUM ( 'Forecast'[Lower 80] ), KEEPFILTERS ( 'Forecast'[Scenario] = "Forecast" ), 'Forecast'[Model] = _model )
+		formatString: "N$" #,0
+		displayFolder: 6 Forecast
+
+	/// Upper bound of the 80 % prediction interval.
+	measure 'Forecast Upper 80' =
+			VAR _model =
+			    SELECTEDVALUE ( 'Forecast'[Model], "Seasonal naive" )
+			RETURN
+			    CALCULATE ( SUM ( 'Forecast'[Upper 80] ), KEEPFILTERS ( 'Forecast'[Scenario] = "Forecast" ), 'Forecast'[Model] = _model )
+		formatString: "N$" #,0
+		displayFolder: 6 Forecast
+
+	/// Hold-out (Oct 2025 - Sep 2026) forecast of the selected model.
+	measure 'Backtest Forecast' =
+			VAR _model =
+			    SELECTEDVALUE ( 'Forecast'[Model], "Seasonal naive" )
+			RETURN
+			    CALCULATE ( SUM ( 'Forecast'[Forecast] ), KEEPFILTERS ( 'Forecast'[Scenario] = "Backtest" ), 'Forecast'[Model] = _model )
+		formatString: "N$" #,0
+		displayFolder: 6 Forecast
+
+	/// Weighted absolute percentage error of the hold-out forecast (category grain).
+	measure 'Backtest WAPE %' =
+			VAR _model =
+			    SELECTEDVALUE ( 'Forecast'[Model], "Seasonal naive" )
+			VAR _rows =
+			    FILTER ( 'Forecast', 'Forecast'[Scenario] = "Backtest" && 'Forecast'[Model] = _model )
+			RETURN
+			    DIVIDE ( SUMX ( _rows, ABS ( 'Forecast'[Actual] - 'Forecast'[Forecast] ) ), SUMX ( _rows, ABS ( 'Forecast'[Actual] ) ) )
+		formatString: 0.0%
+		displayFolder: 6 Forecast
+
+	/// Actual net revenue up to the last sale, forecast afterwards (single continuous line).
+	measure 'Revenue (Actual + Forecast)' = IF ( MAX ( 'Date'[Date] ) <= [Last Sales Date], [Net Revenue], [Forecast Revenue] )
+		formatString: "N$" #,0
+		displayFolder: 6 Forecast
+
+	/// Permutation importance of yield drivers (random forest).
+	measure 'Driver Importance' = SUM ( 'Yield Drivers'[Importance] )
+		formatString: 0.000
+		displayFolder: 6 Forecast
+
+	/// Invoice lines flagged by rule SA07.
+	measure 'Price Anomaly Lines' = CALCULATE ( COUNTROWS ( 'Sales' ), KEEPFILTERS ( 'Sales'[Price Anomaly] = TRUE () ) )
+		formatString: #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// Revenue on lines awaiting steward review.
+	measure 'Flagged Price Anomaly Revenue' = CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Sales'[Price Anomaly] = TRUE () ) )
+		formatString: "N$" #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// Revenue on lines without farm of origin (rule SA05).
+	measure 'Unknown Farm Revenue %' = DIVIDE ( CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Farm'[Farm Code] = "UNKNOWN" ) ), [Net Revenue] )
+		formatString: 0.00%
+		displayFolder: 7 Data Quality & Security
+
+	/// Harvest records corrected by rule HV06.
+	measure 'Corrected Harvest Records' = CALCULATE ( COUNTROWS ( 'Harvest' ), KEEPFILTERS ( 'Harvest'[Is Corrected] = TRUE () ) )
+		formatString: #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// Farms visible to the current user (RLS test).
+	measure 'Visible Farms' = CALCULATE ( DISTINCTCOUNT ( 'Farm'[Farm Code] ), KEEPFILTERS ( 'Farm'[Farm Code] <> "UNKNOWN" ) )
+		formatString: #,0
+		displayFolder: 7 Data Quality & Security
+
+	/// UPN evaluated by row-level security.
+	measure 'Current User' = USERPRINCIPALNAME ()
+		displayFolder: 7 Data Quality & Security
+
+	/// Freshness label for page headers.
+	measure 'Data As Of' = "Data to " & FORMAT ( [Last Sales Date], "d mmm yyyy" )
+		displayFolder: 0 Labels
+
+	/// Dynamic title.
+	measure 'Title Revenue Trend' = "Net revenue by month - " & SELECTEDVALUE ( 'Date'[Fiscal Year], "all fiscal years" )
+		displayFolder: 0 Labels
+
+	/// Dynamic title.
+	measure 'Title Yield' = "Yield vs plan and NSA benchmark - " & SELECTEDVALUE ( 'Crop'[Crop], "all crops" )
+		displayFolder: 0 Labels
+
+	column 'Measure Group'
+		isHidden
+		isNameInferred
+		sourceColumn: [Measure Group]
+
+	partition _Measures = calculated
+		mode: import
+		source = ROW ( "Measure Group", "Measures" )
+

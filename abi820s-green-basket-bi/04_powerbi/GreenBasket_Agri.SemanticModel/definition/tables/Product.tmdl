@@ -1,0 +1,67 @@
+/// Saleable SKU (crop x grade x pack).
+table Product
+
+	column 'Product Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: product_key
+
+	column 'Product Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: product_code
+
+	column Product
+		dataType: string
+		summarizeBy: none
+		sourceColumn: product_name
+
+	column 'Crop Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: crop_key
+
+	column Grade
+		dataType: string
+		summarizeBy: none
+		sourceColumn: grade
+
+	column 'Pack Type'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: pack_type
+
+	column 'Sales UoM'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: sales_uom
+
+	column 'Kg per Sales UoM'
+		dataType: double
+		summarizeBy: none
+		sourceColumn: kg_per_sales_uom
+
+	column 'Is Export Grade'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_export_grade
+
+	partition Product = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("dim_product.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "dim_product"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"product_key", Int64.Type}, {"product_code", type text}, {"product_name", type text}, {"crop_key", Int64.Type}, {"grade", type text}, {"pack_type", type text}, {"sales_uom", type text}, {"kg_per_sales_uom", type number}, {"is_export_grade", type logical}}, "en-US")
+				in
+				    Typed
+

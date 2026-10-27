@@ -1,0 +1,57 @@
+/// Crop; conformed rollup used by harvest, cost, cycle, market-price and NSA facts.
+table Crop
+
+	column 'Crop Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: crop_key
+
+	column 'Crop Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: crop_code
+
+	column Crop
+		dataType: string
+		summarizeBy: none
+		sourceColumn: crop_name
+
+	column 'Crop Category Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: crop_category_key
+
+	column 'NAB Controlled'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_nab_controlled
+
+	column 'Storage Type'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: storage_type
+
+	column 'Shelf Life (days)'
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: shelf_life_days
+
+	partition Crop = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("dim_crop.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "dim_crop"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"crop_key", Int64.Type}, {"crop_code", type text}, {"crop_name", type text}, {"crop_category_key", Int64.Type}, {"is_nab_controlled", type logical}, {"storage_type", type text}, {"shelf_life_days", Int64.Type}}, "en-US")
+				in
+				    Typed
+

@@ -1,0 +1,124 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "c148c5a17fa5ca85caf9",
+  "position": {
+    "x": 24,
+    "y": 440,
+    "z": 0,
+    "width": 610,
+    "height": 264,
+    "tabOrder": 10000
+  },
+  "visual": {
+    "visualType": "scatterChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Farm"
+                    }
+                  },
+                  "Property": "Farm"
+                }
+              },
+              "queryRef": "Farm.Farm"
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Farm"
+                    }
+                  },
+                  "Property": "Irrigation Type"
+                }
+              },
+              "queryRef": "Farm.Irrigation Type"
+            }
+          ]
+        },
+        "X": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Rainfall per Season (mm)"
+                }
+              },
+              "queryRef": "_Measures.Rainfall per Season (mm)",
+              "displayName": "Rainfall per season mm"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Yield (t/ha)"
+                }
+              },
+              "queryRef": "_Measures.Yield (t/ha)",
+              "displayName": "Yield t/ha"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Rainfall vs yield by farm and irrigation system'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Scatter plot of average seasonal rainfall against yield for each farm, coloured by irrigation system.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

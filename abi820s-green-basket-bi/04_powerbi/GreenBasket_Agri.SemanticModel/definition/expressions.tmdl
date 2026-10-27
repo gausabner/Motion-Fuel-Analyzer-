@@ -1,0 +1,24 @@
+expression PgServer = "localhost:5432" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+
+	annotation PBI_ResultType = Text
+
+expression PgDatabase = "green_basket_dw" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+
+	annotation PBI_ResultType = Text
+
+expression SourceMode = "PostgreSQL" meta [IsParameterQuery = true, List = {"PostgreSQL", "CSV"}, DefaultValue = "PostgreSQL", Type = "Text", IsParameterQueryRequired = true]
+
+	annotation PBI_ResultType = Text
+
+expression CsvFolder = "C:\GreenBasket\04_powerbi\data_csv\" meta [IsParameterQuery = true, Type = "Text", IsParameterQueryRequired = true]
+
+	annotation PBI_ResultType = Text
+
+expression RangeStart = #datetime(2020, 1, 1, 0, 0, 0) meta [IsParameterQuery = true, Type = "DateTime", IsParameterQueryRequired = true]
+
+	annotation PBI_ResultType = DateTime
+
+expression RangeEnd = #datetime(2027, 1, 1, 0, 0, 0) meta [IsParameterQuery = true, Type = "DateTime", IsParameterQueryRequired = true]
+
+	annotation PBI_ResultType = DateTime
+

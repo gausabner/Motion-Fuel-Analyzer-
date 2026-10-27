@@ -1,0 +1,140 @@
+relationship 'Sales[Invoice Date Key] -> Date'
+	fromColumn: Sales.'Invoice Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Sales[Dispatch Date Key] -> Date'
+	isActive: false
+	fromColumn: Sales.'Dispatch Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Sales[Product Key] -> Product'
+	fromColumn: Sales.'Product Key'
+	toColumn: Product.'Product Key'
+
+relationship 'Sales[Customer Key] -> Customer'
+	fromColumn: Sales.'Customer Key'
+	toColumn: Customer.'Customer Key'
+
+relationship 'Sales[Farm Key] -> Farm'
+	fromColumn: Sales.'Farm Key'
+	toColumn: Farm.'Farm Key'
+
+relationship 'Product[Crop Key] -> Crop'
+	fromColumn: Product.'Crop Key'
+	toColumn: Crop.'Crop Key'
+
+relationship 'Crop[Crop Category Key] -> Crop Category'
+	fromColumn: Crop.'Crop Category Key'
+	toColumn: 'Crop Category'.'Crop Category Key'
+
+relationship 'Farm[Region Key] -> Region'
+	fromColumn: Farm.'Region Key'
+	toColumn: Region.'Region Key'
+
+relationship 'Harvest[Harvest Date Key] -> Date'
+	fromColumn: Harvest.'Harvest Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Harvest[Farm Key] -> Farm'
+	fromColumn: Harvest.'Farm Key'
+	toColumn: Farm.'Farm Key'
+
+relationship 'Harvest[Crop Key] -> Crop'
+	fromColumn: Harvest.'Crop Key'
+	toColumn: Crop.'Crop Key'
+
+relationship 'Crop Cycle[Planting Date Key] -> Date'
+	fromColumn: 'Crop Cycle'.'Planting Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Crop Cycle[First Harvest Date Key] -> Date'
+	isActive: false
+	fromColumn: 'Crop Cycle'.'First Harvest Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Crop Cycle[Last Harvest Date Key] -> Date'
+	isActive: false
+	fromColumn: 'Crop Cycle'.'Last Harvest Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Crop Cycle[Harvest Season End Date Key] -> Date'
+	isActive: false
+	fromColumn: 'Crop Cycle'.'Harvest Season End Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Crop Cycle[Farm Key] -> Farm'
+	fromColumn: 'Crop Cycle'.'Farm Key'
+	toColumn: Farm.'Farm Key'
+
+relationship 'Crop Cycle[Crop Key] -> Crop'
+	fromColumn: 'Crop Cycle'.'Crop Key'
+	toColumn: Crop.'Crop Key'
+
+relationship 'Production Cost[Posting Date Key] -> Date'
+	fromColumn: 'Production Cost'.'Posting Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Production Cost[Farm Key] -> Farm'
+	fromColumn: 'Production Cost'.'Farm Key'
+	toColumn: Farm.'Farm Key'
+
+relationship 'Production Cost[Crop Key] -> Crop'
+	fromColumn: 'Production Cost'.'Crop Key'
+	toColumn: Crop.'Crop Key'
+
+relationship 'Production Cost[Cost Category Key] -> Cost Category'
+	fromColumn: 'Production Cost'.'Cost Category Key'
+	toColumn: 'Cost Category'.'Cost Category Key'
+
+relationship 'Inventory[Snapshot Date Key] -> Date'
+	fromColumn: Inventory.'Snapshot Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Inventory[Farm Key] -> Farm'
+	fromColumn: Inventory.'Farm Key'
+	toColumn: Farm.'Farm Key'
+
+relationship 'Inventory[Product Key] -> Product'
+	fromColumn: Inventory.'Product Key'
+	toColumn: Product.'Product Key'
+
+relationship 'Weather[Date Key] -> Date'
+	fromColumn: Weather.'Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Weather[Farm Key] -> Farm'
+	fromColumn: Weather.'Farm Key'
+	toColumn: Farm.'Farm Key'
+
+relationship 'Market Price[Month Date Key] -> Date'
+	fromColumn: 'Market Price'.'Month Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Market Price[Commodity Key] -> Commodity'
+	fromColumn: 'Market Price'.'Commodity Key'
+	toColumn: Commodity.'Commodity Key'
+
+relationship 'Market Price[Crop Key] -> Crop'
+	fromColumn: 'Market Price'.'Crop Key'
+	toColumn: Crop.'Crop Key'
+
+relationship 'Crop Estimate[Season End Date Key] -> Date'
+	fromColumn: 'Crop Estimate'.'Season End Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Crop Estimate[Region Key] -> Region'
+	fromColumn: 'Crop Estimate'.'Region Key'
+	toColumn: Region.'Region Key'
+
+relationship 'Crop Estimate[Crop Key] -> Crop'
+	fromColumn: 'Crop Estimate'.'Crop Key'
+	toColumn: Crop.'Crop Key'
+
+relationship 'Forecast[Month Date Key] -> Date'
+	fromColumn: Forecast.'Month Date Key'
+	toColumn: Date.'Date Key'
+
+relationship 'Forecast[Crop Category Key] -> Crop Category'
+	fromColumn: Forecast.'Crop Category Key'
+	toColumn: 'Crop Category'.'Crop Category Key'
+

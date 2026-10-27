@@ -1,0 +1,158 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "bad8738ca51a1c7ab1b8",
+  "position": {
+    "x": 24,
+    "y": 128,
+    "z": 0,
+    "width": 700,
+    "height": 300,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Region"
+                    }
+                  },
+                  "Property": "Region"
+                }
+              },
+              "queryRef": "Region.Region"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Farm"
+                    }
+                  },
+                  "Property": "Farm"
+                }
+              },
+              "queryRef": "Farm.Farm"
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Yield (t/ha)"
+                }
+              },
+              "queryRef": "_Measures.Yield (t/ha)",
+              "displayName": "Yield"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Planned Yield (t/ha)"
+                }
+              },
+              "queryRef": "_Measures.Planned Yield (t/ha)",
+              "displayName": "Plan"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Yield vs Plan %"
+                }
+              },
+              "queryRef": "_Measures.Yield vs Plan %",
+              "displayName": "vs plan"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Benchmark Yield (t/ha)"
+                }
+              },
+              "queryRef": "_Measures.Benchmark Yield (t/ha)",
+              "displayName": "NSA benchmark"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Direct Cost per Tonne"
+                }
+              },
+              "queryRef": "_Measures.Direct Cost per Tonne",
+              "displayName": "Cost N$/t"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Yield by region and farm (drill down region > farm)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Matrix of yield, plan, NSA benchmark and direct cost per tonne by region and farm.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

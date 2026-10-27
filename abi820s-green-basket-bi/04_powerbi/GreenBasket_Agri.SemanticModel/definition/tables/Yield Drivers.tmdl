@@ -1,0 +1,53 @@
+/// Yield-driver model output (03_analytics/yield_drivers.py); disconnected.
+table 'Yield Drivers'
+
+	column Model
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_name
+
+	column Feature
+		dataType: string
+		summarizeBy: none
+		sourceColumn: feature
+
+	column Importance
+		dataType: double
+		formatString: 0.000
+		summarizeBy: sum
+		sourceColumn: importance
+
+	column Coefficient
+		dataType: double
+		formatString: 0.0000
+		summarizeBy: none
+		sourceColumn: coefficient
+
+	column 'P Value'
+		dataType: double
+		formatString: 0.0000
+		summarizeBy: none
+		sourceColumn: p_value
+
+	column Rank
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: rank_order
+
+	partition 'Yield Drivers' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("yield_driver_importance.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "yield_driver_importance"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"model_name", type text}, {"feature", type text}, {"importance", type number}, {"coefficient", type number}, {"p_value", type number}, {"rank_order", Int64.Type}}, "en-US")
+				in
+				    Typed
+

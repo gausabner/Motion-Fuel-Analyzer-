@@ -1,0 +1,11 @@
+/// Dynamic RLS: users see farms (and all facts from those farms) in the zones mapped to their UPN in sec.user_zone_access.
+role 'Zone Manager (dynamic)'
+	modelPermission: read
+
+	tablePermission Farm =
+			'Farm'[Zone Code]
+			    IN CALCULATETABLE (
+			        VALUES ( 'Security User Zone'[Zone Code] ),
+			        'Security User Zone'[User UPN] = USERPRINCIPALNAME ()
+			    )
+

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+# regenerable build intermediates
+03_analytics/outputs/
+06_report/build/
+04_powerbi/tools/TomTool/bin/
+04_powerbi/tools/TomTool/obj/
+# Power BI Desktop local caches (created when the PBIP is opened)
+**/.pbi/localSettings.json
+**/.pbi/cache.abf

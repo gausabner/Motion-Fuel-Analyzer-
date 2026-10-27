@@ -1,0 +1,57 @@
+/// Cost-ledger postings (grain: posting).
+table 'Production Cost'
+
+	column 'Posting Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: posting_date_key
+
+	column 'Farm Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: farm_key
+
+	column 'Crop Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: crop_key
+
+	column 'Cost Category Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: cost_category_key
+
+	column Amount
+		dataType: decimal
+		isHidden
+		formatString: "N$" #,0
+		summarizeBy: sum
+		sourceColumn: amount_nad
+
+	column 'Input Quantity'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: input_qty
+
+	partition 'Production Cost' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("fact_production_cost.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "fact_production_cost"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"posting_date_key", Int64.Type}, {"farm_key", Int64.Type}, {"crop_key", Int64.Type}, {"cost_category_key", Int64.Type}, {"amount_nad", Currency.Type}, {"input_qty", type number}}, "en-US")
+				in
+				    Typed
+

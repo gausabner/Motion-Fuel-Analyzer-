@@ -1,0 +1,31 @@
+/// RLS mapping user UPN -> management zone (disconnected; read only by the Zone Manager role).
+table 'Security User Zone'
+	isHidden
+
+	column 'User UPN'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: user_upn
+
+	column 'Zone Code'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: zone_code
+
+	partition 'Security User Zone' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("sec_user_zone.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "sec_user_zone"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"user_upn", type text}, {"zone_code", type text}}, "en-US")
+				in
+				    Typed
+

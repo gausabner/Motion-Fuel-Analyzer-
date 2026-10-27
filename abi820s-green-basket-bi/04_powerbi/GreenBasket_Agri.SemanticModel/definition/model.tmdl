@@ -1,0 +1,40 @@
+model Model
+	culture: en-GB
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: en-GB
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table _Measures
+ref table Date
+ref table Region
+ref table Farm
+ref table 'Crop Category'
+ref table Crop
+ref table Product
+ref table Customer
+ref table 'Cost Category'
+ref table Commodity
+ref table Sales
+ref table Harvest
+ref table 'Crop Cycle'
+ref table 'Production Cost'
+ref table Inventory
+ref table Weather
+ref table 'Market Price'
+ref table 'Crop Estimate'
+ref table Forecast
+ref table 'Yield Drivers'
+ref table 'Security User Zone'
+ref table 'Metric Selector'
+
+ref role 'Executive (all data)'
+ref role 'Zone Manager (dynamic)'
+ref role 'Export Desk (static)'
+

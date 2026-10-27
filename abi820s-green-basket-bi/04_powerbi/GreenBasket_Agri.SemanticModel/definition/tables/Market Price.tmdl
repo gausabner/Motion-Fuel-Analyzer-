@@ -1,0 +1,56 @@
+/// World Bank commodity prices converted to N$ (non-additive).
+table 'Market Price'
+
+	column 'Month Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: month_date_key
+
+	column 'Commodity Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: commodity_key
+
+	column 'Crop Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: crop_key
+
+	column 'Price (USD)'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: price_usd
+
+	column 'FX (N$ per USD)'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: fx_nad_per_usd
+
+	column 'Price (N$)'
+		dataType: double
+		isHidden
+		summarizeBy: average
+		sourceColumn: price_nad
+
+	partition 'Market Price' = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("fact_market_price_monthly.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "fact_market_price_monthly"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"month_date_key", Int64.Type}, {"commodity_key", Int64.Type}, {"crop_key", Int64.Type}, {"price_usd", type number}, {"fx_nad_per_usd", type number}, {"price_nad", type number}}, "en-US")
+				in
+				    Typed
+

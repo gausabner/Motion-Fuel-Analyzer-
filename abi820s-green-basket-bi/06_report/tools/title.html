@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Title page</title>
+<style>
+  @page { size: A4; }
+  html { font-family: Inter, "DejaVu Sans", Arial, sans-serif; color: #0b0b0b; background: #fff; }
+  body { margin: 0; font-size: 9.6pt; line-height: 1.45; }
+  .band { border-top: 6px solid #2a78d6; padding-top: 18pt; }
+  .inst { font-size: 10pt; color: #52514e; letter-spacing: .2px; }
+  .course { margin-top: 26pt; font-size: 11pt; font-weight: 600; color: #2a78d6; }
+  h1 { font-size: 25pt; line-height: 1.15; margin: 10pt 0 8pt; font-weight: 700; }
+  .sub { font-size: 12pt; color: #52514e; max-width: 150mm; }
+  .meta { margin-top: 26pt; display: grid; grid-template-columns: 42mm 1fr; row-gap: 4pt; font-size: 9.6pt; }
+  .meta div:nth-child(odd) { color: #52514e; }
+  table { border-collapse: collapse; width: 100%; margin-top: 22pt; font-size: 8.8pt; }
+  th { text-align: left; border-bottom: 1.5px solid #52514e; padding: 4pt; font-weight: 650; }
+  td { border-bottom: 1px solid #e1e0d9; padding: 9pt 4pt 5pt; vertical-align: bottom; }
+  td.line { border-bottom: 1px solid #898781; }
+  .decl { margin-top: 18pt; font-size: 8.4pt; color: #52514e; border: 1px solid #e1e0d9; border-radius: 4px; padding: 8pt 10pt; background: #f9f9f7; }
+  .decl b { color: #0b0b0b; }
+</style>
+</head>
+<body>
+<div class="band">
+  <div class="inst">Namibia University of Science and Technology &middot; Faculty of Computing and Informatics</div>
+  <div class="course">ABI820S &middot; Advanced Business Intelligence and Analytics &middot; Group project (30 %)</div>
+  <h1>Green Basket cc &ndash; Agriculture Division:<br>a single trusted view of production, yield, cost and revenue</h1>
+  <div class="sub">End-to-end business intelligence solution: dimensional data warehouse, reproducible ELT with data-quality
+    controls, Power BI semantic model with row-level security, OLAP and four advanced analytics techniques, interactive
+    dashboards, performance optimisation and data governance.</div>
+  <div class="meta">
+    <div>Client (scenario)</div><div>Green Basket cc &ndash; Agriculture Division, Windhoek, Namibia</div>
+    <div>Submission</div><div>28 October 2026 (Week 16) &middot; Final report, version 1.0</div>
+    <div>Data cut-off</div><div>30 September 2026 (day-2 master-data delta of 5 October 2026 included)</div>
+    <div>Platform</div><div>PostgreSQL 16 &middot; Python 3.11 &middot; Power BI Desktop (PBIP: TMDL + PBIR)</div>
+  </div>
+  <table>
+    <thead><tr><th style="width:24%">Team role</th><th style="width:30%">Report sections owned</th><th>Name</th><th style="width:16%">Student number</th><th style="width:14%">Signature</th></tr></thead>
+    <tbody>
+      <tr><td>Member 1 &ndash; Project lead and business analyst</td><td>3.1, 3.9, presentation</td><td class="line"></td><td class="line"></td><td class="line"></td></tr>
+      <tr><td>Member 2 &ndash; Data warehouse architect</td><td>3.2, data dictionary</td><td class="line"></td><td class="line"></td><td class="line"></td></tr>
+      <tr><td>Member 3 &ndash; ETL, data quality and governance</td><td>3.3, 3.8</td><td class="line"></td><td class="line"></td><td class="line"></td></tr>
+      <tr><td>Member 4 &ndash; Power BI developer</td><td>3.4, 3.6</td><td class="line"></td><td class="line"></td><td class="line"></td></tr>
+      <tr><td>Member 5 &ndash; Analytics and performance lead</td><td>3.5, 3.7</td><td class="line"></td><td class="line"></td><td class="line"></td></tr>
+    </tbody>
+  </table>
+  <div class="decl"><b>Declaration.</b> We declare that this report and the accompanying artefacts are our own group work. Every
+    source is acknowledged in APA style, all data are synthetic or public, and no personal information about real
+    people is used. <b>Use of generative AI:</b> an AI assistant (Anthropic Claude) was used to draft code, documentation and
+    analysis. The team executed, verified and edited every artefact and takes full responsibility for the content.
+    Each member can explain the sections they own. This use is disclosed in line with the course's academic-integrity
+    rules, and the team confirms it complies with the NUST policy in force.</div>
+</div>
+</body>
+</html>

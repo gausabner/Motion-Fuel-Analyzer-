@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "Green Basket Agriculture"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "3f9d2c1b-7a6e-4b5c-8d4e-2a1b0c9d8e7f"
+  }
+}

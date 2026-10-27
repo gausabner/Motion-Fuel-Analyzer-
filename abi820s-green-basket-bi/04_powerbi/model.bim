@@ -1,0 +1,2776 @@
+{
+  "name": "Green Basket Agriculture",
+  "compatibilityLevel": 1567,
+  "model": {
+    "culture": "en-GB",
+    "sourceQueryCulture": "en-GB",
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "discourageImplicitMeasures": true,
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "tables": [
+      {
+        "name": "_Measures",
+        "description": "All business measures, organised in display folders.",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Measure Group",
+            "dataType": "string",
+            "isHidden": true,
+            "isNameInferred": true,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Measure Group]"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "_Measures",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": "ROW ( \"Measure Group\", \"Measures\" )"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Net Revenue",
+            "expression": "SUM ( 'Sales'[Net Revenue] )",
+            "displayFolder": "1 Sales",
+            "description": "Invoice + credit-note revenue after discount, N$ (FX-converted).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Gross Revenue",
+            "expression": "SUM ( 'Sales'[Gross Revenue] )",
+            "displayFolder": "1 Sales",
+            "description": "Revenue before discount, N$.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Discount",
+            "expression": "SUM ( 'Sales'[Discount] )",
+            "displayFolder": "1 Sales",
+            "description": "Discounts granted, N$.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "COGS",
+            "expression": "SUM ( 'Sales'[COGS] )",
+            "displayFolder": "1 Sales",
+            "description": "Standard cost of goods sold, N$.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Freight Cost",
+            "expression": "SUM ( 'Sales'[Freight Cost] )",
+            "displayFolder": "1 Sales",
+            "description": "Outbound freight borne by Green Basket, N$.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Gross Margin",
+            "expression": "[Net Revenue] - [COGS]",
+            "displayFolder": "1 Sales",
+            "description": "Net revenue less COGS.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Gross Margin %",
+            "expression": "DIVIDE ( [Gross Margin], [Net Revenue] )",
+            "displayFolder": "1 Sales",
+            "description": "Gross margin as a share of net revenue.",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Contribution after Freight",
+            "expression": "[Gross Margin] - [Freight Cost]",
+            "displayFolder": "1 Sales",
+            "description": "Gross margin less outbound freight.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Sales Volume (t)",
+            "expression": "DIVIDE ( SUM ( 'Sales'[Quantity (kg)] ), 1000 )",
+            "displayFolder": "1 Sales",
+            "description": "Tonnes invoiced (net of credit notes).",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Avg Realised Price (N$/kg)",
+            "expression": "DIVIDE ( [Net Revenue], SUM ( 'Sales'[Quantity (kg)] ) )",
+            "displayFolder": "1 Sales",
+            "description": "Net revenue per kg sold.",
+            "formatString": "\"N$\" #,0.00"
+          },
+          {
+            "name": "Invoice Lines",
+            "expression": "COUNTROWS ( 'Sales' )",
+            "displayFolder": "1 Sales",
+            "description": "Number of document lines.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Invoices",
+            "expression": "DISTINCTCOUNT ( 'Sales'[Invoice ID] )",
+            "displayFolder": "1 Sales",
+            "description": "Distinct invoices and credit notes.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Active Customers",
+            "expression": "CALCULATE ( DISTINCTCOUNT ( 'Customer'[Customer Code] ), 'Sales' )",
+            "displayFolder": "1 Sales",
+            "description": "Distinct customers (durable code) with sales in the context.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Credit Notes",
+            "expression": "- CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Sales'[Document Type] = \"CRN\" ) )",
+            "displayFolder": "1 Sales",
+            "description": "Value credited for quality claims (positive number).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Credit Note Rate %",
+            "expression": "DIVIDE ( [Credit Notes], CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Sales'[Document Type] = \"INV\" ) ) )",
+            "displayFolder": "1 Sales",
+            "description": "Credit notes as a share of invoiced revenue.",
+            "formatString": "0.00%"
+          },
+          {
+            "name": "Export Revenue",
+            "expression": "CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Customer'[Channel] = \"Export\" ) )",
+            "displayFolder": "1 Sales",
+            "description": "Net revenue from customers in the Export channel (CALCULATE with filter modification).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Export Share %",
+            "expression": "DIVIDE ( [Export Revenue], [Net Revenue] )",
+            "displayFolder": "1 Sales",
+            "description": "Export revenue as a share of net revenue.",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Revenue Share of All Crops %",
+            "expression": "DIVIDE (\n    [Net Revenue],\n    CALCULATE ( [Net Revenue], REMOVEFILTERS ( 'Product' ), REMOVEFILTERS ( 'Crop' ), REMOVEFILTERS ( 'Crop Category' ) )\n)",
+            "displayFolder": "1 Sales",
+            "description": "Share of the selection in total revenue across all crops (filters on the product hierarchy removed).",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Top 10 Customer Share %",
+            "expression": "VAR _top10 =\n    TOPN ( 10, VALUES ( 'Customer'[Customer Code] ), [Net Revenue] )\nRETURN\n    DIVIDE ( CALCULATE ( [Net Revenue], _top10 ), [Net Revenue] )",
+            "displayFolder": "1 Sales",
+            "description": "Revenue concentration: share of the ten largest customers in the context.",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Last Sales Date",
+            "expression": "VAR _k =\n    CALCULATE ( MAX ( 'Sales'[Invoice Date Key] ), REMOVEFILTERS ( 'Date' ) )\nRETURN\n    IF ( NOT ISBLANK ( _k ), DATE ( INT ( _k / 10000 ), MOD ( INT ( _k / 100 ), 100 ), MOD ( _k, 100 ) ) )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Latest invoice date in the model (ignores date filters).",
+            "formatString": "dd mmm yyyy"
+          },
+          {
+            "name": "Net Revenue FYTD Raw",
+            "expression": "TOTALYTD ( [Net Revenue], 'Date'[Date], \"3/31\" )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Fiscal year-to-date (year ends 31 March), no future guard.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Net Revenue FYTD",
+            "expression": "IF ( MIN ( 'Date'[Date] ) <= [Last Sales Date], [Net Revenue FYTD Raw] )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Fiscal year-to-date net revenue; blank for periods after the last sale.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Net Revenue FYTD PY",
+            "expression": "VAR _cutoffPY =\n    EDATE ( [Last Sales Date], -12 )\nRETURN\n    CALCULATE (\n        [Net Revenue FYTD Raw],\n        SAMEPERIODLASTYEAR ( 'Date'[Date] ),\n        KEEPFILTERS ( 'Date'[Date] <= _cutoffPY )\n    )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Same fiscal-YTD window one year earlier, cut at the same day (like-for-like).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Net Revenue FYTD YoY %",
+            "expression": "DIVIDE ( [Net Revenue FYTD] - [Net Revenue FYTD PY], [Net Revenue FYTD PY] )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Fiscal-YTD growth versus the like-for-like prior-year window.",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Net Revenue PY",
+            "expression": "CALCULATE ( [Net Revenue], SAMEPERIODLASTYEAR ( 'Date'[Date] ) )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Net revenue in the same period last year.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Net Revenue YoY",
+            "expression": "VAR _cur = [Net Revenue]\nVAR _py = [Net Revenue PY]\nRETURN\n    IF ( NOT ISBLANK ( _cur ) && NOT ISBLANK ( _py ), _cur - _py )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Change versus the same period last year, N$.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Net Revenue YoY %",
+            "expression": "VAR _cur = [Net Revenue]\nVAR _py = [Net Revenue PY]\nRETURN\n    IF ( NOT ISBLANK ( _cur ) && NOT ISBLANK ( _py ), DIVIDE ( _cur - _py, _py ) )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Growth versus the same period last year.",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Net Revenue MAT",
+            "expression": "VAR _end =\n    MIN ( MAX ( 'Date'[Date] ), [Last Sales Date] )\nRETURN\n    IF (\n        MIN ( 'Date'[Date] ) <= [Last Sales Date],\n        CALCULATE ( [Net Revenue], DATESINPERIOD ( 'Date'[Date], _end, -12, MONTH ) )\n    )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Moving annual total: trailing 12 months ending at the context end (capped at the last sale).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Net Revenue 3M Rolling Avg",
+            "expression": "VAR _end =\n    MIN ( MAX ( 'Date'[Date] ), [Last Sales Date] )\nRETURN\n    IF (\n        MIN ( 'Date'[Date] ) <= [Last Sales Date],\n        DIVIDE ( CALCULATE ( [Net Revenue], DATESINPERIOD ( 'Date'[Date], _end, -3, MONTH ) ), 3 )\n    )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Average monthly net revenue over the trailing three months.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Gross Margin % PY",
+            "expression": "CALCULATE ( [Gross Margin %], SAMEPERIODLASTYEAR ( 'Date'[Date] ) )",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Gross margin % in the same period last year.",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Dispatched Volume (t)",
+            "expression": "CALCULATE (\n    DIVIDE ( SUM ( 'Sales'[Quantity (kg)] ), 1000 ),\n    USERELATIONSHIP ( 'Sales'[Dispatch Date Key], 'Date'[Date Key] ),\n    KEEPFILTERS ( 'Sales'[Document Type] = \"INV\" )\n)",
+            "displayFolder": "2 Time Intelligence",
+            "description": "Tonnes by DISPATCH date - activates the inactive role-playing relationship.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Harvest (t)",
+            "expression": "DIVIDE ( SUM ( 'Harvest'[Harvested (kg)] ), 1000 )",
+            "displayFolder": "3 Production & Yield",
+            "description": "Field harvest in tonnes by harvest date.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Planted Area (ha)",
+            "expression": "SUM ( 'Crop Cycle'[Planted (ha)] )",
+            "displayFolder": "3 Production & Yield",
+            "description": "Area planted (by planting date).",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Completed Harvest (t)",
+            "expression": "CALCULATE (\n    DIVIDE ( SUM ( 'Crop Cycle'[Harvested (kg)] ), 1000 ),\n    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = \"Completed\" ),\n    USERELATIONSHIP ( 'Crop Cycle'[Harvest Season End Date Key], 'Date'[Date Key] )\n)",
+            "displayFolder": "3 Production & Yield",
+            "description": "Harvest of completed cycles, by agricultural season of harvest.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Harvested Area (ha)",
+            "expression": "CALCULATE (\n    SUM ( 'Crop Cycle'[Harvested (ha)] ),\n    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = \"Completed\" ),\n    USERELATIONSHIP ( 'Crop Cycle'[Harvest Season End Date Key], 'Date'[Date Key] )\n)",
+            "displayFolder": "3 Production & Yield",
+            "description": "Harvested area of completed cycles, by season of harvest.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Yield (t/ha)",
+            "expression": "DIVIDE ( [Completed Harvest (t)], [Harvested Area (ha)] )",
+            "displayFolder": "3 Production & Yield",
+            "description": "Tonnes per harvested hectare (completed cycles).",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "Planned Yield (t/ha)",
+            "expression": "CALCULATE (\n    DIVIDE ( SUM ( 'Crop Cycle'[Planned Production (kg)] ) / 1000, SUM ( 'Crop Cycle'[Planted (ha)] ) ),\n    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = \"Completed\" ),\n    USERELATIONSHIP ( 'Crop Cycle'[Harvest Season End Date Key], 'Date'[Date Key] )\n)",
+            "displayFolder": "3 Production & Yield",
+            "description": "Budgeted yield of the same completed cycles.",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "Yield vs Plan %",
+            "expression": "VAR _plan = [Planned Yield (t/ha)]\nRETURN\n    IF ( NOT ISBLANK ( _plan ), DIVIDE ( [Yield (t/ha)], _plan ) - 1 )",
+            "displayFolder": "3 Production & Yield",
+            "description": "Actual yield relative to plan.",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Benchmark Yield (t/ha)",
+            "expression": "VAR _prod =\n    CALCULATE ( SUM ( 'Crop Estimate'[Production (t)] ), KEEPFILTERS ( 'Crop Estimate'[Farming Sector] = \"Commercial\" ) )\nVAR _area =\n    CALCULATE ( SUM ( 'Crop Estimate'[Area Planted (ha)] ), KEEPFILTERS ( 'Crop Estimate'[Farming Sector] = \"Commercial\" ) )\nRETURN\n    DIVIDE ( _prod, _area )",
+            "displayFolder": "3 Production & Yield",
+            "description": "NSA commercial-sector yield for the same region/crop/season (drill-across).",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "Yield Gap vs Benchmark (t/ha)",
+            "expression": "VAR _y = [Yield (t/ha)]\nVAR _b = [Benchmark Yield (t/ha)]\nRETURN\n    IF ( NOT ISBLANK ( _y ) && NOT ISBLANK ( _b ), _y - _b )",
+            "displayFolder": "3 Production & Yield",
+            "description": "Green Basket yield minus the NSA commercial benchmark.",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "Direct Cost per Tonne",
+            "expression": "CALCULATE (\n    DIVIDE ( SUM ( 'Crop Cycle'[Direct Cost] ), SUM ( 'Crop Cycle'[Harvested (kg)] ) / 1000 ),\n    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = \"Completed\" ),\n    USERELATIONSHIP ( 'Crop Cycle'[Harvest Season End Date Key], 'Date'[Date Key] )\n)",
+            "displayFolder": "3 Production & Yield",
+            "description": "Crop-cycle direct cost per tonne harvested (completed cycles).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Production Cost",
+            "expression": "SUM ( 'Production Cost'[Amount] )",
+            "displayFolder": "3 Production & Yield",
+            "description": "Posted production cost (incl. overheads) by posting date.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Fertiliser Rate (kg/ha)",
+            "expression": "DIVIDE ( SUM ( 'Crop Cycle'[Fertiliser (kg)] ), SUM ( 'Crop Cycle'[Planted (ha)] ) )",
+            "displayFolder": "3 Production & Yield",
+            "description": "Fertiliser applied per planted hectare.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Failed Area %",
+            "expression": "DIVIDE ( CALCULATE ( [Planted Area (ha)], KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = \"Failed\" ) ), [Planted Area (ha)] )",
+            "displayFolder": "3 Production & Yield",
+            "description": "Share of planted area abandoned (crop failure).",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Area in Progress (ha)",
+            "expression": "CALCULATE ( [Planted Area (ha)], KEEPFILTERS ( 'Crop Cycle'[Cycle Status] IN { \"Growing\", \"Harvesting\" } ) )",
+            "displayFolder": "3 Production & Yield",
+            "description": "Area still growing or being harvested.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Cycles Completed",
+            "expression": "CALCULATE (\n    DISTINCTCOUNT ( 'Crop Cycle'[Cycle ID] ),\n    KEEPFILTERS ( 'Crop Cycle'[Cycle Status] = \"Completed\" ),\n    USERELATIONSHIP ( 'Crop Cycle'[Last Harvest Date Key], 'Date'[Date Key] )\n)",
+            "displayFolder": "3 Production & Yield",
+            "description": "Distinct crop cycles completed, by last-harvest date.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Closing Stock (t)",
+            "expression": "VAR _last =\n    CALCULATE (\n        MAX ( 'Inventory'[Snapshot Date Key] ),\n        REMOVEFILTERS ( 'Farm' ), REMOVEFILTERS ( 'Region' ), REMOVEFILTERS ( 'Product' ), REMOVEFILTERS ( 'Crop' ), REMOVEFILTERS ( 'Crop Category' )\n    )\nRETURN\n    DIVIDE ( CALCULATE ( SUM ( 'Inventory'[Closing Stock (kg)] ), 'Inventory'[Snapshot Date Key] = _last ), 1000 )",
+            "displayFolder": "4 Inventory",
+            "description": "Stock on hand at the LAST month-end snapshot in the period across all farms/products (semi-additive).",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Closing Stock Value",
+            "expression": "VAR _last =\n    CALCULATE (\n        MAX ( 'Inventory'[Snapshot Date Key] ),\n        REMOVEFILTERS ( 'Farm' ), REMOVEFILTERS ( 'Region' ), REMOVEFILTERS ( 'Product' ), REMOVEFILTERS ( 'Crop' ), REMOVEFILTERS ( 'Crop Category' )\n    )\nRETURN\n    CALCULATE ( SUM ( 'Inventory'[Closing Stock Value] ), 'Inventory'[Snapshot Date Key] = _last )",
+            "displayFolder": "4 Inventory",
+            "description": "Closing stock at standard cost, last snapshot in the period.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Opening Stock (t)",
+            "expression": "VAR _first =\n    CALCULATE (\n        MIN ( 'Inventory'[Snapshot Date Key] ),\n        REMOVEFILTERS ( 'Farm' ), REMOVEFILTERS ( 'Region' ), REMOVEFILTERS ( 'Product' ), REMOVEFILTERS ( 'Crop' ), REMOVEFILTERS ( 'Crop Category' )\n    )\nRETURN\n    DIVIDE ( CALCULATE ( SUM ( 'Inventory'[Opening Stock (kg)] ), 'Inventory'[Snapshot Date Key] = _first ), 1000 )",
+            "displayFolder": "4 Inventory",
+            "description": "Stock on hand at the FIRST snapshot in the period.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Stock Received (t)",
+            "expression": "DIVIDE ( SUM ( 'Inventory'[Received (kg)] ), 1000 )",
+            "displayFolder": "4 Inventory",
+            "description": "Graded produce received into stock.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Stock Dispatched (t)",
+            "expression": "DIVIDE ( SUM ( 'Inventory'[Dispatched (kg)] ), 1000 )",
+            "displayFolder": "4 Inventory",
+            "description": "Produce dispatched per the stock system.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Shrinkage (t)",
+            "expression": "DIVIDE ( SUM ( 'Inventory'[Shrinkage (kg)] ), 1000 )",
+            "displayFolder": "4 Inventory",
+            "description": "Post-harvest losses.",
+            "formatString": "#,0.0"
+          },
+          {
+            "name": "Shrinkage %",
+            "expression": "DIVIDE ( [Shrinkage (t)], [Opening Stock (t)] + [Stock Received (t)] )",
+            "displayFolder": "4 Inventory",
+            "description": "Losses relative to stock available (opening + received).",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Avg Daily Dispatch L90D (t)",
+            "expression": "VAR _end =\n    MIN ( MAX ( 'Date'[Date] ), [Last Sales Date] )\nRETURN\n    DIVIDE (\n        CALCULATE (\n            SUM ( 'Sales'[Quantity (kg)] ),\n            DATESINPERIOD ( 'Date'[Date], _end, -90, DAY ),\n            KEEPFILTERS ( 'Sales'[Document Type] = \"INV\" )\n        ),\n        90 * 1000\n    )",
+            "displayFolder": "4 Inventory",
+            "description": "Average tonnes invoiced per day over the last 90 days of the context.",
+            "formatString": "#,0.0"
+          },
+          {
+            "name": "Stock Cover (days)",
+            "expression": "DIVIDE ( [Closing Stock (t)], [Avg Daily Dispatch L90D (t)] )",
+            "displayFolder": "4 Inventory",
+            "description": "Days of sales covered by closing stock.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Rainfall (mm)",
+            "expression": "AVERAGEX ( VALUES ( 'Farm'[Farm Code] ), CALCULATE ( SUM ( 'Weather'[Rainfall (mm)] ) ) )",
+            "displayFolder": "5 Weather & Markets",
+            "description": "Rainfall total per location, averaged across the selected farm locations.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Rainfall per Season (mm)",
+            "expression": "VAR _seasons =\n    CALCULATE ( DISTINCTCOUNT ( 'Date'[Crop Season] ), 'Weather' )\nRETURN\n    DIVIDE ( [Rainfall (mm)], _seasons )",
+            "displayFolder": "5 Weather & Markets",
+            "description": "Rainfall per agricultural season (Oct-Sep) per location: comparable whether one or several seasons are selected.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Heat Days",
+            "expression": "AVERAGEX ( VALUES ( 'Farm'[Farm Code] ), CALCULATE ( SUM ( 'Weather'[Heat Day] ) ) )",
+            "displayFolder": "5 Weather & Markets",
+            "description": "Days with Tmax >= 35 C per location, averaged across locations.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Avg Max Temp (C)",
+            "expression": "AVERAGE ( 'Weather'[Max Temp (C)] )",
+            "displayFolder": "5 Weather & Markets",
+            "description": "Mean daily maximum temperature.",
+            "formatString": "#,0.0"
+          },
+          {
+            "name": "World Price (N$/t)",
+            "expression": "AVERAGE ( 'Market Price'[Price (N$)] )",
+            "displayFolder": "5 Weather & Markets",
+            "description": "Average international price converted to N$ (select one crop/commodity).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "World Price (USD)",
+            "expression": "AVERAGE ( 'Market Price'[Price (USD)] )",
+            "displayFolder": "5 Weather & Markets",
+            "description": "Average international price in USD per published unit.",
+            "formatString": "#,0.00"
+          },
+          {
+            "name": "Realised Price (N$/t)",
+            "expression": "[Avg Realised Price (N$/kg)] * 1000",
+            "displayFolder": "5 Weather & Markets",
+            "description": "Green Basket realised price per tonne.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Local Premium over World Price %",
+            "expression": "VAR _w = [World Price (N$/t)]\nRETURN\n    IF ( HASONEVALUE ( 'Crop'[Crop] ) && NOT ISBLANK ( _w ), DIVIDE ( [Realised Price (N$/t)], _w ) - 1 )",
+            "displayFolder": "5 Weather & Markets",
+            "description": "Realised price relative to the international price (one crop selected).",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Forecast Revenue",
+            "expression": "VAR _model =\n    SELECTEDVALUE ( 'Forecast'[Model], \"Seasonal naive\" )\nRETURN\n    CALCULATE (\n        SUM ( 'Forecast'[Forecast] ),\n        KEEPFILTERS ( 'Forecast'[Scenario] = \"Forecast\" ),\n        'Forecast'[Model] = _model\n    )",
+            "displayFolder": "6 Forecast",
+            "description": "Forward forecast of net revenue for the selected model (default: seasonal naive).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Forecast Lower 80",
+            "expression": "VAR _model =\n    SELECTEDVALUE ( 'Forecast'[Model], \"Seasonal naive\" )\nRETURN\n    CALCULATE ( SUM ( 'Forecast'[Lower 80] ), KEEPFILTERS ( 'Forecast'[Scenario] = \"Forecast\" ), 'Forecast'[Model] = _model )",
+            "displayFolder": "6 Forecast",
+            "description": "Lower bound of the 80 % prediction interval (sum of category bounds - approximate at total level).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Forecast Upper 80",
+            "expression": "VAR _model =\n    SELECTEDVALUE ( 'Forecast'[Model], \"Seasonal naive\" )\nRETURN\n    CALCULATE ( SUM ( 'Forecast'[Upper 80] ), KEEPFILTERS ( 'Forecast'[Scenario] = \"Forecast\" ), 'Forecast'[Model] = _model )",
+            "displayFolder": "6 Forecast",
+            "description": "Upper bound of the 80 % prediction interval.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Backtest Forecast",
+            "expression": "VAR _model =\n    SELECTEDVALUE ( 'Forecast'[Model], \"Seasonal naive\" )\nRETURN\n    CALCULATE ( SUM ( 'Forecast'[Forecast] ), KEEPFILTERS ( 'Forecast'[Scenario] = \"Backtest\" ), 'Forecast'[Model] = _model )",
+            "displayFolder": "6 Forecast",
+            "description": "Hold-out (Oct 2025 - Sep 2026) forecast of the selected model.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Backtest WAPE %",
+            "expression": "VAR _model =\n    SELECTEDVALUE ( 'Forecast'[Model], \"Seasonal naive\" )\nVAR _rows =\n    FILTER ( 'Forecast', 'Forecast'[Scenario] = \"Backtest\" && 'Forecast'[Model] = _model )\nRETURN\n    DIVIDE ( SUMX ( _rows, ABS ( 'Forecast'[Actual] - 'Forecast'[Forecast] ) ), SUMX ( _rows, ABS ( 'Forecast'[Actual] ) ) )",
+            "displayFolder": "6 Forecast",
+            "description": "Weighted absolute percentage error of the hold-out forecast (category grain).",
+            "formatString": "0.0%"
+          },
+          {
+            "name": "Revenue (Actual + Forecast)",
+            "expression": "IF ( MAX ( 'Date'[Date] ) <= [Last Sales Date], [Net Revenue], [Forecast Revenue] )",
+            "displayFolder": "6 Forecast",
+            "description": "Actual net revenue up to the last sale, forecast afterwards (single continuous line).",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Driver Importance",
+            "expression": "SUM ( 'Yield Drivers'[Importance] )",
+            "displayFolder": "6 Forecast",
+            "description": "Permutation importance of yield drivers (random forest).",
+            "formatString": "0.000"
+          },
+          {
+            "name": "Price Anomaly Lines",
+            "expression": "CALCULATE ( COUNTROWS ( 'Sales' ), KEEPFILTERS ( 'Sales'[Price Anomaly] = TRUE () ) )",
+            "displayFolder": "7 Data Quality & Security",
+            "description": "Invoice lines flagged by rule SA07.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Flagged Price Anomaly Revenue",
+            "expression": "CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Sales'[Price Anomaly] = TRUE () ) )",
+            "displayFolder": "7 Data Quality & Security",
+            "description": "Revenue on lines awaiting steward review.",
+            "formatString": "\"N$\" #,0"
+          },
+          {
+            "name": "Unknown Farm Revenue %",
+            "expression": "DIVIDE ( CALCULATE ( [Net Revenue], KEEPFILTERS ( 'Farm'[Farm Code] = \"UNKNOWN\" ) ), [Net Revenue] )",
+            "displayFolder": "7 Data Quality & Security",
+            "description": "Revenue on lines without farm of origin (rule SA05).",
+            "formatString": "0.00%"
+          },
+          {
+            "name": "Corrected Harvest Records",
+            "expression": "CALCULATE ( COUNTROWS ( 'Harvest' ), KEEPFILTERS ( 'Harvest'[Is Corrected] = TRUE () ) )",
+            "displayFolder": "7 Data Quality & Security",
+            "description": "Harvest records corrected by rule HV06.",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Visible Farms",
+            "expression": "CALCULATE ( DISTINCTCOUNT ( 'Farm'[Farm Code] ), KEEPFILTERS ( 'Farm'[Farm Code] <> \"UNKNOWN\" ) )",
+            "displayFolder": "7 Data Quality & Security",
+            "description": "Farms visible to the current user (RLS test).",
+            "formatString": "#,0"
+          },
+          {
+            "name": "Current User",
+            "expression": "USERPRINCIPALNAME ()",
+            "displayFolder": "7 Data Quality & Security",
+            "description": "UPN evaluated by row-level security."
+          },
+          {
+            "name": "Data As Of",
+            "expression": "\"Data to \" & FORMAT ( [Last Sales Date], \"d mmm yyyy\" )",
+            "displayFolder": "0 Labels",
+            "description": "Freshness label for page headers."
+          },
+          {
+            "name": "Title Revenue Trend",
+            "expression": "\"Net revenue by month - \" & SELECTEDVALUE ( 'Date'[Fiscal Year], \"all fiscal years\" )",
+            "displayFolder": "0 Labels",
+            "description": "Dynamic title."
+          },
+          {
+            "name": "Title Yield",
+            "expression": "\"Yield vs plan and NSA benchmark - \" & SELECTEDVALUE ( 'Crop'[Crop], \"all crops\" )",
+            "displayFolder": "0 Labels",
+            "description": "Dynamic title."
+          }
+        ]
+      },
+      {
+        "name": "Date",
+        "description": "Conformed calendar (2020-2027) with calendar, fiscal (Apr-Mar) and agricultural season (Oct-Sep) attributes. Marked as date table.",
+        "columns": [
+          {
+            "name": "Date Key",
+            "dataType": "int64",
+            "sourceColumn": "date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Date",
+            "dataType": "dateTime",
+            "sourceColumn": "full_date",
+            "isKey": true,
+            "formatString": "dd mmm yyyy",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Day of Month",
+            "dataType": "int64",
+            "sourceColumn": "day_of_month",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Day of Week",
+            "dataType": "int64",
+            "sourceColumn": "day_of_week_iso",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Day Name",
+            "dataType": "string",
+            "sourceColumn": "day_name",
+            "sortByColumn": "Day of Week",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Day Short",
+            "dataType": "string",
+            "sourceColumn": "day_short",
+            "sortByColumn": "Day of Week",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Weekend",
+            "dataType": "boolean",
+            "sourceColumn": "is_weekend",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Public Holiday",
+            "dataType": "boolean",
+            "sourceColumn": "is_public_holiday",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Holiday Name",
+            "dataType": "string",
+            "sourceColumn": "holiday_name",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Working Day",
+            "dataType": "boolean",
+            "sourceColumn": "is_working_day",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ISO Week",
+            "dataType": "int64",
+            "sourceColumn": "iso_week",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Week Start",
+            "dataType": "dateTime",
+            "sourceColumn": "week_start_date",
+            "formatString": "dd mmm yyyy",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month Number",
+            "dataType": "int64",
+            "sourceColumn": "month_num",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month Name",
+            "dataType": "string",
+            "sourceColumn": "month_name",
+            "sortByColumn": "Month Number",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month Short",
+            "dataType": "string",
+            "sourceColumn": "month_short",
+            "sortByColumn": "Month Number",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Year Month",
+            "dataType": "string",
+            "sourceColumn": "year_month",
+            "sortByColumn": "Year Month Key",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Year Month Key",
+            "dataType": "int64",
+            "sourceColumn": "year_month_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month Start",
+            "dataType": "dateTime",
+            "sourceColumn": "month_start_date",
+            "formatString": "mmm yyyy",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month End",
+            "dataType": "dateTime",
+            "sourceColumn": "month_end_date",
+            "formatString": "dd mmm yyyy",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Month End",
+            "dataType": "boolean",
+            "sourceColumn": "is_month_end",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Quarter Number",
+            "dataType": "int64",
+            "sourceColumn": "quarter_num",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Year Quarter",
+            "dataType": "string",
+            "sourceColumn": "year_quarter",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Calendar Year",
+            "dataType": "int64",
+            "sourceColumn": "calendar_year",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Fiscal Year Number",
+            "dataType": "int64",
+            "sourceColumn": "fiscal_year",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Fiscal Year",
+            "dataType": "string",
+            "sourceColumn": "fiscal_year_label",
+            "displayFolder": "Fiscal (Apr-Mar)",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Fiscal Quarter Number",
+            "dataType": "int64",
+            "sourceColumn": "fiscal_quarter_num",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Fiscal Quarter",
+            "dataType": "string",
+            "sourceColumn": "fiscal_quarter_label",
+            "displayFolder": "Fiscal (Apr-Mar)",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Fiscal Month Number",
+            "dataType": "int64",
+            "sourceColumn": "fiscal_month_num",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Fiscal Month",
+            "dataType": "string",
+            "sourceColumn": "fiscal_month_name",
+            "sortByColumn": "Fiscal Month Number",
+            "displayFolder": "Fiscal (Apr-Mar)",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Season Start Year",
+            "dataType": "int64",
+            "sourceColumn": "crop_season_start_year",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Season",
+            "dataType": "string",
+            "sourceColumn": "crop_season_label",
+            "displayFolder": "Agricultural season (Oct-Sep)",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Season Month Number",
+            "dataType": "int64",
+            "sourceColumn": "season_month_num",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Current Month",
+            "dataType": "boolean",
+            "sourceColumn": "is_current_month",
+            "displayFolder": "Calendar",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Date",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"dim_date.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"dim_date\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"date_key\", Int64.Type}, {\"full_date\", type date}, {\"day_of_month\", Int64.Type}, {\"day_of_week_iso\", Int64.Type}, {\"day_name\", type text}, {\"day_short\", type text}, {\"is_weekend\", type logical}, {\"is_public_holiday\", type logical}, {\"holiday_name\", type text}, {\"is_working_day\", type logical}, {\"iso_week\", Int64.Type}, {\"week_start_date\", type date}, {\"month_num\", Int64.Type}, {\"month_name\", type text}, {\"month_short\", type text}, {\"year_month\", type text}, {\"year_month_key\", Int64.Type}, {\"month_start_date\", type date}, {\"month_end_date\", type date}, {\"is_month_end\", type logical}, {\"quarter_num\", Int64.Type}, {\"year_quarter\", type text}, {\"calendar_year\", Int64.Type}, {\"fiscal_year\", Int64.Type}, {\"fiscal_year_label\", type text}, {\"fiscal_quarter_num\", Int64.Type}, {\"fiscal_quarter_label\", type text}, {\"fiscal_month_num\", Int64.Type}, {\"fiscal_month_name\", type text}, {\"crop_season_start_year\", Int64.Type}, {\"crop_season_label\", type text}, {\"season_month_num\", Int64.Type}, {\"is_current_month\", type logical}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ],
+        "dataCategory": "Time",
+        "hierarchies": [
+          {
+            "name": "Fiscal Calendar",
+            "levels": [
+              {
+                "name": "Fiscal Year",
+                "ordinal": 0,
+                "column": "Fiscal Year"
+              },
+              {
+                "name": "Fiscal Quarter",
+                "ordinal": 1,
+                "column": "Fiscal Quarter"
+              },
+              {
+                "name": "Year Month",
+                "ordinal": 2,
+                "column": "Year Month"
+              },
+              {
+                "name": "Date",
+                "ordinal": 3,
+                "column": "Date"
+              }
+            ]
+          },
+          {
+            "name": "Calendar",
+            "levels": [
+              {
+                "name": "Calendar Year",
+                "ordinal": 0,
+                "column": "Calendar Year"
+              },
+              {
+                "name": "Year Quarter",
+                "ordinal": 1,
+                "column": "Year Quarter"
+              },
+              {
+                "name": "Year Month",
+                "ordinal": 2,
+                "column": "Year Month"
+              },
+              {
+                "name": "Date",
+                "ordinal": 3,
+                "column": "Date"
+              }
+            ]
+          },
+          {
+            "name": "Agricultural Season",
+            "levels": [
+              {
+                "name": "Crop Season",
+                "ordinal": 0,
+                "column": "Crop Season"
+              },
+              {
+                "name": "Year Month",
+                "ordinal": 1,
+                "column": "Year Month"
+              },
+              {
+                "name": "Date",
+                "ordinal": 2,
+                "column": "Date"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Region",
+        "description": "Namibia's 14 regions (ISO 3166-2:NA) with Green Basket management zone; also the grain of NSA crop estimates.",
+        "columns": [
+          {
+            "name": "Region Key",
+            "dataType": "int64",
+            "sourceColumn": "region_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Region Code",
+            "dataType": "string",
+            "sourceColumn": "region_code",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Region",
+            "dataType": "string",
+            "sourceColumn": "region_name",
+            "dataCategory": "StateOrProvince",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Zone Code",
+            "dataType": "string",
+            "sourceColumn": "zone_code",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Zone",
+            "dataType": "string",
+            "sourceColumn": "zone_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Capital Town",
+            "dataType": "string",
+            "sourceColumn": "capital_town",
+            "dataCategory": "City",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Northern Crop Region",
+            "dataType": "boolean",
+            "sourceColumn": "is_northern_crop_region",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Region",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"dim_region.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"dim_region\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"region_key\", Int64.Type}, {\"region_code\", type text}, {\"region_name\", type text}, {\"zone_code\", type text}, {\"zone_name\", type text}, {\"capital_town\", type text}, {\"is_northern_crop_region\", type logical}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ],
+        "hierarchies": [
+          {
+            "name": "Geography",
+            "levels": [
+              {
+                "name": "Zone",
+                "ordinal": 0,
+                "column": "Zone"
+              },
+              {
+                "name": "Region",
+                "ordinal": 1,
+                "column": "Region"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Farm",
+        "description": "Farm unit, SCD Type 2: one row per version; facts carry the version valid at the event date (as-was). '... (Current)' columns give as-is values.",
+        "columns": [
+          {
+            "name": "Farm Key",
+            "dataType": "int64",
+            "sourceColumn": "farm_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Code",
+            "dataType": "string",
+            "sourceColumn": "farm_code",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm",
+            "dataType": "string",
+            "sourceColumn": "farm_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Region Key",
+            "dataType": "int64",
+            "sourceColumn": "region_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Zone Code",
+            "dataType": "string",
+            "sourceColumn": "zone_code",
+            "isHidden": true,
+            "description": "Used by the Zone Manager RLS role.",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Town",
+            "dataType": "string",
+            "sourceColumn": "town",
+            "dataCategory": "City",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Latitude",
+            "dataType": "double",
+            "sourceColumn": "latitude",
+            "dataCategory": "Latitude",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Longitude",
+            "dataType": "double",
+            "sourceColumn": "longitude",
+            "dataCategory": "Longitude",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Cultivated (ha)",
+            "dataType": "double",
+            "sourceColumn": "cultivated_ha",
+            "formatString": "#,0",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Irrigation Type",
+            "dataType": "string",
+            "sourceColumn": "irrigation_type",
+            "description": "As-was: irrigation system valid at the event date.",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Irrigated",
+            "dataType": "boolean",
+            "sourceColumn": "is_irrigated",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Water Source",
+            "dataType": "string",
+            "sourceColumn": "water_source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Manager Code",
+            "dataType": "string",
+            "sourceColumn": "farm_manager_code",
+            "description": "Pseudonymised employee code.",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "GlobalGAP Certified",
+            "dataType": "boolean",
+            "sourceColumn": "is_globalgap_certified",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Irrigation Type (Current)",
+            "dataType": "string",
+            "sourceColumn": "irrigation_type_current",
+            "displayFolder": "As-is (current)",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Manager (Current)",
+            "dataType": "string",
+            "sourceColumn": "farm_manager_current",
+            "displayFolder": "As-is (current)",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "SCD Version",
+            "dataType": "int64",
+            "sourceColumn": "scd_version",
+            "displayFolder": "SCD history",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Effective From",
+            "dataType": "dateTime",
+            "sourceColumn": "scd_effective_from",
+            "formatString": "dd mmm yyyy",
+            "displayFolder": "SCD history",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Effective To",
+            "dataType": "dateTime",
+            "sourceColumn": "scd_effective_to",
+            "formatString": "dd mmm yyyy",
+            "displayFolder": "SCD history",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Current Version",
+            "dataType": "boolean",
+            "sourceColumn": "scd_is_current",
+            "displayFolder": "SCD history",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Version",
+            "dataType": "string",
+            "sourceColumn": "farm_version_label",
+            "displayFolder": "SCD history",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Farm",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"dim_farm.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"dim_farm\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"farm_key\", Int64.Type}, {\"farm_code\", type text}, {\"farm_name\", type text}, {\"region_key\", Int64.Type}, {\"zone_code\", type text}, {\"town\", type text}, {\"latitude\", type number}, {\"longitude\", type number}, {\"cultivated_ha\", type number}, {\"irrigation_type\", type text}, {\"is_irrigated\", type logical}, {\"water_source\", type text}, {\"farm_manager_code\", type text}, {\"is_globalgap_certified\", type logical}, {\"irrigation_type_current\", type text}, {\"farm_manager_current\", type text}, {\"scd_version\", Int64.Type}, {\"scd_effective_from\", type date}, {\"scd_effective_to\", type date}, {\"scd_is_current\", type logical}, {\"farm_version_label\", type text}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Crop Category",
+        "description": "Top of the product snowflake: Cereals & grains, Vegetables, Fruit.",
+        "columns": [
+          {
+            "name": "Crop Category Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_category_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Category Code",
+            "dataType": "string",
+            "sourceColumn": "category_code",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Category",
+            "dataType": "string",
+            "sourceColumn": "category_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Sector",
+            "dataType": "string",
+            "sourceColumn": "sector",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Crop Category",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"dim_crop_category.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"dim_crop_category\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"crop_category_key\", Int64.Type}, {\"category_code\", type text}, {\"category_name\", type text}, {\"sector\", type text}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Crop",
+        "description": "Crop; conformed rollup used by harvest, cost, cycle, market-price and NSA facts.",
+        "columns": [
+          {
+            "name": "Crop Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Code",
+            "dataType": "string",
+            "sourceColumn": "crop_code",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop",
+            "dataType": "string",
+            "sourceColumn": "crop_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Category Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_category_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "NAB Controlled",
+            "dataType": "boolean",
+            "sourceColumn": "is_nab_controlled",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Storage Type",
+            "dataType": "string",
+            "sourceColumn": "storage_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Shelf Life (days)",
+            "dataType": "int64",
+            "sourceColumn": "shelf_life_days",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Crop",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"dim_crop.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"dim_crop\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"crop_key\", Int64.Type}, {\"crop_code\", type text}, {\"crop_name\", type text}, {\"crop_category_key\", Int64.Type}, {\"is_nab_controlled\", type logical}, {\"storage_type\", type text}, {\"shelf_life_days\", Int64.Type}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Product",
+        "description": "Saleable SKU (crop x grade x pack).",
+        "columns": [
+          {
+            "name": "Product Key",
+            "dataType": "int64",
+            "sourceColumn": "product_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Product Code",
+            "dataType": "string",
+            "sourceColumn": "product_code",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Product",
+            "dataType": "string",
+            "sourceColumn": "product_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Grade",
+            "dataType": "string",
+            "sourceColumn": "grade",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Pack Type",
+            "dataType": "string",
+            "sourceColumn": "pack_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Sales UoM",
+            "dataType": "string",
+            "sourceColumn": "sales_uom",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Kg per Sales UoM",
+            "dataType": "double",
+            "sourceColumn": "kg_per_sales_uom",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Export Grade",
+            "dataType": "boolean",
+            "sourceColumn": "is_export_grade",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Product",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"dim_product.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"dim_product\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"product_key\", Int64.Type}, {\"product_code\", type text}, {\"product_name\", type text}, {\"crop_key\", Int64.Type}, {\"grade\", type text}, {\"pack_type\", type text}, {\"sales_uom\", type text}, {\"kg_per_sales_uom\", type number}, {\"is_export_grade\", type logical}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Customer",
+        "description": "Customer, SCD Type 2 on channel / credit terms / key account; geography flattened (customer role) to avoid an ambiguous path from Region.",
+        "columns": [
+          {
+            "name": "Customer Key",
+            "dataType": "int64",
+            "sourceColumn": "customer_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Customer Code",
+            "dataType": "string",
+            "sourceColumn": "customer_code",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Customer",
+            "dataType": "string",
+            "sourceColumn": "customer_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Customer Type",
+            "dataType": "string",
+            "sourceColumn": "customer_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Channel",
+            "dataType": "string",
+            "sourceColumn": "channel",
+            "description": "As-was sales channel at invoice date.",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Credit Terms (days)",
+            "dataType": "int64",
+            "sourceColumn": "credit_terms_days",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Key Account",
+            "dataType": "boolean",
+            "sourceColumn": "is_key_account",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Town",
+            "dataType": "string",
+            "sourceColumn": "town",
+            "dataCategory": "City",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Customer Region",
+            "dataType": "string",
+            "sourceColumn": "customer_region",
+            "dataCategory": "StateOrProvince",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Customer Zone",
+            "dataType": "string",
+            "sourceColumn": "customer_zone",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Country",
+            "dataType": "string",
+            "sourceColumn": "country_name",
+            "dataCategory": "Country",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Market Group",
+            "dataType": "string",
+            "sourceColumn": "market_group",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "sourceColumn": "customer_status",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Inferred Member",
+            "dataType": "boolean",
+            "sourceColumn": "is_inferred",
+            "displayFolder": "SCD history",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Customer Segment",
+            "dataType": "string",
+            "sourceColumn": "customer_segment",
+            "description": "K-means segment (03_analytics/clustering.py).",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Channel (Current)",
+            "dataType": "string",
+            "sourceColumn": "channel_current",
+            "displayFolder": "As-is (current)",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "SCD Version",
+            "dataType": "int64",
+            "sourceColumn": "scd_version",
+            "displayFolder": "SCD history",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Current Version",
+            "dataType": "boolean",
+            "sourceColumn": "scd_is_current",
+            "displayFolder": "SCD history",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Customer",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"dim_customer.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"dim_customer\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"customer_key\", Int64.Type}, {\"customer_code\", type text}, {\"customer_name\", type text}, {\"customer_type\", type text}, {\"channel\", type text}, {\"credit_terms_days\", Int64.Type}, {\"is_key_account\", type logical}, {\"town\", type text}, {\"customer_region\", type text}, {\"customer_zone\", type text}, {\"country_name\", type text}, {\"market_group\", type text}, {\"customer_status\", type text}, {\"is_inferred\", type logical}, {\"customer_segment\", type text}, {\"channel_current\", type text}, {\"scd_version\", Int64.Type}, {\"scd_is_current\", type logical}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Cost Category",
+        "description": "Production cost category with cost group and behaviour.",
+        "columns": [
+          {
+            "name": "Cost Category Key",
+            "dataType": "int64",
+            "sourceColumn": "cost_category_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Cost Category Code",
+            "dataType": "string",
+            "sourceColumn": "cost_category_code",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Cost Category",
+            "dataType": "string",
+            "sourceColumn": "cost_category_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Cost Group",
+            "dataType": "string",
+            "sourceColumn": "cost_group",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Cost Behaviour",
+            "dataType": "string",
+            "sourceColumn": "cost_behaviour",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Crop Specific",
+            "dataType": "boolean",
+            "sourceColumn": "is_crop_specific",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Cost Category",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"dim_cost_category.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"dim_cost_category\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"cost_category_key\", Int64.Type}, {\"cost_category_code\", type text}, {\"cost_category_name\", type text}, {\"cost_group\", type text}, {\"cost_behaviour\", type text}, {\"is_crop_specific\", type logical}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Commodity",
+        "description": "World Bank Pink Sheet series (output and input prices).",
+        "columns": [
+          {
+            "name": "Commodity Key",
+            "dataType": "int64",
+            "sourceColumn": "commodity_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Commodity Code",
+            "dataType": "string",
+            "sourceColumn": "commodity_code",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Commodity",
+            "dataType": "string",
+            "sourceColumn": "commodity_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Price Unit",
+            "dataType": "string",
+            "sourceColumn": "price_unit",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Commodity Role",
+            "dataType": "string",
+            "sourceColumn": "commodity_role",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Commodity",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"dim_commodity.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"dim_commodity\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"commodity_key\", Int64.Type}, {\"commodity_code\", type text}, {\"commodity_name\", type text}, {\"price_unit\", type text}, {\"commodity_role\", type text}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Sales",
+        "description": "Invoice and credit-note lines (grain: one row per document line). Import with incremental refresh on Invoice Date Key.",
+        "columns": [
+          {
+            "name": "Invoice Date Key",
+            "dataType": "int64",
+            "sourceColumn": "invoice_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Dispatch Date Key",
+            "dataType": "int64",
+            "sourceColumn": "dispatch_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Product Key",
+            "dataType": "int64",
+            "sourceColumn": "product_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Customer Key",
+            "dataType": "int64",
+            "sourceColumn": "customer_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Key",
+            "dataType": "int64",
+            "sourceColumn": "farm_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Invoice ID",
+            "dataType": "int64",
+            "sourceColumn": "invoice_id",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Document Type",
+            "dataType": "string",
+            "sourceColumn": "doc_type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Quantity (kg)",
+            "dataType": "double",
+            "sourceColumn": "quantity_kg",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Gross Revenue",
+            "dataType": "decimal",
+            "sourceColumn": "gross_revenue_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Discount",
+            "dataType": "decimal",
+            "sourceColumn": "discount_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Net Revenue",
+            "dataType": "decimal",
+            "sourceColumn": "net_revenue_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "COGS",
+            "dataType": "decimal",
+            "sourceColumn": "cogs_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Freight Cost",
+            "dataType": "decimal",
+            "sourceColumn": "freight_cost_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Price Anomaly",
+            "dataType": "boolean",
+            "sourceColumn": "is_price_anomaly",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Sales",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"fact_sales.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"fact_sales\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"invoice_date_key\", Int64.Type}, {\"dispatch_date_key\", Int64.Type}, {\"product_key\", Int64.Type}, {\"customer_key\", Int64.Type}, {\"farm_key\", Int64.Type}, {\"invoice_id\", Int64.Type}, {\"doc_type\", type text}, {\"quantity_kg\", type number}, {\"gross_revenue_nad\", Currency.Type}, {\"discount_nad\", Currency.Type}, {\"net_revenue_nad\", Currency.Type}, {\"cogs_nad\", Currency.Type}, {\"freight_cost_nad\", Currency.Type}, {\"is_price_anomaly\", type logical}}, \"en-US\"),\n    // incremental refresh window (RangeStart/RangeEnd folded to SQL as integer date keys)\n    Filtered = Table.SelectRows(Typed, each [invoice_date_key] >= Int64.From(DateTime.ToText(RangeStart, \"yyyyMMdd\")) and [invoice_date_key] < Int64.From(DateTime.ToText(RangeEnd, \"yyyyMMdd\")))\nin\n    Filtered"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Harvest",
+        "description": "Harvest records (grain: farm x crop x block x day).",
+        "columns": [
+          {
+            "name": "Harvest Date Key",
+            "dataType": "int64",
+            "sourceColumn": "harvest_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Key",
+            "dataType": "int64",
+            "sourceColumn": "farm_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Harvested (kg)",
+            "dataType": "double",
+            "sourceColumn": "harvested_kg",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Is Corrected",
+            "dataType": "boolean",
+            "sourceColumn": "is_corrected",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Harvest",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"fact_harvest.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"fact_harvest\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"harvest_date_key\", Int64.Type}, {\"farm_key\", Int64.Type}, {\"crop_key\", Int64.Type}, {\"harvested_kg\", type number}, {\"is_corrected\", type logical}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Crop Cycle",
+        "description": "Accumulating snapshot (grain: field block x crop cycle). Active date = planting; inactive role-playing dates for first/last harvest and season end.",
+        "columns": [
+          {
+            "name": "Cycle ID",
+            "dataType": "string",
+            "sourceColumn": "cycle_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Block ID",
+            "dataType": "string",
+            "sourceColumn": "block_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Key",
+            "dataType": "int64",
+            "sourceColumn": "farm_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Planting Date Key",
+            "dataType": "int64",
+            "sourceColumn": "planting_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "First Harvest Date Key",
+            "dataType": "int64",
+            "sourceColumn": "first_harvest_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Last Harvest Date Key",
+            "dataType": "int64",
+            "sourceColumn": "last_harvest_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Harvest Season End Date Key",
+            "dataType": "int64",
+            "sourceColumn": "harvest_season_end_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Cycle Status",
+            "dataType": "string",
+            "sourceColumn": "cycle_status",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Irrigation Method",
+            "dataType": "string",
+            "sourceColumn": "irrigation_method",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Irrigated Block",
+            "dataType": "boolean",
+            "sourceColumn": "is_irrigated",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Planted (ha)",
+            "dataType": "double",
+            "sourceColumn": "planted_ha",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Harvested (ha)",
+            "dataType": "double",
+            "sourceColumn": "harvested_ha",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Planned Production (kg)",
+            "dataType": "double",
+            "sourceColumn": "planned_production_kg",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Harvested (kg)",
+            "dataType": "double",
+            "sourceColumn": "harvested_kg",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Days to First Harvest",
+            "dataType": "int64",
+            "sourceColumn": "days_to_first_harvest",
+            "isHidden": true,
+            "summarizeBy": "average"
+          },
+          {
+            "name": "Direct Cost",
+            "dataType": "decimal",
+            "sourceColumn": "direct_cost_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Fertiliser (kg)",
+            "dataType": "double",
+            "sourceColumn": "fertiliser_kg",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Crop Cycle",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"fact_crop_cycle.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"fact_crop_cycle\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"cycle_id\", type text}, {\"block_id\", type text}, {\"farm_key\", Int64.Type}, {\"crop_key\", Int64.Type}, {\"planting_date_key\", Int64.Type}, {\"first_harvest_date_key\", Int64.Type}, {\"last_harvest_date_key\", Int64.Type}, {\"harvest_season_end_date_key\", Int64.Type}, {\"cycle_status\", type text}, {\"irrigation_method\", type text}, {\"is_irrigated\", type logical}, {\"planted_ha\", type number}, {\"harvested_ha\", type number}, {\"planned_production_kg\", type number}, {\"harvested_kg\", type number}, {\"days_to_first_harvest\", Int64.Type}, {\"direct_cost_nad\", Currency.Type}, {\"fertiliser_kg\", type number}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Production Cost",
+        "description": "Cost-ledger postings (grain: posting).",
+        "columns": [
+          {
+            "name": "Posting Date Key",
+            "dataType": "int64",
+            "sourceColumn": "posting_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Key",
+            "dataType": "int64",
+            "sourceColumn": "farm_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Cost Category Key",
+            "dataType": "int64",
+            "sourceColumn": "cost_category_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Amount",
+            "dataType": "decimal",
+            "sourceColumn": "amount_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Input Quantity",
+            "dataType": "double",
+            "sourceColumn": "input_qty",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Production Cost",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"fact_production_cost.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"fact_production_cost\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"posting_date_key\", Int64.Type}, {\"farm_key\", Int64.Type}, {\"crop_key\", Int64.Type}, {\"cost_category_key\", Int64.Type}, {\"amount_nad\", Currency.Type}, {\"input_qty\", type number}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Inventory",
+        "description": "Monthly stock snapshot (semi-additive: use the Closing Stock measures, never SUM over time).",
+        "columns": [
+          {
+            "name": "Snapshot Date Key",
+            "dataType": "int64",
+            "sourceColumn": "snapshot_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Key",
+            "dataType": "int64",
+            "sourceColumn": "farm_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Product Key",
+            "dataType": "int64",
+            "sourceColumn": "product_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Opening Stock (kg)",
+            "dataType": "double",
+            "sourceColumn": "opening_stock_kg",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Received (kg)",
+            "dataType": "double",
+            "sourceColumn": "received_kg",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Dispatched (kg)",
+            "dataType": "double",
+            "sourceColumn": "dispatched_kg",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Shrinkage (kg)",
+            "dataType": "double",
+            "sourceColumn": "shrinkage_kg",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Closing Stock (kg)",
+            "dataType": "double",
+            "sourceColumn": "closing_stock_kg",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Closing Stock Value",
+            "dataType": "decimal",
+            "sourceColumn": "closing_stock_value_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Inventory",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"fact_inventory_monthly.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"fact_inventory_monthly\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"snapshot_date_key\", Int64.Type}, {\"farm_key\", Int64.Type}, {\"product_key\", Int64.Type}, {\"opening_stock_kg\", type number}, {\"received_kg\", type number}, {\"dispatched_kg\", type number}, {\"shrinkage_kg\", type number}, {\"closing_stock_kg\", type number}, {\"closing_stock_value_nad\", Currency.Type}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Weather",
+        "description": "NASA POWER daily weather per farm location (rainfall averaged across locations, never summed).",
+        "columns": [
+          {
+            "name": "Date Key",
+            "dataType": "int64",
+            "sourceColumn": "date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farm Key",
+            "dataType": "int64",
+            "sourceColumn": "farm_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Rainfall (mm)",
+            "dataType": "double",
+            "sourceColumn": "rainfall_mm",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Max Temp (C)",
+            "dataType": "double",
+            "sourceColumn": "t_max_c",
+            "isHidden": true,
+            "summarizeBy": "average"
+          },
+          {
+            "name": "Min Temp (C)",
+            "dataType": "double",
+            "sourceColumn": "t_min_c",
+            "isHidden": true,
+            "summarizeBy": "average"
+          },
+          {
+            "name": "Heat Day",
+            "dataType": "int64",
+            "sourceColumn": "heat_day",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Weather",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"fact_weather_daily.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"fact_weather_daily\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"date_key\", Int64.Type}, {\"farm_key\", Int64.Type}, {\"rainfall_mm\", type number}, {\"t_max_c\", type number}, {\"t_min_c\", type number}, {\"heat_day\", Int64.Type}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Market Price",
+        "description": "World Bank commodity prices converted to N$ (non-additive).",
+        "columns": [
+          {
+            "name": "Month Date Key",
+            "dataType": "int64",
+            "sourceColumn": "month_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Commodity Key",
+            "dataType": "int64",
+            "sourceColumn": "commodity_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Price (USD)",
+            "dataType": "double",
+            "sourceColumn": "price_usd",
+            "isHidden": true,
+            "summarizeBy": "average"
+          },
+          {
+            "name": "FX (N$ per USD)",
+            "dataType": "double",
+            "sourceColumn": "fx_nad_per_usd",
+            "isHidden": true,
+            "summarizeBy": "average"
+          },
+          {
+            "name": "Price (N$)",
+            "dataType": "double",
+            "sourceColumn": "price_nad",
+            "isHidden": true,
+            "summarizeBy": "average"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Market Price",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"fact_market_price_monthly.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"fact_market_price_monthly\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"month_date_key\", Int64.Type}, {\"commodity_key\", Int64.Type}, {\"crop_key\", Int64.Type}, {\"price_usd\", type number}, {\"fx_nad_per_usd\", type number}, {\"price_nad\", type number}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Crop Estimate",
+        "description": "NSA / MAFWLR regional crop estimates (benchmark).",
+        "columns": [
+          {
+            "name": "Season End Date Key",
+            "dataType": "int64",
+            "sourceColumn": "season_end_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Region Key",
+            "dataType": "int64",
+            "sourceColumn": "region_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Farming Sector",
+            "dataType": "string",
+            "sourceColumn": "farming_sector",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Area Planted (ha)",
+            "dataType": "double",
+            "sourceColumn": "area_planted_ha",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Production (t)",
+            "dataType": "double",
+            "sourceColumn": "production_t",
+            "isHidden": true,
+            "summarizeBy": "sum"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Crop Estimate",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"fact_crop_estimate.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"fact_crop_estimate\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"season_end_date_key\", Int64.Type}, {\"region_key\", Int64.Type}, {\"crop_key\", Int64.Type}, {\"farming_sector\", type text}, {\"area_planted_ha\", type number}, {\"production_t\", type number}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Forecast",
+        "description": "Back-test and forward forecasts from 03_analytics/forecasting.py.",
+        "columns": [
+          {
+            "name": "Month Date Key",
+            "dataType": "int64",
+            "sourceColumn": "month_date_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Crop Category Key",
+            "dataType": "int64",
+            "sourceColumn": "crop_category_key",
+            "isHidden": true,
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Model",
+            "dataType": "string",
+            "sourceColumn": "model_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Scenario",
+            "dataType": "string",
+            "sourceColumn": "scenario",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Actual",
+            "dataType": "decimal",
+            "sourceColumn": "actual_net_revenue_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Forecast",
+            "dataType": "decimal",
+            "sourceColumn": "forecast_net_revenue_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Lower 80",
+            "dataType": "decimal",
+            "sourceColumn": "lower_80_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Upper 80",
+            "dataType": "decimal",
+            "sourceColumn": "upper_80_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Lower 95",
+            "dataType": "decimal",
+            "sourceColumn": "lower_95_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Upper 95",
+            "dataType": "decimal",
+            "sourceColumn": "upper_95_nad",
+            "isHidden": true,
+            "formatString": "\"N$\" #,0",
+            "summarizeBy": "sum"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Forecast",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"fact_forecast_monthly.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"fact_forecast_monthly\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"month_date_key\", Int64.Type}, {\"crop_category_key\", Int64.Type}, {\"model_name\", type text}, {\"scenario\", type text}, {\"actual_net_revenue_nad\", Currency.Type}, {\"forecast_net_revenue_nad\", Currency.Type}, {\"lower_80_nad\", Currency.Type}, {\"upper_80_nad\", Currency.Type}, {\"lower_95_nad\", Currency.Type}, {\"upper_95_nad\", Currency.Type}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Yield Drivers",
+        "description": "Yield-driver model output (03_analytics/yield_drivers.py); disconnected.",
+        "columns": [
+          {
+            "name": "Model",
+            "dataType": "string",
+            "sourceColumn": "model_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Feature",
+            "dataType": "string",
+            "sourceColumn": "feature",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Importance",
+            "dataType": "double",
+            "sourceColumn": "importance",
+            "formatString": "0.000",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "Coefficient",
+            "dataType": "double",
+            "sourceColumn": "coefficient",
+            "formatString": "0.0000",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "P Value",
+            "dataType": "double",
+            "sourceColumn": "p_value",
+            "formatString": "0.0000",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Rank",
+            "dataType": "int64",
+            "sourceColumn": "rank_order",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Yield Drivers",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"yield_driver_importance.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"yield_driver_importance\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"model_name\", type text}, {\"feature\", type text}, {\"importance\", type number}, {\"coefficient\", type number}, {\"p_value\", type number}, {\"rank_order\", Int64.Type}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Security User Zone",
+        "description": "RLS mapping user UPN -> management zone (disconnected; read only by the Zone Manager role).",
+        "columns": [
+          {
+            "name": "User UPN",
+            "dataType": "string",
+            "sourceColumn": "user_upn",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Zone Code",
+            "dataType": "string",
+            "sourceColumn": "zone_code",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Security User Zone",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing\n    ReadCsv = (file as text) as table =>\n        let\n            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = \",\", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])\n        in\n            Table.ReplaceValue(Raw, \"\", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),\n    Source = if SourceMode = \"CSV\"\n        then ReadCsv(\"sec_user_zone.csv.gz\")\n        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = \"mart\", Item = \"sec_user_zone\"]}[Data],\n    Typed = Table.TransformColumnTypes(Source, {{\"user_upn\", type text}, {\"zone_code\", type text}}, \"en-US\")\nin\n    Typed"
+            }
+          }
+        ],
+        "isHidden": true
+      },
+      {
+        "name": "Metric Selector",
+        "description": "Field parameter: lets users switch the metric shown in a visual.",
+        "columns": [
+          {
+            "type": "calculatedTableColumn",
+            "name": "Metric",
+            "dataType": "string",
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Value1]",
+            "sortByColumn": "Metric Order",
+            "relatedColumnDetails": {
+              "groupByColumns": [
+                {
+                  "groupingColumn": "Metric Fields"
+                }
+              ]
+            },
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "Metric Fields",
+            "dataType": "string",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Value2]",
+            "sortByColumn": "Metric Order",
+            "extendedProperties": [
+              {
+                "type": "json",
+                "name": "ParameterMetadata",
+                "value": {
+                  "version": 3,
+                  "kind": 2
+                }
+              }
+            ],
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculatedTableColumn",
+            "name": "Metric Order",
+            "dataType": "int64",
+            "isHidden": true,
+            "isNameInferred": false,
+            "isDataTypeInferred": true,
+            "sourceColumn": "[Value3]",
+            "summarizeBy": "sum"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Metric Selector",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": "{\n    ( \"Net Revenue\", NAMEOF ( '_Measures'[Net Revenue] ), 0 ),\n    ( \"Gross Margin\", NAMEOF ( '_Measures'[Gross Margin] ), 1 ),\n    ( \"Gross Margin %\", NAMEOF ( '_Measures'[Gross Margin %] ), 2 ),\n    ( \"Sales Volume (t)\", NAMEOF ( '_Measures'[Sales Volume (t)] ), 3 ),\n    ( \"Avg Realised Price (N$/kg)\", NAMEOF ( '_Measures'[Avg Realised Price (N$/kg)] ), 4 ),\n    ( \"Export Share %\", NAMEOF ( '_Measures'[Export Share %] ), 5 )\n}"
+            }
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "Sales[Invoice Date Key] -> Date",
+        "fromTable": "Sales",
+        "fromColumn": "Invoice Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key"
+      },
+      {
+        "name": "Sales[Dispatch Date Key] -> Date",
+        "fromTable": "Sales",
+        "fromColumn": "Dispatch Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key",
+        "isActive": false
+      },
+      {
+        "name": "Sales[Product Key] -> Product",
+        "fromTable": "Sales",
+        "fromColumn": "Product Key",
+        "toTable": "Product",
+        "toColumn": "Product Key"
+      },
+      {
+        "name": "Sales[Customer Key] -> Customer",
+        "fromTable": "Sales",
+        "fromColumn": "Customer Key",
+        "toTable": "Customer",
+        "toColumn": "Customer Key"
+      },
+      {
+        "name": "Sales[Farm Key] -> Farm",
+        "fromTable": "Sales",
+        "fromColumn": "Farm Key",
+        "toTable": "Farm",
+        "toColumn": "Farm Key"
+      },
+      {
+        "name": "Product[Crop Key] -> Crop",
+        "fromTable": "Product",
+        "fromColumn": "Crop Key",
+        "toTable": "Crop",
+        "toColumn": "Crop Key"
+      },
+      {
+        "name": "Crop[Crop Category Key] -> Crop Category",
+        "fromTable": "Crop",
+        "fromColumn": "Crop Category Key",
+        "toTable": "Crop Category",
+        "toColumn": "Crop Category Key"
+      },
+      {
+        "name": "Farm[Region Key] -> Region",
+        "fromTable": "Farm",
+        "fromColumn": "Region Key",
+        "toTable": "Region",
+        "toColumn": "Region Key"
+      },
+      {
+        "name": "Harvest[Harvest Date Key] -> Date",
+        "fromTable": "Harvest",
+        "fromColumn": "Harvest Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key"
+      },
+      {
+        "name": "Harvest[Farm Key] -> Farm",
+        "fromTable": "Harvest",
+        "fromColumn": "Farm Key",
+        "toTable": "Farm",
+        "toColumn": "Farm Key"
+      },
+      {
+        "name": "Harvest[Crop Key] -> Crop",
+        "fromTable": "Harvest",
+        "fromColumn": "Crop Key",
+        "toTable": "Crop",
+        "toColumn": "Crop Key"
+      },
+      {
+        "name": "Crop Cycle[Planting Date Key] -> Date",
+        "fromTable": "Crop Cycle",
+        "fromColumn": "Planting Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key"
+      },
+      {
+        "name": "Crop Cycle[First Harvest Date Key] -> Date",
+        "fromTable": "Crop Cycle",
+        "fromColumn": "First Harvest Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key",
+        "isActive": false
+      },
+      {
+        "name": "Crop Cycle[Last Harvest Date Key] -> Date",
+        "fromTable": "Crop Cycle",
+        "fromColumn": "Last Harvest Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key",
+        "isActive": false
+      },
+      {
+        "name": "Crop Cycle[Harvest Season End Date Key] -> Date",
+        "fromTable": "Crop Cycle",
+        "fromColumn": "Harvest Season End Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key",
+        "isActive": false
+      },
+      {
+        "name": "Crop Cycle[Farm Key] -> Farm",
+        "fromTable": "Crop Cycle",
+        "fromColumn": "Farm Key",
+        "toTable": "Farm",
+        "toColumn": "Farm Key"
+      },
+      {
+        "name": "Crop Cycle[Crop Key] -> Crop",
+        "fromTable": "Crop Cycle",
+        "fromColumn": "Crop Key",
+        "toTable": "Crop",
+        "toColumn": "Crop Key"
+      },
+      {
+        "name": "Production Cost[Posting Date Key] -> Date",
+        "fromTable": "Production Cost",
+        "fromColumn": "Posting Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key"
+      },
+      {
+        "name": "Production Cost[Farm Key] -> Farm",
+        "fromTable": "Production Cost",
+        "fromColumn": "Farm Key",
+        "toTable": "Farm",
+        "toColumn": "Farm Key"
+      },
+      {
+        "name": "Production Cost[Crop Key] -> Crop",
+        "fromTable": "Production Cost",
+        "fromColumn": "Crop Key",
+        "toTable": "Crop",
+        "toColumn": "Crop Key"
+      },
+      {
+        "name": "Production Cost[Cost Category Key] -> Cost Category",
+        "fromTable": "Production Cost",
+        "fromColumn": "Cost Category Key",
+        "toTable": "Cost Category",
+        "toColumn": "Cost Category Key"
+      },
+      {
+        "name": "Inventory[Snapshot Date Key] -> Date",
+        "fromTable": "Inventory",
+        "fromColumn": "Snapshot Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key"
+      },
+      {
+        "name": "Inventory[Farm Key] -> Farm",
+        "fromTable": "Inventory",
+        "fromColumn": "Farm Key",
+        "toTable": "Farm",
+        "toColumn": "Farm Key"
+      },
+      {
+        "name": "Inventory[Product Key] -> Product",
+        "fromTable": "Inventory",
+        "fromColumn": "Product Key",
+        "toTable": "Product",
+        "toColumn": "Product Key"
+      },
+      {
+        "name": "Weather[Date Key] -> Date",
+        "fromTable": "Weather",
+        "fromColumn": "Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key"
+      },
+      {
+        "name": "Weather[Farm Key] -> Farm",
+        "fromTable": "Weather",
+        "fromColumn": "Farm Key",
+        "toTable": "Farm",
+        "toColumn": "Farm Key"
+      },
+      {
+        "name": "Market Price[Month Date Key] -> Date",
+        "fromTable": "Market Price",
+        "fromColumn": "Month Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key"
+      },
+      {
+        "name": "Market Price[Commodity Key] -> Commodity",
+        "fromTable": "Market Price",
+        "fromColumn": "Commodity Key",
+        "toTable": "Commodity",
+        "toColumn": "Commodity Key"
+      },
+      {
+        "name": "Market Price[Crop Key] -> Crop",
+        "fromTable": "Market Price",
+        "fromColumn": "Crop Key",
+        "toTable": "Crop",
+        "toColumn": "Crop Key"
+      },
+      {
+        "name": "Crop Estimate[Season End Date Key] -> Date",
+        "fromTable": "Crop Estimate",
+        "fromColumn": "Season End Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key"
+      },
+      {
+        "name": "Crop Estimate[Region Key] -> Region",
+        "fromTable": "Crop Estimate",
+        "fromColumn": "Region Key",
+        "toTable": "Region",
+        "toColumn": "Region Key"
+      },
+      {
+        "name": "Crop Estimate[Crop Key] -> Crop",
+        "fromTable": "Crop Estimate",
+        "fromColumn": "Crop Key",
+        "toTable": "Crop",
+        "toColumn": "Crop Key"
+      },
+      {
+        "name": "Forecast[Month Date Key] -> Date",
+        "fromTable": "Forecast",
+        "fromColumn": "Month Date Key",
+        "toTable": "Date",
+        "toColumn": "Date Key"
+      },
+      {
+        "name": "Forecast[Crop Category Key] -> Crop Category",
+        "fromTable": "Forecast",
+        "fromColumn": "Crop Category Key",
+        "toTable": "Crop Category",
+        "toColumn": "Crop Category Key"
+      }
+    ],
+    "roles": [
+      {
+        "name": "Executive (all data)",
+        "modelPermission": "read",
+        "description": "Unrestricted read for the Executive Committee and CFO."
+      },
+      {
+        "name": "Zone Manager (dynamic)",
+        "modelPermission": "read",
+        "description": "Dynamic RLS: users see farms (and all facts from those farms) in the zones mapped to their UPN in sec.user_zone_access.",
+        "tablePermissions": [
+          {
+            "name": "Farm",
+            "filterExpression": "'Farm'[Zone Code]\n    IN CALCULATETABLE (\n        VALUES ( 'Security User Zone'[Zone Code] ),\n        'Security User Zone'[User UPN] = USERPRINCIPALNAME ()\n    )"
+          }
+        ]
+      },
+      {
+        "name": "Export Desk (static)",
+        "modelPermission": "read",
+        "description": "Static RLS: the export desk sees export-channel customers only.",
+        "tablePermissions": [
+          {
+            "name": "Customer",
+            "filterExpression": "'Customer'[Channel] = \"Export\""
+          }
+        ]
+      }
+    ],
+    "expressions": [
+      {
+        "name": "PgServer",
+        "kind": "m",
+        "expression": "\"localhost:5432\" meta [IsParameterQuery = true, Type = \"Text\", IsParameterQueryRequired = true]",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Text"
+          }
+        ]
+      },
+      {
+        "name": "PgDatabase",
+        "kind": "m",
+        "expression": "\"green_basket_dw\" meta [IsParameterQuery = true, Type = \"Text\", IsParameterQueryRequired = true]",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Text"
+          }
+        ]
+      },
+      {
+        "name": "SourceMode",
+        "kind": "m",
+        "expression": "\"PostgreSQL\" meta [IsParameterQuery = true, List = {\"PostgreSQL\", \"CSV\"}, DefaultValue = \"PostgreSQL\", Type = \"Text\", IsParameterQueryRequired = true]",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Text"
+          }
+        ]
+      },
+      {
+        "name": "CsvFolder",
+        "kind": "m",
+        "expression": "\"C:\\GreenBasket\\04_powerbi\\data_csv\\\" meta [IsParameterQuery = true, Type = \"Text\", IsParameterQueryRequired = true]",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Text"
+          }
+        ]
+      },
+      {
+        "name": "RangeStart",
+        "kind": "m",
+        "expression": "#datetime(2020, 1, 1, 0, 0, 0) meta [IsParameterQuery = true, Type = \"DateTime\", IsParameterQueryRequired = true]",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "DateTime"
+          }
+        ]
+      },
+      {
+        "name": "RangeEnd",
+        "kind": "m",
+        "expression": "#datetime(2027, 1, 1, 0, 0, 0) meta [IsParameterQuery = true, Type = \"DateTime\", IsParameterQueryRequired = true]",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "DateTime"
+          }
+        ]
+      }
+    ],
+    "annotations": [
+      {
+        "name": "__PBI_TimeIntelligenceEnabled",
+        "value": "0"
+      },
+      {
+        "name": "PBI_ProTooling",
+        "value": "[\"DevMode\"]"
+      }
+    ]
+  }
+}

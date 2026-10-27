@@ -1,0 +1,4 @@
+/// Unrestricted read for the Executive Committee and CFO.
+role 'Executive (all data)'
+	modelPermission: read
+

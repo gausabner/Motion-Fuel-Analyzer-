@@ -1,0 +1,561 @@
+Farm,Date,Product,Block,Quantity,Unit,Clerk,Comment
+GB-HAR-01,03-May-21,Butternut squash,B101,45638.0,Kg,CLK-HAR1,
+GB-HAR-01,03-May-21,Butternut,B102,60498.2,kg,CLK-HAR3,
+GB-HAR-01,04-May-21,Butternut,B102,63.66,bins(400kg),CLK-HAR3,machine breakdown
+GB-HAR-01,04-May-21,Butternut,B103,35.65,ton,CLK-HAR3,night shift
+GB-HAR-01,18-May-21,White Maize,P01,183.843,ton,CLK-HAR3,
+GB-HAR-01,19-May-21,MAIZE (WHITE),P01,76707.2,Kg,CLK-HAR1,
+GB-HAR-01,19-May-21,maize,P02,157.54,t,CLK-HAR1,
+GB-HAR-01,29-Sep-21,onion,B01,207.96,bins(400kg),CLK-HAR2,
+GB-HAR-01,30-Sep-21,Onions,B01,92.904,t,CLK-HAR2,
+GB-HAR-01,01-Oct-21,Onion,B01,65.859,ton,CLK-HAR1,
+GB-HAR-01,01-Oct-21,onion,B02,75.047,ton,CLK-HAR2,weighbridge slip attached
+GB-HAR-01,02-Oct-21,Onion,B01,164.743,t,CLK-HAR2,
+GB-HAR-01,02-Oct-21,Onions,B02,94.93,ton,CLK-HAR2,
+GB-HAR-01,04-Oct-21,onion,B02,69458.4,Kg,CLK-HAR3,weighbridge slip attached
+GB-HAR-01,04-Oct-21,onion,B03,164.78,bins(400kg),CLK-HAR1,
+GB-HAR-01,05-Oct-21,Onion,B03,167.75,bins(400kg),CLK-HAR2,rain delay
+GB-HAR-01,06-Oct-21,onion,B03,64.85,ton,CLK-HAR3,
+GB-HAR-01,11-Oct-21,Onion,B04,86.297,ton,CLK-HAR1,
+GB-HAR-01,12-Oct-21,Onions,B04,70951.5,Kg,CLK-HAR1,machine breakdown
+GB-HAR-01,13-Oct-21,Onions,B04,164.58,bins(400kg),CLK-HAR3,night shift
+GB-HAR-01,14-Oct-21,Onion,B04,251.32,bins(400kg),CLK-HAR2,
+GB-HAR-01,15-Oct-21,Onion,B04,104745.8,kg,CLK-HAR1,
+GB-HAR-01,28-Oct-21,wheat,P01,56983.9,Kg,CLK-HAR1,
+GB-HAR-01,29-Oct-21,wheat,P02,202215.8,Kg,CLK-HAR3,
+GB-HAR-01,30-Nov-21,Table Grapes,V05,2.07,t,CLK-HAR1,
+GB-HAR-01,01-Dec-21,GRAPES,V02,480,crates(10kg),CLK-HAR2,
+GB-HAR-01,02-Dec-21,GRAPES,V03,2.009,t,CLK-HAR1,
+GB-HAR-01,02-Dec-21,Grapes,V04,216,crates(10kg),CLK-HAR3,machine breakdown
+GB-HAR-01,03-Dec-21,GRAPES,V01,3651.4,KG,CLK-HAR3,
+GB-HAR-01,03-Dec-21,GRAPES,V02,22.49,t,CLK-HAR2,
+GB-HAR-01,04-Dec-21,GRAPES,V03,471,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,04-Dec-21,Table Grapes,V04,804,crates(10kg),CLK-HAR2,
+GB-HAR-01,04-Dec-21,Table grapes,V05,862,crates(10kg),CLK-HAR2,weighbridge slip attached
+GB-HAR-01,06-Dec-21,Table Grapes,V02,-20.819,ton,CLK-HAR2,rain delay
+GB-HAR-01,06-Dec-21,Table Grapes,V04,923,crates(10kg),CLK-HAR3,
+GB-HAR-01,07-Dec-21,Table Grapes,V01,1240,crates(10kg),CLK-HAR2,
+GB-HAR-01,07-Dec-21,GRAPES,V03,759,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,08-Dec-21,Table grapes,V04,1254,crates(10kg),CLK-HAR3,
+GB-HAR-01,08-Dec-21,GRAPES,V05,1280,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,09-Dec-21,Table Grapes,V03,11.239,t,CLK-HAR2,rain delay
+GB-HAR-01,10-Dec-21,Table Grapes,V01,2226,crates(10kg),CLK-HAR3,
+GB-HAR-01,10-Dec-21,Table grapes,V02,3790,crates(10kg),CLK-HAR3,weighbridge slip attached
+GB-HAR-01,10-Dec-21,GRAPES,V05,1567,crates(10kg),CLK-HAR2,machine breakdown
+GB-HAR-01,11-Dec-21,Table grapes,V04,1846,crates(10kg),CLK-HAR1,rain delay
+GB-HAR-01,13-Dec-21,Table grapes,V01,2795,crates(10kg),CLK-HAR3,
+GB-HAR-01,13-Dec-21,Table grapes,V02,39603.9,kg,CLK-HAR3,rain delay
+GB-HAR-01,13-Dec-21,GRAPES,V03,1115,crates(10kg),CLK-HAR3,
+GB-HAR-01,13-Dec-21,Table grapes,V04,14258.6,kg,CLK-HAR1,
+GB-HAR-01,13-Dec-21,Table grapes,V05,17.785,t,CLK-HAR3,night shift
+GB-HAR-01,16-Dec-21,Table Grapes,V01,2607,crates(10kg),CLK-HAR1,rain delay
+GB-HAR-01,16-Dec-21,Grapes,V04,9.976,t,CLK-HAR2,
+GB-HAR-01,16-Dec-21,Table Grapes,V05,22.977,ton,CLK-HAR1,
+GB-HAR-01,17-Dec-21,Table Grapes,V02,3653,crates(10kg),CLK-HAR3,machine breakdown
+GB-HAR-01,17-Dec-21,GRAPES,V03,1518,crates(10kg),CLK-HAR3,
+GB-HAR-01,18-Dec-21,Table grapes,V01,32.236,ton,CLK-HAR1,night shift
+GB-HAR-01,20-Dec-21,Grapes,V02,4174,crates(10kg),CLK-HAR2,
+GB-HAR-01,20-Dec-21,Table Grapes,V03,18.059,t,CLK-HAR2,rain delay
+GB-HAR-01,20-Dec-21,Table grapes,V04,1441,crates(10kg),CLK-HAR2,
+GB-HAR-01,20-Dec-21,GRAPES,V05,25.157,ton,CLK-HAR1,night shift
+GB-HAR-01,22-Dec-21,Table grapes,V01,46.007,t,CLK-HAR3,night shift
+GB-HAR-01,23-Dec-21,Grapes,V04,7.695,t,CLK-HAR3,
+GB-HAR-01,24-Dec-21,GRAPES,V02,31.805,ton,CLK-HAR1,
+GB-HAR-01,24-Dec-21,Grapes,V03,1018,crates(10kg),CLK-HAR2,rain delay
+GB-HAR-01,24-Dec-21,Grapes,V05,2027,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,25-Dec-21,GRAPES,V01,37.01,t,CLK-HAR1,rain delay
+GB-HAR-01,27-Dec-21,GRAPES,V01,31.754,ton,CLK-HAR1,rain delay
+GB-HAR-01,27-Dec-21,Grapes,V02,2582,crates(10kg),CLK-HAR3,
+GB-HAR-01,27-Dec-21,Grapes,V03,14140.8,kg,CLK-HAR1,night shift
+GB-HAR-01,27-Dec-21,Table Grapes,V04,706,crates(10kg),CLK-HAR2,
+GB-HAR-01,27-Dec-21,GRAPES,V05,1504,crates(10kg),CLK-HAR1,
+GB-HAR-01,29-Dec-21,Table Grapes,V02,2198,crates(10kg),CLK-HAR1,
+  gb-har-01,29-Dec-21,Table Grapes,V04,5.334,ton,CLK-HAR2,rain delay
+GB-HAR-01,30-Dec-21,GRAPES,V01,3451,crates(10kg),CLK-HAR3,weighbridge slip attached
+GB-HAR-01,30-Dec-21,Table grapes,V03,13.739,ton,CLK-HAR1,
+GB-HAR-01,31-Dec-21,Table Grapes,V05,1351,crates(10kg),CLK-HAR1,machine breakdown
+GB-HAR-01,01-Jan-22,Table Grapes,V02,13.853,ton,CLK-HAR1,
+GB-HAR-01,01-Jan-22,Table grapes,V03,12.656,t,CLK-HAR2,
+GB-HAR-01,03-Jan-22,Table Grapes,V01,17.689,t,CLK-HAR1,night shift
+GB-HAR-01,03-Jan-22,Grapes,V04,1.905,t,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,03-Jan-22,GRAPES,V05,1328,crates(10kg),CLK-HAR3,
+GB-HAR-01,04-Jan-22,Grapes,V03,869,crates(10kg),CLK-HAR3,
+GB-HAR-01,05-Jan-22,Table Grapes,V01,12815.5,kg,CLK-HAR3,
+GB-HAR-01,05-Jan-22,Grapes,V02,13.401,t,CLK-HAR1,
+GB-HAR-01,06-Jan-22,GRAPES,V04,236.9,kg,CLK-HAR3,
+GB-HAR-01,07-Jan-22,GRAPES,V01,849,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,07-Jan-22,Table grapes,V05,8939.7,KG,CLK-HAR1,
+  gb-har-01,08-Jan-22,Table Grapes,V02,6205.9,KG,CLK-HAR3,weighbridge slip attached
+GB-HAR-01,08-Jan-22,Grapes,V03,586,crates(10kg),CLK-HAR2,
+GB-HAR-01,10-Jan-22,Table Grapes,V01,3402.8,kg,CLK-HAR1,
+GB-HAR-01,10-Jan-22,Grapes,V03,395,crates(10kg),CLK-HAR1,
+GB-HAR-01,10-Jan-22,Table grapes,V05,639,crates(10kg),CLK-HAR2,rain delay
+GB-HAR-01,11-Jan-22,Table grapes,V02,76,crates(10kg),CLK-HAR1,rain delay
+GB-HAR-01,13-Jan-22,GRAPES,V01,0.564,ton,CLK-HAR1,
+GB-HAR-01,13-Jan-22,Table Grapes,V03,1427.1,Kg,CLK-HAR2,weighbridge slip attached
+GB-HAR-01,14-Jan-22,GRAPES,V05,1.864,ton,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,15-Jan-22,Table grapes,V03,0.181,t,CLK-HAR1,rain delay
+GB-HAR-01,17-Jan-22,Table Grapes,V05,36,crates(10kg),CLK-HAR2,weighbridge slip attached
+GB-HAR-01,24-Jan-22,Butternut squash,B201,123.59,bins(400kg),CLK-HAR3,
+GB-HAR-01,24-Jan-22,Butternut squash,B202,40.864,t,CLK-HAR3,machine breakdown
+  gb-har-01,25-Jan-22,Butternuts,B201,55.85,bins(400kg),CLK-HAR3,
+GB-HAR-01,26-Jan-22,Butternut,B203,18.564,ton,CLK-HAR2,
+GB-HAR-01,26-Jan-22,Butternuts,B204,49.69,bins(400kg),CLK-HAR1,
+GB-HAR-01,27-Jan-22,Butternuts,B203,48.139,ton,CLK-HAR2,
+GB-HAR-01,21-Apr-22,Butternut,B101,48.705,t,CLK-HAR2,
+GB-HAR-01,22-Apr-22,Butternut squash,B102,26277.3,Kg,CLK-HAR2,
+GB-HAR-01,23-Apr-22,Butternuts,B102,29283.4,kg,CLK-HAR1,night shift
+GB-HAR-01,25-Apr-22,Butternut squash,B103,77.64,bins(400kg),CLK-HAR2,
+GB-HAR-01,26-Apr-22,Butternuts,B103,33.927,t,CLK-HAR1,
+GB-HAR-01,03-May-22,Maize,P01,161.14,t,CLK-HAR1,
+GB-HAR-01,04-May-22,MAIZE (WHITE),P01,178.395,ton,CLK-HAR2,machine breakdown
+GB-HAR-01,04-May-22,Maize,P02,110247.9,kg,CLK-HAR2,
+GB_HAR_01,20-Sep-22,Onions,B01,255.55,bins(400kg),CLK-HAR2,
+GB-HAR-01,21-Sep-22,onion,B01,142.25,bins(400kg),CLK-HAR3,
+GB-HAR-01,22-Sep-22,onion,B01,88.264,t,CLK-HAR1,
+GB-HAR-01,22-Sep-22,Onions,B02,150636.5,Kg,CLK-HAR1,machine breakdown
+GB-HAR-01,23-Sep-22,Onion,B02,187.85,bins(400kg),CLK-HAR2,
+GB-HAR-01,24-Sep-22,Onions,B02,82.034,t,CLK-HAR1,
+GB-HAR-01,24-Sep-22,onion,B04,146.97,bins(400kg),CLK-HAR3,
+GB-HAR-01,26-Sep-22,Onion,B03,76.689,ton,CLK-HAR1,rain delay
+GB-HAR-01,26-Sep-22,onion,B04,287.47,bins(400kg),CLK-HAR1,
+GB-HAR-01,27-Sep-22,onion,B03,226.74,bins(400kg),CLK-HAR1,
+GB-HAR-01,28-Sep-22,onion,B03,119.839,ton,CLK-HAR2,weighbridge slip attached
+GB-HAR-01,29-Sep-22,onion,B03,78.45,t,CLK-HAR1,
+GB-HAR-01,14-Nov-22,wheat,P01,133.724,ton,CLK-HAR3,rain delay
+  gb-har-01,15-Nov-22,WHEAT,P01,109.468,t,CLK-HAR3,weighbridge slip attached
+GB-HAR-01,15-Nov-22,Wheat,P02,82590.8,Kg,CLK-HAR1,
+GB-HAR-01,28-Dec-22,Grapes,V03,0.677,ton,CLK-HAR2,
+GB-HAR-01,28-Dec-22,Grapes,V05,1.595,ton,CLK-HAR2,weighbridge slip attached
+GB-HAR-01,29-Dec-22,GRAPES,V01,567,crates(10kg),CLK-HAR2,night shift
+GB-HAR-01,29-Dec-22,Grapes,V02,248,crates(10kg),CLK-HAR2,
+GB-HAR-01,29-Dec-22,Table Grapes,V04,315,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,30-Dec-22,GRAPES,V05,617,crates(10kg),CLK-HAR1,rain delay
+GB-HAR-01,31-Dec-22,Table grapes,V01,1208,crates(10kg),CLK-HAR2,night shift
+GB-HAR-01,31-Dec-22,Grapes,V03,205,crates(10kg),CLK-HAR2,rain delay
+GB_HAR_01,02-Jan-23,GRAPES,V01,19.799,t,CLK-HAR1,
+GB-HAR-01,02-Jan-23,Table grapes,V02,1302,crates(10kg),CLK-HAR3,
+GB-HAR-01,02-Jan-23,Table grapes,V04,1151,crates(10kg),CLK-HAR2,
+GB-HAR-01,02-Jan-23,Grapes,V05,9.403,ton,CLK-HAR1,
+GB-HAR-01,04-Jan-23,Grapes,V01,2503,crates(10kg),CLK-HAR3,
+GB-HAR-01,04-Jan-23,Table Grapes,V03,411,crates(10kg),CLK-HAR2,night shift
+GB-HAR-01,06-Jan-23,Grapes,V02,17.041,t,CLK-HAR1,
+GB-HAR-01,06-Jan-23,Table grapes,V03,4.9,t,CLK-HAR3,
+GB-HAR-01,06-Jan-23,Grapes,V04,1361,crates(10kg),CLK-HAR2,
+GB-HAR-01,06-Jan-23,GRAPES,V05,13.267,ton,CLK-HAR2,machine breakdown
+  gb-har-01,07-Jan-23,Grapes,V01,2731,crates(10kg),CLK-HAR3,
+GB-HAR-01,09-Jan-23,Table Grapes,V01,4158,crates(10kg),CLK-HAR2,
+GB-HAR-01,09-Jan-23,Table grapes,V02,1851,crates(10kg),CLK-HAR2,
+GB-HAR-01,09-Jan-23,Table Grapes,V03,6.404,t,CLK-HAR2,
+GB-HAR-01,09-Jan-23,Grapes,V04,1933,crates(10kg),CLK-HAR1,
+GB-HAR-01,09-Jan-23,GRAPES,V05,2176,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,11-Jan-23,Table Grapes,V01,44.693,t,CLK-HAR2,
+GB-HAR-01,11-Jan-23,GRAPES,V02,24.843,ton,CLK-HAR1,rain delay
+GB-HAR-01,12-Jan-23,GRAPES,V03,867,crates(10kg),CLK-HAR3,rain delay
+GB-HAR-01,12-Jan-23,Table grapes,V04,17.13,ton,CLK-HAR1,machine breakdown
+GB-HAR-01,12-Jan-23,Table Grapes,V05,18.157,t,CLK-HAR3,
+GB-HAR-01,13-Jan-23,GRAPES,V02,2679,crates(10kg),CLK-HAR3,
+  gb-har-01,16-Jan-23,Grapes,V01,3446,crates(10kg),CLK-HAR3,night shift
+GB-HAR-01,16-Jan-23,GRAPES,V03,8.565,ton,CLK-HAR2,night shift
+GB-HAR-01,16-Jan-23,Table grapes,V04,2402,crates(10kg),CLK-HAR1,
+GB-HAR-01,16-Jan-23,Table grapes,V05,2219,crates(10kg),CLK-HAR3,rain delay
+GB-HAR-01,17-Jan-23,Grapes,V02,32.184,t,CLK-HAR2,machine breakdown
+GB-HAR-01,18-Jan-23,Table grapes,V05,20.701,t,CLK-HAR1,
+GB-HAR-01,19-Jan-23,Butternut,B201,72.19,bins(400kg),CLK-HAR1,
+GB-HAR-01,19-Jan-23,GRAPES,V03,7397.3,KG,CLK-HAR1,
+GB-HAR-01,20-Jan-23,Butternut,B201,15.299,t,CLK-HAR2,
+GB-HAR-01,20-Jan-23,Butternut,B202,53.155,ton,CLK-HAR1,
+GB-HAR-01,20-Jan-23,Table grapes,V01,31.499,t,CLK-HAR3,machine breakdown
+GB-HAR-01,20-Jan-23,Grapes,V02,3015,crates(10kg),CLK-HAR3,
+GB-HAR-01,20-Jan-23,GRAPES,V04,2363,crates(10kg),CLK-HAR2,
+GB-HAR-01,21-Jan-23,Grapes,V05,1863,crates(10kg),CLK-HAR1,
+GB-HAR-01,23-Jan-23,Butternuts,B203,19736.9,KG,CLK-HAR2,rain delay
+GB-HAR-01,23-Jan-23,Butternuts,B204,81.75,bins(400kg),CLK-HAR2,night shift
+GB-HAR-01,23-Jan-23,Table grapes,V01,2730,crates(10kg),CLK-HAR2,rain delay
+GB-HAR-01,23-Jan-23,GRAPES,V02,25186.4,Kg,CLK-HAR1,rain delay
+GB-HAR-01,23-Jan-23,GRAPES,V03,10.128,t,CLK-HAR3,rain delay
+GB-HAR-01,23-Jan-23,GRAPES,V04,24.883,ton,CLK-HAR3,
+GB-HAR-01,24-Jan-23,Butternut squash,B203,27731.6,kg,CLK-HAR2,machine breakdown
+GB-HAR-01,24-Jan-23,Butternut squash,B204,55.16,bins(400kg),CLK-HAR1,machine breakdown
+GB-HAR-01,24-Jan-23,Table Grapes,V05,1545,crates(10kg),CLK-HAR1,machine breakdown
+GB-HAR-01,25-Jan-23,Table Grapes,V03,9.063,t,CLK-HAR3,weighbridge slip attached
+GB-HAR-01,25-Jan-23,GRAPES,V04,2142,crates(10kg),CLK-HAR3,
+GB-HAR-01,26-Jan-23,Grapes,V01,18.416,ton,CLK-HAR1,machine breakdown
+GB-HAR-01,27-Jan-23,Grapes,V02,25.244,t,CLK-HAR2,machine breakdown
+GB-HAR-01,27-Jan-23,Grapes,V03,558,crates(10kg),CLK-HAR3,
+GB-HAR-01,27-Jan-23,Table Grapes,V05,1005,crates(10kg),CLK-HAR3,night shift
+GB-HAR-01,30-Jan-23,GRAPES,V01,1875,crates(10kg),CLK-HAR1,
+GB-HAR-01,30-Jan-23,Grapes,V02,2360,crates(10kg),CLK-HAR2,
+GB-HAR-01,30-Jan-23,Table Grapes,V03,9.554,ton,CLK-HAR3,weighbridge slip attached
+GB-HAR-01,30-Jan-23,GRAPES,V04,1508,crates(10kg),CLK-HAR3,rain delay
+GB-HAR-01,31-Jan-23,Table grapes,V05,672,crates(10kg),CLK-HAR3,
+GB-HAR-01,01-Feb-23,GRAPES,V01,1421,crates(10kg),CLK-HAR2,
+GB-HAR-01,01-Feb-23,Table grapes,V03,5.97,t,CLK-HAR2,
+GB-HAR-01,01-Feb-23,Table grapes,V04,915,crates(10kg),CLK-HAR3,
+GB-HAR-01,02-Feb-23,GRAPES,V02,1393,crates(10kg),CLK-HAR2,weighbridge slip attached
+GB-HAR-01,03-Feb-23,Table Grapes,V05,662,crates(10kg),CLK-HAR1,
+GB-HAR-01,04-Feb-23,Table Grapes,V03,596,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,04-Feb-23,GRAPES,V04,588,crates(10kg),CLK-HAR2,
+GB-HAR-01,06-Feb-23,Grapes,V01,853,crates(10kg),CLK-HAR2,
+GB-HAR-01,06-Feb-23,Table Grapes,V02,1381,crates(10kg),CLK-HAR2,machine breakdown
+GB-HAR-01,06-Feb-23,Table grapes,V03,4.355,ton,CLK-HAR1,night shift
+GB-HAR-01,06-Feb-23,Table grapes,V03,4.355,ton,CLK-HAR1,night shift
+GB-HAR-01,06-Feb-23,Table grapes,V04,3059.2,Kg,CLK-HAR1,rain delay
+GB-HAR-01,06-Feb-23,Table Grapes,V05,358,crates(10kg),CLK-HAR3,machine breakdown
+GB-HAR-01,08-Feb-23,Table Grapes,V01,2.477,ton,CLK-HAR1,rain delay
+GB-HAR-01,08-Feb-23,Table grapes,V02,1168,crates(10kg),CLK-HAR3,
+GB-HAR-01,09-Feb-23,Grapes,V03,3.245,ton,CLK-HAR2,
+GB-HAR-01,10-Feb-23,Table grapes,V04,54,crates(10kg),CLK-HAR1,
+GB-HAR-01,10-Feb-23,Table Grapes,V05,132,crates(10kg),CLK-HAR2,
+GB-HAR-01,11-Feb-23,Table grapes,V02,5.848,ton,CLK-HAR2,
+GB-HAR-01,13-Feb-23,Table grapes,V01,0.461,ton,CLK-HAR3,
+  gb-har-01,13-Feb-23,Grapes,V03,1540.6,kg,CLK-HAR3,
+GB-HAR-01,13-Feb-23,Grapes,V05,0.329,t,CLK-HAR2,machine breakdown
+GB-HAR-01,15-Feb-23,GRAPES,V02,278,crates(10kg),CLK-HAR2,
+GB-HAR-01,15-Feb-23,GRAPES,V03,100,crates(10kg),CLK-HAR2,rain delay
+GB-HAR-01,18-Feb-23,Table Grapes,V02,43,crates(10kg),CLK-HAR1,
+GB-HAR-01,18-Feb-23,GRAPES,V03,543.0,kg,CLK-HAR2,
+GB-HAR-01,20-Feb-23,Table grapes,V03,10,crates(10kg),CLK-HAR1,night shift
+  gb-har-01,25-Apr-23,Butternut,B101,36479.4,KG,CLK-HAR1,
+GB-HAR-01,26-Apr-23,Butternut squash,B102,78.53,bins(400kg),CLK-HAR2,
+GB-HAR-01,29-Apr-23,Butternuts,B103,53.212,t,CLK-HAR3,
+GB-HAR-01,01-May-23,Butternut,B103,30.271,ton,CLK-HAR3,
+GB-HAR-01,02-May-23,Butternut squash,B103,42.253,ton,CLK-HAR1,
+GB-HAR-01,15-May-23,W/Maize,P01,180.368,t,CLK-HAR2,rain delay
+GB-HAR-01,16-May-23,MAIZE (WHITE),P02,116.314,ton,CLK-HAR1,machine breakdown
+GB-HAR-01,28-Aug-23,onion,B01,115254.6,KG,CLK-HAR1,
+GB-HAR-01,29-Aug-23,onion,B01,349.0,bins(400kg),CLK-HAR2,
+GB-HAR-01,30-Aug-23,Onions,B01,102.334,t,CLK-HAR3,machine breakdown
+GB-HAR-01,31-Aug-23,Onion,B01,62218.8,KG,CLK-HAR3,
+GB-HAR-01,31-Aug-23,onion,B02,79.653,ton,CLK-HAR3,weighbridge slip attached
+GB-HAR-01,01-Sep-23,Onions,B02,66.257,ton,CLK-HAR3,
+GB-HAR-01,01-Sep-23,Onion,B03,63.914,t,CLK-HAR3,
+GB-HAR-01,02-Sep-23,Onions,B02,235.08,bins(400kg),CLK-HAR3,rain delay
+GB-HAR-01,02-Sep-23,onion,B03,103622.0,KG,CLK-HAR2,
+GB-HAR-01,04-Sep-23,Onion,B02,230.03,bins(400kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,04-Sep-23,onion,B03,46.342,ton,CLK-HAR1,
+GB-HAR-01,04-Sep-23,onion,B04,54108.0,Kg,CLK-HAR3,
+GB-HAR-01,05-Sep-23,onion,B04,327.95,bins(400kg),CLK-HAR2,weighbridge slip attached
+GB-HAR-01,06-Sep-23,Onion,B04,65.657,t,CLK-HAR3,rain delay
+GB-HAR-01,27-Oct-23,Wheat,P01,85890.9,Kg,CLK-HAR1,
+GB-HAR-01,28-Oct-23,WHEAT,P02,120.35,ton,CLK-HAR1,night shift
+GB-HAR-01,30-Oct-23,Wheat,P02,58473.9,kg,CLK-HAR3,
+GB-HAR-01,11-Dec-23,Table grapes,V02,1.905,t,CLK-HAR1,machine breakdown
+GB-HAR-01,11-Dec-23,Table grapes,V03,341,crates(10kg),CLK-HAR1,
+GB-HAR-01,11-Dec-23,GRAPES,V04,170,crates(10kg),CLK-HAR3,machine breakdown
+GB-HAR-01,12-Dec-23,Table grapes,V01,326,crates(10kg),CLK-HAR1,
+GB-HAR-01,14-Dec-23,Table Grapes,V04,475,crates(10kg),CLK-HAR3,weighbridge slip attached
+GB-HAR-01,14-Dec-23,Table Grapes,V05,632,crates(10kg),CLK-HAR1,
+GB-HAR-01,15-Dec-23,Table Grapes,V02,396,crates(10kg),CLK-HAR2,weighbridge slip attached
+GB-HAR-01,15-Dec-23,GRAPES,V03,10.313,t,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,16-Dec-23,GRAPES,V01,11.057,ton,CLK-HAR2,
+GB-HAR-01,16-Dec-23,Grapes,V04,942,crates(10kg),CLK-HAR3,
+GB-HAR-01,16-Dec-23,Grapes,V05,14.17,ton,CLK-HAR1,
+GB-HAR-01,18-Dec-23,Table grapes,V01,1577,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,19-Dec-23,Grapes,V02,893,crates(10kg),CLK-HAR2,machine breakdown
+GB-HAR-01,19-Dec-23,Table Grapes,V03,1389,crates(10kg),CLK-HAR1,rain delay
+GB-HAR-01,19-Dec-23,Table grapes,V04,11.887,ton,CLK-HAR1,rain delay
+GB-HAR-01,19-Dec-23,Table Grapes,V05,2193,crates(10kg),CLK-HAR1,
+GB-HAR-01,21-Dec-23,GRAPES,V01,16.931,ton,CLK-HAR2,machine breakdown
+  gb-har-01,21-Dec-23,GRAPES,V05,22.509,t,CLK-HAR2,
+GB-HAR-01,22-Dec-23,GRAPES,V03,1879,crates(10kg),CLK-HAR1,
+GB-HAR-01,23-Dec-23,Table grapes,V02,13.319,ton,CLK-HAR1,
+GB-HAR-01,23-Dec-23,Table grapes,V04,1421,crates(10kg),CLK-HAR2,
+GB-HAR-01,23-Dec-23,Grapes,V05,36567.7,kg,CLK-HAR1,
+GB-HAR-01,25-Dec-23,Grapes,V01,2852,crates(10kg),CLK-HAR1,
+GB-HAR-01,25-Dec-23,Grapes,V02,11.613,ton,CLK-HAR2,
+GB-HAR-01,26-Dec-23,Grapes,V03,2406,crates(10kg),CLK-HAR1,
+GB-HAR-01,27-Dec-23,Table Grapes,V04,1340,crates(10kg),CLK-HAR2,rain delay
+GB-HAR-01,27-Dec-23,Table grapes,V05,29.107,t,CLK-HAR1,
+GB-HAR-01,28-Dec-23,GRAPES,V02,1487,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,28-Dec-23,Grapes,V03,39.458,t,CLK-HAR2,
+GB-HAR-01,29-Dec-23,GRAPES,V01,3368,crates(10kg),CLK-HAR3,
+GB-HAR-01,30-Dec-23,Butternut squash,B201,18014.8,KG,CLK-HAR3,
+GB-HAR-01,30-Dec-23,Table grapes,V03,2496,crates(10kg),CLK-HAR3,
+GB-HAR-01,30-Dec-23,Grapes,V04,1417,crates(10kg),CLK-HAR2,weighbridge slip attached
+GB-HAR-01,30-Dec-23,Table grapes,V05,4746,crates(10kg),CLK-HAR2,night shift
+GB-HAR-01,01-Jan-24,Butternut squash,B201,108.52,bins(400kg),CLK-HAR3,
+GB-HAR-01,01-Jan-24,Butternuts,B202,45.215,t,CLK-HAR3,rain delay
+GB-HAR-01,01-Jan-24,Butternut squash,B203,33332.7,KG,CLK-HAR1,
+GB-HAR-01,01-Jan-24,Grapes,V01,2078,crates(10kg),CLK-HAR2,rain delay
+GB-HAR-01,01-Jan-24,Table Grapes,V02,13.573,t,CLK-HAR3,
+GB-HAR-01,01-Jan-24,GRAPES,V03,30492.5,kg,CLK-HAR1,
+GB-HAR-01,01-Jan-24,Table Grapes,V05,30.663,t,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,02-Jan-24,Butternut squash,B204,38.224,ton,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,03-Jan-24,GRAPES,V01,1898,crates(10kg),CLK-HAR2,machine breakdown
+GB-HAR-01,03-Jan-24,GRAPES,V02,11.77,t,CLK-HAR3,rain delay
+GB-HAR-01,03-Jan-24,Table grapes,V04,1322,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,04-Jan-24,GRAPES,V03,2864,crates(10kg),CLK-HAR3,
+GB-HAR-01,05-Jan-24,Table Grapes,V05,35.121,ton,CLK-HAR1,
+GB-HAR-01,06-Jan-24,Table Grapes,V01,1471,crates(10kg),CLK-HAR1,
+GB-HAR-01,06-Jan-24,Table Grapes,V02,1153,crates(10kg),CLK-HAR3,weighbridge slip attached
+GB-HAR-01,08-Jan-24,GRAPES,V03,19.738,ton,CLK-HAR1,night shift
+GB_HAR_01,08-Jan-24,Table grapes,V04,9.809,t,CLK-HAR2,weighbridge slip attached
+GB-HAR-01,08-Jan-24,Grapes,V05,34615.4,KG,CLK-HAR1,
+GB-HAR-01,10-Jan-24,Table grapes,V01,1090,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,10-Jan-24,Grapes,V02,1201,crates(10kg),CLK-HAR2,weighbridge slip attached
+GB-HAR-01,10-Jan-24,Table Grapes,V03,24589.8,KG,CLK-HAR1,machine breakdown
+GB-HAR-01,11-Jan-24,Table Grapes,V04,832,crates(10kg),CLK-HAR3,
+GB-HAR-01,12-Jan-24,GRAPES,V05,1933,crates(10kg),CLK-HAR1,
+GB-HAR-01,13-Jan-24,Grapes,V02,14.049,ton,CLK-HAR2,weighbridge slip attached
+GB-HAR-01,13-Jan-24,Table Grapes,V04,612,crates(10kg),CLK-HAR3,
+GB-HAR-01,15-Jan-24,GRAPES,V01,650,crates(10kg),CLK-HAR3,
+GB-HAR-01,15-Jan-24,Table grapes,V03,19.658,ton,CLK-HAR1,
+GB-HAR-01,15-Jan-24,Table grapes,V03,19.658,ton,CLK-HAR1,
+GB-HAR-01,15-Jan-24,GRAPES,V04,470,crates(10kg),CLK-HAR3,
+GB-HAR-01,15-Jan-24,Table Grapes,V05,21.502,t,CLK-HAR1,machine breakdown
+GB-HAR-01,17-Jan-24,Grapes,V01,3.511,t,CLK-HAR2,night shift
+GB-HAR-01,17-Jan-24,GRAPES,V02,11.868,t,CLK-HAR1,night shift
+GB-HAR-01,18-Jan-24,GRAPES,V04,347,crates(10kg),CLK-HAR2,rain delay
+GB-HAR-01,18-Jan-24,Grapes,V05,15.417,t,CLK-HAR3,
+GB-HAR-01,19-Jan-24,Grapes,V03,1244,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,20-Jan-24,Table Grapes,V01,62,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,20-Jan-24,Grapes,V02,981,crates(10kg),CLK-HAR2,night shift
+GB-HAR-01,22-Jan-24,Table grapes,V04,160,crates(10kg),CLK-HAR2,night shift
+GB-HAR-01,22-Jan-24,Table Grapes,V05,10.668,t,CLK-HAR1,machine breakdown
+GB-HAR-01,23-Jan-24,Table Grapes,V02,762,crates(10kg),CLK-HAR3,machine breakdown
+GB-HAR-01,23-Jan-24,Grapes,V03,789,crates(10kg),CLK-HAR3,rain delay
+GB-HAR-01,24-Jan-24,Table grapes,V05,324,crates(10kg),CLK-HAR2,
+GB-HAR-01,25-Jan-24,Table grapes,V03,5.938,t,CLK-HAR1,
+GB-HAR-01,25-Jan-24,Grapes,V04,26,crates(10kg),CLK-HAR2,machine breakdown
+GB-HAR-01,26-Jan-24,Table Grapes,V02,3.409,t,CLK-HAR1,rain delay
+GB-HAR-01,27-Jan-24,GRAPES,V03,260,crates(10kg),CLK-HAR2,
+GB-HAR-01,27-Jan-24,GRAPES,V05,594.0,kg,CLK-HAR2,night shift
+GB-HAR-01,30-Jan-24,Table Grapes,V02,2.487,ton,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,30-Jan-24,Table Grapes,V03,45,crates(10kg),CLK-HAR3,
+GB-HAR-01,01-Feb-24,Table grapes,V02,0.821,ton,CLK-HAR1,
+GB-HAR-01,03-Feb-24,Table Grapes,V02,0.221,ton,CLK-HAR1,
+GB-HAR-01,29-Apr-24,MAIZE (WHITE),P01,150.682,ton,CLK-HAR2,
+GB-HAR-01,29-Apr-24,MAIZE (WHITE),P02,138364.3,Kg,CLK-HAR1,
+GB-HAR-01,30-Apr-24,White Maize,P02,90.923,t,CLK-HAR1,machine breakdown
+GB-HAR-01,09-May-24,Butternuts,B101,25596.5,KG,CLK-HAR1,machine breakdown
+GB-HAR-01,10-May-24,Butternut squash,B101,33009.9,kg,CLK-HAR2,night shift
+GB-HAR-01,10-May-24,Butternut,B102,49.761,t,CLK-HAR3,
+GB-HAR-01,13-May-24,Butternut squash,B103,18.467,ton,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,14-May-24,Butternut squash,B103,71.06,bins(400kg),CLK-HAR3,
+GB-HAR-01,19-Sep-24,onion,B01,70549.5,KG,CLK-HAR1,
+GB-HAR-01,20-Sep-24,Onions,B01,63.608,t,CLK-HAR1,rain delay
+  gb-har-01,20-Sep-24,Onions,B02,122.89,bins(400kg),CLK-HAR3,
+GB-HAR-01,21-Sep-24,onion,B01,39469.0,Kg,CLK-HAR2,machine breakdown
+GB-HAR-01,21-Sep-24,onion,B02,41071.3,KG,CLK-HAR2,machine breakdown
+GB-HAR-01,23-Sep-24,Onions,B01,79799.3,Kg,CLK-HAR2,
+GB-HAR-01,23-Sep-24,Onions,B03,163.5,bins(400kg),CLK-HAR3,
+GB-HAR-01,24-Sep-24,Onions,B01,48742.2,Kg,CLK-HAR2,
+GB-HAR-01,24-Sep-24,onion,B03,40.598,t,CLK-HAR3,
+GB-HAR-01,25-Sep-24,Onions,B01,59.575,ton,CLK-HAR1,
+GB-HAR-01,25-Sep-24,Onion,B03,172.89,bins(400kg),CLK-HAR1,machine breakdown
+GB-HAR-01,26-Sep-24,Onion,B01,95.734,ton,CLK-HAR1,night shift
+GB-HAR-01,28-Sep-24,onion,B04,168.7,bins(400kg),CLK-HAR2,
+GB-HAR-01,28-Sep-24,onion,B04,168.7,bins(400kg),CLK-HAR2,
+GB-HAR-01,30-Sep-24,onion,B04,49851.9,Kg,CLK-HAR2,weighbridge slip attached
+GB-HAR-01,01-Oct-24,onion,B04,150.88,bins(400kg),CLK-HAR2,night shift
+GB-HAR-01,02-Oct-24,onion,B04,47.924,ton,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,05-Nov-24,WHEAT,P01,148629.0,kg,CLK-HAR2,
+GB-HAR-01,06-Nov-24,WHEAT,P02,118.783,ton,CLK-HAR2,rain delay
+GB-HAR-01,12-Dec-24,Table Grapes,V02,219,crates(10kg),CLK-HAR3,
+GB-HAR-01,12-Dec-24,GRAPES,V05,417,crates(10kg),CLK-HAR1,
+GB-HAR-01,14-Dec-24,GRAPES,V03,3.218,ton,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,14-Dec-24,Grapes,V04,315,crates(10kg),CLK-HAR3,rain delay
+GB-HAR-01,14-Dec-24,Grapes,V05,15.415,t,CLK-HAR2,
+GB-HAR-01,16-Dec-24,Table Grapes,V01,219,crates(10kg),CLK-HAR2,
+GB-HAR-01,16-Dec-24,Table grapes,V02,7.59,ton,CLK-HAR3,rain delay
+GB-HAR-01,16-Dec-24,Table Grapes,V03,11.148,ton,CLK-HAR1,machine breakdown
+GB-HAR-01,18-Dec-24,Grapes,V04,9.902,ton,CLK-HAR1,night shift
+GB-HAR-01,18-Dec-24,Table Grapes,V05,21816.0,kg,CLK-HAR3,machine breakdown
+GB-HAR-01,19-Dec-24,Table Grapes,V01,672,crates(10kg),CLK-HAR3,
+GB-HAR-01,19-Dec-24,GRAPES,V03,13.87,t,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,20-Dec-24,GRAPES,V02,13.594,t,CLK-HAR1,
+GB-HAR-01,21-Dec-24,Table grapes,V01,8956.3,Kg,CLK-HAR3,
+GB-HAR-01,21-Dec-24,GRAPES,V04,1729,crates(10kg),CLK-HAR1,
+GB-HAR-01,21-Dec-24,Grapes,V05,22.841,ton,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,23-Dec-24,GRAPES,V01,10.107,ton,CLK-HAR3,machine breakdown
+GB-HAR-01,23-Dec-24,Table Grapes,V02,16271.1,kg,CLK-HAR3,
+GB-HAR-01,23-Dec-24,Table Grapes,V02,16271.1,kg,CLK-HAR3,
+GB-HAR-01,23-Dec-24,Table Grapes,V03,1585,crates(10kg),CLK-HAR1,
+GB-HAR-01,23-Dec-24,Grapes,V05,31.103,ton,CLK-HAR1,
+GB-HAR-01,25-Dec-24,Butternut,B201,30.578,t,CLK-HAR1,machine breakdown
+GB-HAR-01,25-Dec-24,GRAPES,V02,1494,crates(10kg),CLK-HAR2,
+GB-HAR-01,25-Dec-24,GRAPES,V03,1476,crates(10kg),CLK-HAR2,night shift
+GB-HAR-01,25-Dec-24,Table Grapes,V04,22.944,ton,CLK-HAR3,weighbridge slip attached
+GB-HAR-01,25-Dec-24,Table grapes,V05,3139,crates(10kg),CLK-HAR1,
+GB-HAR-01,26-Dec-24,Butternut,B201,23165.2,KG,CLK-HAR3,rain delay
+GB-HAR-01,26-Dec-24,Butternut,B202,26.174,ton,CLK-HAR2,
+GB-HAR-01,27-Dec-24,Butternut squash,B202,24654.5,Kg,CLK-HAR1,rain delay
+GB-HAR-01,27-Dec-24,GRAPES,V01,1563,crates(10kg),CLK-HAR3,
+GB-HAR-01,27-Dec-24,Table Grapes,V03,21.244,t,CLK-HAR3,weighbridge slip attached
+GB-HAR-01,27-Dec-24,Table Grapes,V04,2464,crates(10kg),CLK-HAR2,
+GB-HAR-01,28-Dec-24,Butternut squash,B203,17.773,t,CLK-HAR1,
+GB-HAR-01,28-Dec-24,GRAPES,V02,1897,crates(10kg),CLK-HAR1,
+GB-HAR-01,30-Dec-24,Butternuts,B203,59.97,bins(400kg),CLK-HAR3,
+GB-HAR-01,30-Dec-24,Butternuts,B204,23503.7,kg,CLK-HAR1,
+GB-HAR-01,30-Dec-24,Table Grapes,V02,20380.8,KG,CLK-HAR3,rain delay
+GB-HAR-01,30-Dec-24,Table Grapes,V04,2584,crates(10kg),CLK-HAR1,
+GB-HAR-01,30-Dec-24,Grapes,V05,3923,crates(10kg),CLK-HAR1,
+GB-HAR-01,31-Dec-24,Butternut,B204,35.553,ton,CLK-HAR3,weighbridge slip attached
+GB-HAR-01,31-Dec-24,Grapes,V01,15618.2,Kg,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,31-Dec-24,Table grapes,V03,1818,crates(10kg),CLK-HAR3,
+GB-HAR-01,01-Jan-25,GRAPES,V02,14.899,t,CLK-HAR3,
+GB-HAR-01,02-Jan-25,Table grapes,V05,32203.9,KG,CLK-HAR1,
+GB-HAR-01,03-Jan-25,Table grapes,V01,1479,crates(10kg),CLK-HAR3,night shift
+GB-HAR-01,03-Jan-25,Grapes,V02,1940,crates(10kg),CLK-HAR1,
+GB-HAR-01,03-Jan-25,Grapes,V03,1358,crates(10kg),CLK-HAR1,
+GB-HAR-01,03-Jan-25,GRAPES,V04,3774,crates(10kg),CLK-HAR1,
+GB-HAR-01,06-Jan-25,Table grapes,V02,1652,crates(10kg),CLK-HAR2,
+GB-HAR-01,06-Jan-25,Table Grapes,V04,25.189,ton,CLK-HAR2,weighbridge slip attached
+GB-HAR-01,06-Jan-25,Table grapes,V05,2226,crates(10kg),CLK-HAR1,
+GB-HAR-01,07-Jan-25,Table Grapes,V01,12.752,ton,CLK-HAR3,
+GB-HAR-01,07-Jan-25,Table Grapes,V03,11.663,ton,CLK-HAR1,
+GB-HAR-01,08-Jan-25,Grapes,V04,23.347,t,CLK-HAR3,machine breakdown
+GB-HAR-01,08-Jan-25,Grapes,V04,23.347,t,CLK-HAR3,machine breakdown
+GB-HAR-01,09-Jan-25,Grapes,V02,1166,crates(10kg),CLK-HAR3,
+GB-HAR-01,10-Jan-25,GRAPES,V01,14.109,t,CLK-HAR3,
+GB-HAR-01,10-Jan-25,Grapes,V03,6.247,t,CLK-HAR3,
+  gb-har-01,10-Jan-25,Table Grapes,V05,14694.2,KG,CLK-HAR2,
+GB-HAR-01,11-Jan-25,Table Grapes,V02,667,crates(10kg),CLK-HAR1,
+GB-HAR-01,13-Jan-25,Grapes,V01,1211,crates(10kg),CLK-HAR1,machine breakdown
+GB-HAR-01,13-Jan-25,Grapes,V03,3.305,t,CLK-HAR2,rain delay
+GB-HAR-01,13-Jan-25,Grapes,V04,2244,crates(10kg),CLK-HAR1,
+GB-HAR-01,13-Jan-25,Table grapes,V05,1325,crates(10kg),CLK-HAR2,
+GB-HAR-01,15-Jan-25,Grapes,V02,5.497,ton,CLK-HAR2,
+GB-HAR-01,15-Jan-25,GRAPES,V04,20.903,ton,CLK-HAR1,
+GB-HAR-01,16-Jan-25,GRAPES,V01,1020,crates(10kg),CLK-HAR2,
+GB-HAR-01,16-Jan-25,Table Grapes,V05,10024.2,kg,CLK-HAR1,
+GB-HAR-01,17-Jan-25,Table grapes,V03,49,crates(10kg),CLK-HAR3,rain delay
+GB-HAR-01,18-Jan-25,Table Grapes,V02,257,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,18-Jan-25,Table Grapes,V04,1517,crates(10kg),CLK-HAR2,
+GB-HAR-01,18-Jan-25,GRAPES,V05,405,crates(10kg),CLK-HAR3,
+GB-HAR-01,20-Jan-25,Table grapes,V01,6.659,t,CLK-HAR1,
+GB-HAR-01,20-Jan-25,GRAPES,V02,0.324,t,CLK-HAR1,night shift
+GB-HAR-01,22-Jan-25,Table Grapes,V04,1075,crates(10kg),CLK-HAR3,
+GB-HAR-01,22-Jan-25,Table Grapes,V05,46,crates(10kg),CLK-HAR3,
+GB-HAR-01,24-Jan-25,GRAPES,V01,334,crates(10kg),CLK-HAR2,
+GB-HAR-01,24-Jan-25,Grapes,V04,5.882,t,CLK-HAR2,
+GB-HAR-01,27-Jan-25,Table grapes,V01,2.038,t,CLK-HAR2,
+GB-HAR-01,27-Jan-25,GRAPES,V04,3.389,ton,CLK-HAR1,
+GB-HAR-01,27-Jan-25,GRAPES,V04,3.389,ton,CLK-HAR1,
+GB-HAR-01,30-Jan-25,Table grapes,V01,0.342,t,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,31-Jan-25,GRAPES,V04,35,crates(10kg),CLK-HAR3,rain delay
+GB-HAR-01,21-Apr-25,W/Maize,P01,65199.9,KG,CLK-HAR3,machine breakdown
+GB-HAR-01,21-Apr-25,White Maize,P02,123887.9,kg,CLK-HAR2,night shift
+GB-HAR-01,22-Apr-25,Maize,P01,82619.2,KG,CLK-HAR2,
+GB-HAR-01,10-May-25,Butternut,B101,38.822,ton,CLK-HAR1,
+GB-HAR-01,12-May-25,Butternut,B101,37893.7,KG,CLK-HAR2,machine breakdown
+GB-HAR-01,12-May-25,Butternuts,B102,37.528,t,CLK-HAR1,
+GB-HAR-01,13-May-25,Butternut,B103,114.08,bins(400kg),CLK-HAR1,
+  gb-har-01,14-May-25,Butternut squash,B103,27.709,t,CLK-HAR1,
+GB-HAR-01,09-Sep-25,Onions,B01,309.09,bins(400kg),CLK-HAR3,
+GB-HAR-01,10-Sep-25,Onion,B01,94.294,t,CLK-HAR1,
+GB-HAR-01,12-Sep-25,onion,B02,45.115,ton,CLK-HAR2,
+GB-HAR-01,13-Sep-25,Onions,B02,63899.5,KG,CLK-HAR1,night shift
+GB-HAR-01,13-Sep-25,Onions,B03,57.931,t,CLK-HAR2,rain delay
+GB-HAR-01,15-Sep-25,onion,B02,84986.0,Kg,CLK-HAR3,
+GB-HAR-01,15-Sep-25,Onion,B03,225.79,bins(400kg),CLK-HAR1,
+GB-HAR-01,16-Sep-25,onion,B02,270.78,bins(400kg),CLK-HAR1,
+GB-HAR-01,16-Sep-25,onion,B03,70812.9,Kg,CLK-HAR1,
+GB-HAR-01,18-Sep-25,Onion,B04,99.333,ton,CLK-HAR2,
+GB-HAR-01,19-Sep-25,onion,B04,127.49,bins(400kg),CLK-HAR3,
+GB-HAR-01,20-Sep-25,Onions,B04,213.81,bins(400kg),CLK-HAR1,night shift
+GB-HAR-01,22-Sep-25,Onions,B04,50493.1,Kg,CLK-HAR2,night shift
+GB-HAR-01,20-Oct-25,Wheat,P01,93187.3,kg,CLK-HAR1,rain delay
+GB-HAR-01,21-Oct-25,Wheat,P02,175.678,ton,CLK-HAR2,
+GB-HAR-01,12-Dec-25,Table Grapes,V03,2683.4,KG,CLK-HAR1,night shift
+GB-HAR-01,13-Dec-25,Grapes,V05,2367.1,Kg,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,13-Dec-25,Grapes,V05,2367.1,Kg,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,15-Dec-25,Table grapes,V01,728,crates(10kg),CLK-HAR1,
+GB-HAR-01,15-Dec-25,Grapes,V02,192,crates(10kg),CLK-HAR2,
+GB-HAR-01,15-Dec-25,Grapes,V03,939,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,15-Dec-25,Table Grapes,V04,430,crates(10kg),CLK-HAR1,
+GB-HAR-01,16-Dec-25,Table Grapes,V05,828,crates(10kg),CLK-HAR1,
+GB-HAR-01,18-Dec-25,Grapes,V01,24.883,t,CLK-HAR1,night shift
+GB-HAR-01,18-Dec-25,GRAPES,V02,850,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,18-Dec-25,GRAPES,V04,1213,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,19-Dec-25,Table grapes,V03,1217,crates(10kg),CLK-HAR3,rain delay
+GB-HAR-01,19-Dec-25,Grapes,V05,1031,crates(10kg),CLK-HAR2,
+GB-HAR-01,20-Dec-25,Table grapes,V01,32247.2,kg,CLK-HAR3,
+GB-HAR-01,20-Dec-25,GRAPES,V02,1026,crates(10kg),CLK-HAR1,
+GB-HAR-01,22-Dec-25,Table Grapes,V04,15554.1,KG,CLK-HAR2,
+GB-HAR-01,22-Dec-25,Grapes,V05,1763,crates(10kg),CLK-HAR2,night shift
+GB-HAR-01,23-Dec-25,Table Grapes,V02,1605,crates(10kg),CLK-HAR1,
+GB-HAR-01,23-Dec-25,GRAPES,V03,16.572,ton,CLK-HAR3,
+GB-HAR-01,24-Dec-25,Table grapes,V01,5487,crates(10kg),CLK-HAR2,
+GB-HAR-01,25-Dec-25,Table Grapes,V02,15.862,t,CLK-HAR3,
+GB-HAR-01,25-Dec-25,Grapes,V03,1784,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,25-Dec-25,Table Grapes,V04,2098,crates(10kg),CLK-HAR1,weighbridge slip attached
+GB-HAR-01,26-Dec-25,Table grapes,V05,2146,crates(10kg),CLK-HAR2,night shift
+GB-HAR-01,29-Dec-25,Butternuts,B201,41.175,t,CLK-HAR2,
+GB-HAR-01,29-Dec-25,Table grapes,V01,45.718,t,CLK-HAR2,
+GB-HAR-01,29-Dec-25,Table Grapes,V02,17.745,t,CLK-HAR3,night shift
+GB-HAR-01,29-Dec-25,GRAPES,V03,16.788,t,CLK-HAR2,
+GB-HAR-01,29-Dec-25,GRAPES,V04,25689.3,KG,CLK-HAR1,
+GB-HAR-01,30-Dec-25,Butternuts,B202,32123.5,KG,CLK-HAR2,
+GB-HAR-01,30-Dec-25,Grapes,V05,23477.7,Kg,CLK-HAR2,machine breakdown
+GB-HAR-01,31-Dec-25,Butternut,B202,29977.9,Kg,CLK-HAR2,machine breakdown
+GB-HAR-01,31-Dec-25,Butternuts,B203,44529.5,Kg,CLK-HAR1,rain delay
+GB-HAR-01,31-Dec-25,Table Grapes,V02,15.406,ton,CLK-HAR2,
+GB-HAR-01,01-Jan-26,Butternuts,B204,37145.6,KG,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,01-Jan-26,Table Grapes,V05,17.072,ton,CLK-HAR1,night shift
+GB-HAR-01,02-Jan-26,Table Grapes,V01,7887,crates(10kg),CLK-HAR1,
+GB-HAR-01,02-Jan-26,GRAPES,V03,1448,crates(10kg),CLK-HAR3,
+GB-HAR-01,02-Jan-26,GRAPES,V04,21.561,t,CLK-HAR2,
+GB-HAR-01,03-Jan-26,Grapes,V05,2436,crates(10kg),CLK-HAR3,
+GB-HAR-01,05-Jan-26,Table Grapes,V01,5329,crates(10kg),CLK-HAR2,
+GB-HAR-01,05-Jan-26,Table grapes,V02,21.5,t,CLK-HAR2,
+GB-HAR-01,05-Jan-26,Table Grapes,V03,13.831,t,CLK-HAR2,
+GB-HAR-01,05-Jan-26,Grapes,V04,1725,crates(10kg),CLK-HAR1,rain delay
+GB-HAR-01,05-Jan-26,Grapes,V05,2070,crates(10kg),CLK-HAR1,
+GB-HAR-01,09-Jan-26,Table grapes,V01,58.623,t,CLK-HAR2,
+GB-HAR-01,09-Jan-26,Grapes,V02,2115,crates(10kg),CLK-HAR1,
+GB-HAR-01,09-Jan-26,Table Grapes,V03,9.59,t,CLK-HAR2,
+GB-HAR-01,09-Jan-26,Grapes,V04,2207,crates(10kg),CLK-HAR3,
+GB-HAR-01,09-Jan-26,GRAPES,V05,19.257,ton,CLK-HAR1,rain delay
+GB-HAR-01,12-Jan-26,GRAPES,V02,1742,crates(10kg),CLK-HAR1,machine breakdown
+GB-HAR-01,12-Jan-26,Table grapes,V04,1863,crates(10kg),CLK-HAR1,
+GB-HAR-01,12-Jan-26,GRAPES,V05,1662,crates(10kg),CLK-HAR1,rain delay
+GB-HAR-01,13-Jan-26,GRAPES,V01,58015.3,kg,CLK-HAR1,
+GB-HAR-01,13-Jan-26,Table Grapes,V03,540,crates(10kg),CLK-HAR1,
+GB-HAR-01,15-Jan-26,Grapes,V02,1076,crates(10kg),CLK-HAR1,
+GB-HAR-01,15-Jan-26,Table Grapes,V04,879,crates(10kg),CLK-HAR3,
+GB-HAR-01,16-Jan-26,Table Grapes,V01,4100,crates(10kg),CLK-HAR1,
+GB-HAR-01,16-Jan-26,Table grapes,V03,224,crates(10kg),CLK-HAR3,
+GB-HAR-01,16-Jan-26,Grapes,V05,1547,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,19-Jan-26,GRAPES,V02,10.876,t,CLK-HAR1,rain delay
+GB-HAR-01,19-Jan-26,Grapes,V03,49,crates(10kg),CLK-HAR3,machine breakdown
+GB-HAR-01,19-Jan-26,Table grapes,V04,515,crates(10kg),CLK-HAR3,night shift
+GB-HAR-01,20-Jan-26,Table Grapes,V01,37.202,ton,CLK-HAR2,
+GB-HAR-01,20-Jan-26,GRAPES,V05,9.683,ton,CLK-HAR2,
+GB-HAR-01,22-Jan-26,GRAPES,V02,13.909,t,CLK-HAR2,weighbridge slip attached
+GB-HAR-01,22-Jan-26,Table grapes,V04,0.683,t,CLK-HAR2,
+GB-HAR-01,22-Jan-26,Table grapes,V05,773,crates(10kg),CLK-HAR1,
+GB-HAR-01,24-Jan-26,Grapes,V01,26.029,t,CLK-HAR1,
+GB-HAR-01,26-Jan-26,Table Grapes,V01,1843,crates(10kg),CLK-HAR3,
+GB-HAR-01,26-Jan-26,GRAPES,V02,6.513,ton,CLK-HAR1,
+GB-HAR-01,26-Jan-26,GRAPES,V05,3.618,t,CLK-HAR3,night shift
+GB-HAR-01,28-Jan-26,GRAPES,V05,1.698,ton,CLK-HAR2,
+GB-HAR-01,29-Jan-26,Table Grapes,V01,5.088,t,CLK-HAR1,
+GB-HAR-01,30-Jan-26,GRAPES,V02,387,crates(10kg),CLK-HAR2,
+GB-HAR-01,31-Jan-26,Table Grapes,V05,30,crates(10kg),CLK-HAR1,night shift
+GB-HAR-01,02-Feb-26,Table Grapes,V01,804.1,kg,CLK-HAR3,rain delay
+GB-HAR-01,02-Feb-26,Grapes,V02,139,crates(10kg),CLK-HAR1,
+GB-HAR-01,06-Feb-26,GRAPES,V02,28,crates(10kg),CLK-HAR1,
+GB-HAR-01,05-May-26,Butternuts,B101,42.526,ton,CLK-HAR2,night shift
+GB-HAR-01,06-May-26,Butternuts,B101,26.804,ton,CLK-HAR3,machine breakdown
+GB-HAR-01,06-May-26,Butternut squash,B102,41717.4,kg,CLK-HAR1,
+GB-HAR-01,08-May-26,Butternut squash,B103,29606.8,KG,CLK-HAR1,weighbridge slip attached
+GB-HAR-01,09-May-26,Butternut,B103,49.54,bins(400kg),CLK-HAR3,
+GB-HAR-01,26-May-26,maize,P01,179.897,t,CLK-HAR3,
+GB-HAR-01,27-May-26,MAIZE (WHITE),P02,132776.8,kg,CLK-HAR1,rain delay
+GB-HAR-01,28-May-26,MAIZE (WHITE),P02,1571.707,ton,CLK-HAR1,machine breakdown
+GB-HAR-01,31-Aug-26,Onion,B01,54414.1,kg,CLK-HAR3,night shift
+GB-HAR-01,01-Sep-26,Onions,B01,52770.4,KG,CLK-HAR2,rain delay
+GB-HAR-01,03-Sep-26,Onions,B02,268.77,bins(400kg),CLK-HAR2,
+GB-HAR-01,03-Sep-26,onion,B03,47983.0,kg,CLK-HAR3,rain delay
+GB-HAR-01,04-Sep-26,Onions,B02,74.202,ton,CLK-HAR1,
+GB-HAR-01,04-Sep-26,onion,B03,98177.1,Kg,CLK-HAR1,rain delay
+GB-HAR-01,05-Sep-26,onion,B02,85.792,t,CLK-HAR2,
+GB-HAR-01,05-Sep-26,Onion,B03,86.198,t,CLK-HAR3,rain delay
+GB-HAR-01,07-Sep-26,onion,B02,143.64,bins(400kg),CLK-HAR3,
+GB-HAR-01,08-Sep-26,onion,B02,33.603,ton,CLK-HAR1,
+GB-HAR-01,08-Sep-26,Onions,B04,134.07,bins(400kg),CLK-HAR2,
+GB-HAR-01,09-Sep-26,onion,B04,51655.1,KG,CLK-HAR2,
+GB-HAR-01,10-Sep-26,Onions,B04,82.896,ton,CLK-HAR1,
+GB-HAR-01,11-Sep-26,onion,B04,127.983,ton,CLK-HAR1,weighbridge slip attached

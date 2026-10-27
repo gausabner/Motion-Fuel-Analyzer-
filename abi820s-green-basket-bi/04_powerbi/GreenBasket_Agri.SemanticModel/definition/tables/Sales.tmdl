@@ -1,0 +1,109 @@
+/// Invoice and credit-note lines (grain: one row per document line). Import with incremental refresh on Invoice Date Key.
+table Sales
+
+	column 'Invoice Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: invoice_date_key
+
+	column 'Dispatch Date Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: dispatch_date_key
+
+	column 'Product Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: product_key
+
+	column 'Customer Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: customer_key
+
+	column 'Farm Key'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: farm_key
+
+	column 'Invoice ID'
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		sourceColumn: invoice_id
+
+	column 'Document Type'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: doc_type
+
+	column 'Quantity (kg)'
+		dataType: double
+		isHidden
+		summarizeBy: sum
+		sourceColumn: quantity_kg
+
+	column 'Gross Revenue'
+		dataType: decimal
+		isHidden
+		formatString: "N$" #,0
+		summarizeBy: sum
+		sourceColumn: gross_revenue_nad
+
+	column Discount
+		dataType: decimal
+		isHidden
+		formatString: "N$" #,0
+		summarizeBy: sum
+		sourceColumn: discount_nad
+
+	column 'Net Revenue'
+		dataType: decimal
+		isHidden
+		formatString: "N$" #,0
+		summarizeBy: sum
+		sourceColumn: net_revenue_nad
+
+	column COGS
+		dataType: decimal
+		isHidden
+		formatString: "N$" #,0
+		summarizeBy: sum
+		sourceColumn: cogs_nad
+
+	column 'Freight Cost'
+		dataType: decimal
+		isHidden
+		formatString: "N$" #,0
+		summarizeBy: sum
+		sourceColumn: freight_cost_nad
+
+	column 'Price Anomaly'
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_price_anomaly
+
+	partition Sales = m
+		mode: import
+		source =
+				let
+				    // CSV fallback reader: gzip CSV exported by export_fallbacks.py; empty cells become null before typing
+				    ReadCsv = (file as text) as table =>
+				        let
+				            Raw = Table.PromoteHeaders(Csv.Document(Binary.Decompress(File.Contents(CsvFolder & file), Compression.GZip), [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]), [PromoteAllScalars = true])
+				        in
+				            Table.ReplaceValue(Raw, "", null, Replacer.ReplaceValue, Table.ColumnNames(Raw)),
+				    Source = if SourceMode = "CSV"
+				        then ReadCsv("fact_sales.csv.gz")
+				        else PostgreSQL.Database(PgServer, PgDatabase){[Schema = "mart", Item = "fact_sales"]}[Data],
+				    Typed = Table.TransformColumnTypes(Source, {{"invoice_date_key", Int64.Type}, {"dispatch_date_key", Int64.Type}, {"product_key", Int64.Type}, {"customer_key", Int64.Type}, {"farm_key", Int64.Type}, {"invoice_id", Int64.Type}, {"doc_type", type text}, {"quantity_kg", type number}, {"gross_revenue_nad", Currency.Type}, {"discount_nad", Currency.Type}, {"net_revenue_nad", Currency.Type}, {"cogs_nad", Currency.Type}, {"freight_cost_nad", Currency.Type}, {"is_price_anomaly", type logical}}, "en-US"),
+				    // incremental refresh window (RangeStart/RangeEnd folded to SQL as integer date keys)
+				    Filtered = Table.SelectRows(Typed, each [invoice_date_key] >= Int64.From(DateTime.ToText(RangeStart, "yyyyMMdd")) and [invoice_date_key] < Int64.From(DateTime.ToText(RangeEnd, "yyyyMMdd")))
+				in
+				    Filtered
+

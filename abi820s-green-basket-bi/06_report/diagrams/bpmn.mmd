@@ -1,0 +1,26 @@
+flowchart TB
+  subgraph FARM["Farm operations - farm manager, agronomist"]
+    direction LR
+    A([Season<br/>plan]) --> B[Planting<br/>register - S1] --> C[Field operations<br/>S5 cost ledger] --> D{Harvest<br/>ready?}
+    D -- no --> C
+    D -- yes --> E[Harvest log<br/>per block - S1]
+  end
+  subgraph PACK["Packhouse and stock - inventory controller"]
+    direction LR
+    F[Grade and pack<br/>cull removed] --> G[Stock receipt<br/>S4 stock system] --> H[Month-end<br/>stock count]
+  end
+  subgraph SALES["Sales and export desk"]
+    direction LR
+    I[Order<br/>S2 customer] --> J[Dispatch<br/>from stock] --> K[Invoice or credit<br/>note - S3 ERP] --> L([Payment<br/>received])
+  end
+  subgraph BI["BI platform - nightly"]
+    direction LR
+    X[(External<br/>S6-S9)] -.-> M[Extract<br/>to landing] --> N{DQ rules<br/>pass?}
+    N -- no --> O[Quarantine,<br/>steward queue]
+    N -- yes --> P[Load star<br/>schema] --> Q[Reconcile<br/>R01-R19] --> R([Refresh<br/>Power BI])
+  end
+  FARM -- produce --> PACK
+  PACK -- stock --> SALES
+  FARM -. logs, ledger .-> BI
+  PACK -. stock extract .-> BI
+  SALES -. ERP extract .-> BI
