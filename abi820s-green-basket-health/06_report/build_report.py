@@ -116,6 +116,7 @@ PURPOSE = {
     "run_all.py": "Rebuilds everything in dependency order: generate, ELT, analytics, evidence, mock-ups, PBIP, backup",
     "01_data/generate_synthetic_data.py": "Seeded generator of all synthetic sources, the day-2 delta, the manifest and the DQ ground truth",
     "01_data/fetch_public_data.py": "Downloads the real NASA POWER files; checks the NSA regional totals",
+    "01_data/build_dataset_guide.py": "Writes the dataset guide (01_data/README.md) and the Excel overview of every source and clean table",
     "02_sql/00_create_database.sql": "Database and least-privilege login roles",
     "02_sql/01_ddl_schemas_audit.sql": "Schemas, audit tables (batches, steps, DQ issues, reconciliation), 44-rule DQ catalogue",
     "02_sql/02_ddl_staging_ref.sql": "Landing (text) and clean (typed) staging tables; reference and alias tables",

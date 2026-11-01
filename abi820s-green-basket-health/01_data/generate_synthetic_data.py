@@ -10,24 +10,25 @@ Generates the raw source-system extracts used by the health data warehouse.
 INTERNAL SOURCES (synthetic and anonymised by design: GBHS is fictitious and no record
 describes a real person; patients carry a random pseudonym, birth year, sex, region and
 payer class only - no names, ID numbers, dates of birth, addresses or clinical notes)
-  S1  Patient administration system (PAS)
-        raw/internal/pas/pas_ed_opd_encounters_<yyyy>.csv.gz   ED and clinic attendances (5 yearly files)
-        raw/internal/pas/pas_inpatient_spells.csv.gz           inpatient spells (change-data-capture export)
-        raw/internal/pas/pas_patient_index.csv.gz              pseudonymised master patient index (MPI)
-        raw/internal/pas/pas_patient_changes.csv.gz            MPI audit trail (residence region, payer class)
-  S2  Ward bed-state returns          raw/internal/wards/ward_midnight_census.csv
-  S3  E-rostering system              raw/internal/roster/eroster_shift_summary.csv.gz
-  S4  IDSR weekly returns             raw/internal/idsr/idsr_weekly_returns.csv
-  S5  Master and reference data       raw/internal/master_data/GBHS_Master_Data.xlsx
+  S1  PAS ED and clinic attendances   raw/internal/pas/pas_ed_opd_encounters_<yyyy>.csv.gz  (5 yearly files)
+  S2  PAS inpatient spells            raw/internal/pas/pas_inpatient_spells.csv.gz  (change-data-capture export)
+  S3  PAS patient index + changes     raw/internal/pas/pas_patient_index.csv.gz  (pseudonymised master patient index)
+                                      raw/internal/pas/pas_patient_changes.csv.gz  (residence region, payer class)
+  S4  Ward midnight census returns    raw/internal/wards/ward_midnight_census.csv
+  S5  Nursing e-roster summary        raw/internal/roster/eroster_shift_summary.csv.gz
+  S6  IDSR weekly returns             raw/internal/idsr/idsr_weekly_returns.csv
+  S7  Master and reference data       raw/internal/master_data/GBHS_Master_Data.xlsx
   Day-2 incremental extract           raw/delta_2026-10-01/*  (1 October 2026)
 
 EXTERNAL SOURCES
-  S6  NSA 2023 census population      raw/external/nsa/nsa_census2023_population_by_region.csv
+  S8  NSA 2023 census population      raw/external/nsa/nsa_census2023_population_by_region.csv
       REAL published regional totals (preliminary results, 13 March 2024), in a messy
       publication-style CSV (title rows, thousands separators, national total row, footnote).
-  S7  NASA POWER daily weather        raw/external/nasa_power/POWER_Point_Daily_<facility>.json
+  S9  NASA POWER daily weather        raw/external/nasa_power/POWER_Point_Daily_<facility>.json
       Stand-in values in the exact POWER API JSON layout (the API host was not reachable from
       the build environment); fetch_public_data.py downloads the real series unchanged.
+
+Source numbers S1-S9 are those of the report (section 3.1); 01_data/README.md describes every file.
 
 Data-quality defects are injected deliberately (duplicates, mixed date formats, code
 variants, keying errors, impossible values, late-arriving records, missing returns ...).

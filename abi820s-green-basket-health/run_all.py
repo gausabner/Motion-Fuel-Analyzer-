@@ -10,6 +10,7 @@ run_all.py - rebuilds the whole Green Basket Health Services BI project from scr
   4. 04_powerbi/expected_values.py           expected Power BI card values and RLS test matrix (SQL mirror of the DAX)
      07_presentation/deck_data.py            the numbers shown on the slides
      04_powerbi/build_pbip.py                Power BI Project (TMDL + PBIR) and fallbacks
+     01_data/build_dataset_guide.py          01_data/README.md and GBHS_Dataset_Overview.xlsx (where the dataset is)
   5. pg_dump                                 05_backup/gbhs_health_dw_pg16_warehouse.backup + schema-only DDL
 
 Usage:  python run_all.py --dsn "postgresql://postgres:<pw>@localhost:5432/gbhs_health_dw" [--skip-generate]
@@ -69,6 +70,7 @@ def main():
             cmd += ["--schemas", args.schemas]
         run(cmd, ROOT / "04_powerbi", env)
         run([py, "export_fallbacks.py"], ROOT / "04_powerbi", env)
+    run([py, "build_dataset_guide.py"], ROOT / "01_data", env)   # dataset guide and Excel overview for the marker
     if shutil.which("pg_dump"):
         m = re.match(r"postgres(?:ql)?://([^:@/]+)(?::([^@/]*))?@([^:/]+)(?::(\d+))?/(\w+)", args.dsn)
         user, pw, host, port, db = m.groups()

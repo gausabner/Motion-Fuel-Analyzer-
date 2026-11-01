@@ -13,6 +13,18 @@ regions. This package delivers the following, all built from code and reproducib
 - four analytics techniques: malaria forecasting, 30-day readmission risk, outbreak detection and ED wait drivers;
 - the final report (PDF) and the presentation (PPTX).
 
+## Where is the dataset?
+
+| What | Where |
+|---|---|
+| **Overview workbook**: every source and every clean table as a sheet; opens in Excel, no tools needed | `01_data/GBHS_Dataset_Overview.xlsx` |
+| Guide to every dataset file: source, rows, columns, real or synthetic | `01_data/README.md` |
+| The nine raw source extracts S1–S9, complete (CSV, gzip CSV, Excel, JSON) | `01_data/raw/` |
+| The clean, integrated tables, as Power BI imports them (CSV) | `04_powerbi/data_csv/` |
+| The whole warehouse (PostgreSQL backup) | `05_backup/gbhs_health_dw_pg16_warehouse.backup` |
+
+## Deliverables
+
 | Deliverable (brief §4) | File |
 |---|---|
 | Final report | `06_report/GBHS_ABI820S_Final_Report.pdf` |
@@ -21,7 +33,7 @@ regions. This package delivers the following, all built from code and reproducib
 | Python scripts | `01_data/`, `03_analytics/`, `04_powerbi/`, `06_report/`, `07_presentation/`, `run_all.py` |
 | Warehouse backup and DDL | `05_backup/gbhs_health_dw_pg16_warehouse.backup`, `05_backup/gbhs_health_dw_schema_ddl.sql` |
 | Data dictionary and ERDs | Report §3.2 and Appendix A; `06_report/data_dictionary.md` and `.xlsx`; `06_report/diagrams/*.mmd` |
-| Datasets | `01_data/raw/` (synthetic, seed 20261028, plus the real NSA census totals); `01_data/fetch_public_data.py` (NASA POWER) |
+| Datasets | `01_data/` (see *Where is the dataset?* above): raw extracts, the overview workbook and the dataset guide; `01_data/fetch_public_data.py` (NASA POWER) |
 | Presentation | `07_presentation/GBHS_ABI820S_Presentation.pptx` (14 slides + 4 backup, with speaker notes) |
 
 ## Must-do before submission (Windows + Power BI Desktop)
@@ -62,7 +74,9 @@ The steps, in order (about 5 minutes in total):
    `07_presentation/deck_data.py` collects the numbers on the slides.
 5. **Build the Power BI project.** `04_powerbi/build_pbip.py` generates the PBIP (TMDL and PBIR) and validates it.
    `export_fallbacks.py` writes the CSV-mode files and the single-file TMDL script.
-6. **Back up.** `pg_dump` writes `05_backup/`.
+6. **Describe the dataset.** `01_data/build_dataset_guide.py` writes `01_data/README.md` and
+   `01_data/GBHS_Dataset_Overview.xlsx` from the data files.
+7. **Back up.** `pg_dump` writes `05_backup/`.
 
 The report and the deck need extra tools: pandoc 3, Node 18+ with Playwright, mermaid 10 and pptxgenjs 3.12.
 

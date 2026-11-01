@@ -184,19 +184,33 @@ flowchart TB
 The solution integrates **nine sources** of all three required types. The brief needs at least one transactional,
 one master/reference and one external source; we have six transactional, one master/reference and two external.
 
-<!-- table: Data sources (type, format, volume in the full load, provenance and terms of use) -->
+<!-- table: Data sources (type, format, volume in the full load, file in the package, provenance and terms of use) -->
 
-| # | Source | Type | Format and volume | Provenance and terms |
-|---|---|---|---|---|
-| S1 | PAS ED and clinic attendances | Transactional | 5 yearly gzip CSV extracts that overlap at year ends; 563,209 rows | Synthetic (A1) |
-| S2 | PAS inpatient spells | Transactional | Change-data-capture export, gzip CSV; 151,774 spell images | Synthetic |
-| S3 | PAS patient index and change log | Transactional / master | gzip CSV; 107,332 + 11,661 rows; pseudonymised IDs only | Synthetic |
-| S4 | Ward midnight census returns | Transactional (periodic) | CSV; 36,232 ward-days | Synthetic |
-| S5 | Nursing e-roster shift summary | Transactional (periodic) | gzip CSV; 97,502 unit-shift rows | Synthetic |
-| S6 | IDSR weekly returns | Transactional (periodic) | CSV; 22,410 facility × condition × week rows | Synthetic; follows the WHO AFRO IDSR priority diseases |
-| S7 | GBHS master data workbook | Master / reference | Excel, 10 sheets: regions, facilities, wards and their history, SATS, ICD-10, IDSR conditions, payers, code mappings | Synthetic; ICD-10 titles from WHO (2019); SATS from South African Triage Group (2012) |
-| S8 | NSA 2023 Population and Housing Census, population by region | External (public) | CSV as published, with spaces as thousands separators and title and footnote rows; 14 regions | **Real values**, Namibia Statistics Agency (2024); public statistics, cited |
-| S9 | NASA POWER daily weather (rainfall, Tmax, Tmin, humidity) at each facility | External (public) | JSON from the POWER API; 10 points × 1,856 days | NASA POWER format (NASA Langley Research Center, n.d.); values are stand-ins until `fetch_public_data.py` is run (A2). NASA data are free and open, with attribution requested |
+| # | Source | Type | Format and volume | File in `01_data/raw/` | Provenance and terms |
+|---|---|---|---|---|---|
+| S1 | PAS ED and clinic attendances | Transactional | 5 yearly gzip CSV extracts that overlap at year ends; 563,209 rows | `internal/pas/pas_ed_opd_encounters_<year>.csv.gz` | Synthetic (A1) |
+| S2 | PAS inpatient spells | Transactional | Change-data-capture export, gzip CSV; 151,774 spell images | `internal/pas/pas_inpatient_spells.csv.gz` | Synthetic |
+| S3 | PAS patient index and change log | Transactional / master | gzip CSV; 107,332 + 11,661 rows; pseudonymised IDs only | `internal/pas/pas_patient_index.csv.gz`, `pas_patient_changes.csv.gz` | Synthetic |
+| S4 | Ward midnight census returns | Transactional (periodic) | CSV; 36,232 ward-days | `internal/wards/ward_midnight_census.csv` | Synthetic |
+| S5 | Nursing e-roster shift summary | Transactional (periodic) | gzip CSV; 97,502 unit-shift rows | `internal/roster/eroster_shift_summary.csv.gz` | Synthetic |
+| S6 | IDSR weekly returns | Transactional (periodic) | CSV; 22,410 facility × condition × week rows | `internal/idsr/idsr_weekly_returns.csv` | Synthetic; follows the WHO AFRO IDSR priority diseases |
+| S7 | GBHS master data workbook | Master / reference | Excel, 10 sheets: regions, facilities, wards and their history, SATS, ICD-10, IDSR conditions, payers, code mappings | `internal/master_data/GBHS_Master_Data.xlsx` | Synthetic; ICD-10 titles from WHO (2019); SATS from South African Triage Group (2012) |
+| S8 | NSA 2023 Population and Housing Census, population by region | External (public) | CSV as published, with spaces as thousands separators and title and footnote rows; 14 regions | `external/nsa/nsa_census2023_population_by_region.csv` | **Real values**, Namibia Statistics Agency (2024); public statistics, cited |
+| S9 | NASA POWER daily weather (rainfall, Tmax, Tmin, humidity) at each facility | External (public) | JSON from the POWER API; 10 points × 1,856 days | `external/nasa_power/POWER_Point_Daily_<facility>.json` | NASA POWER format (NASA Langley Research Center, n.d.); values are stand-ins until `fetch_public_data.py` is run (A2). NASA data are free and open, with attribution requested |
+
+<div class="note">
+
+**Where to find the dataset.** The complete dataset is in the folder `01_data/` of the submission package.
+
+- `01_data/GBHS_Dataset_Overview.xlsx` opens in Excel without any tools. Its `Index` sheet lists every file, and every
+  source and every clean warehouse table follows as a sheet: complete when it has up to 20,000 rows, otherwise its
+  first 1,000 rows.
+- `01_data/README.md` describes every file, with its rows and columns and whether it is real or synthetic.
+- The complete source files S1–S9 are in `01_data/raw/`, together with the day-2 delta of 1 October 2026.
+- The clean, integrated tables, exactly as Power BI imports them, are in `04_powerbi/data_csv/`. The whole warehouse
+  is in `05_backup/`.
+
+</div>
 
 **Ethical and legal-use confirmation (required by the brief).** The team confirms that:
 
