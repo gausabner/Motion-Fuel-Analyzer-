@@ -1,8 +1,24 @@
+import { randomUUID } from "crypto";
+import { detectDeliveryFormat, parseHr640Sheet, importHr640Rows, type Hr640Row, type DeliveryFormat, type Hr640Result } from "@/lib/ingestion-hr640";
+
+/** Result of ingesting an HR580 transaction sheet. */
+export type Hr580Result = {
+    format: "hr580";
+    count: number;
+    totalProcessed: number;
+    duplicates: number;
+    errors: number;
+    votesResolved: number;
+};
+
+/** Either shape; discriminate on `format`. */
+export type IngestResult = Hr580Result | Hr640Result;
 import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
 import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import { resolveVotesByPrefix } from "@/lib/vote-resolution";
 
 /**
  * Maps standard tank numbers to Fuel Types based on TankDefinition.
@@ -16,30 +32,110 @@ export async function getFuelTypeMap() {
     return map;
 }
 
-export async function processExcelFile(buffer: Buffer, originalFileName: string = "uploaded_file.csv") {
+/**
+ * Excel saves long vote numbers in scientific notation (6 significant digits),
+ * e.g. 4520151100655 arrives as 4520150000000. Build a map from the rounded
+ * form back to the registered vote so imports self-heal — but only when the
+ * mapping is unambiguous (exactly one registry vote rounds to that value).
+ */
+async function getVoteRepairMap() {
+    const roundTo6Sig = (v: string) => {
+        const n = Number(v);
+        if (!isFinite(n) || n <= 0) return null;
+        const exp = Math.floor(Math.log10(n));
+        const factor = Math.pow(10, exp - 5);
+        return String(Math.round(n / factor) * factor);
+    };
+    const ccs = await prisma.costCentre.findMany({ select: { voteNo: true } });
+    const candidates: Record<string, string[]> = {};
+    for (const { voteNo } of ccs) {
+        const key = roundTo6Sig(voteNo);
+        if (!key || key === voteNo) continue;
+        (candidates[key] = candidates[key] || []).push(voteNo);
+    }
+    const map: Record<string, string> = {};
+    for (const [rounded, votes] of Object.entries(candidates)) {
+        if (votes.length === 1) map[rounded] = votes[0];
+    }
+    return map;
+}
+
+export async function processExcelFile(buffer: Buffer, originalFileName: string = "uploaded_file.csv", selectedSheets?: string[]): Promise<IngestResult> {
     // 1. Get System Settings for Localization
     const settings = await (prisma as any).systemSettings.findFirst({ where: { id: 'global' } });
     const fuelRate = settings?.fuelRate || 19.95;
 
-    // 2. Save File Physically
+    // 2. Save the raw file to NON-PUBLIC storage (never under public/, which
+    //    Next.js would serve unauthenticated). On-disk name is UUID + a
+    //    sanitized extension only; the original name lives in the DB and is
+    //    served back through the authenticated /api/uploads/[id] route.
     const uploadId = uuidv4();
-    const storageDir = path.join(process.cwd(), "public/uploads");
-    const safeFileName = `${uploadId}_${originalFileName.replace(/\s+/g, '_')}`;
-    const filePath = path.join(storageDir, safeFileName);
+    const storageDir = path.join(process.cwd(), "storage/uploads");
+    const ext = (path.extname(originalFileName).toLowerCase().match(/^\.(xlsx|xls|csv)$/)?.[0]) || ".dat";
+    const diskName = `${uploadId}${ext}`;
+    const filePath = path.join(storageDir, diskName);
+    await fs.mkdir(storageDir, { recursive: true });
     await fs.writeFile(filePath, buffer);
 
     // 3. Read Workbook
     const workbook = XLSX.read(buffer, { type: "buffer" });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(sheet);
+    
+    const sheetsToProcess = selectedSheets && selectedSheets.length > 0 
+        ? selectedSheets 
+        : [workbook.SheetNames[0]];
 
     const fuelMap = await getFuelTypeMap();
+    const voteRepairMap = await getVoteRepairMap();
     const transactions: any[] = [];
     const errors: any[] = [];
     const dailyAggMap: Record<string, { date: Date, fuelType: string, vol: number, cost: number, count: number }> = {};
 
-    for (const row of jsonData as any[]) {
+    // Routing is by HEADER SIGNATURE, never by sheet or file name: the sample
+    // HR640 workbook is named Hr440 and its sheet is named "hr640". A sheet that
+    // does not look like HR640 falls through to the HR580 transaction parser.
+    const hr640Rows: Hr640Row[] = [];
+    const hr640Errors: string[] = [];
+    const hr580Sheets: string[] = [];
+    let deliveryFormat: DeliveryFormat = "hr640";
+    for (const sheetName of sheetsToProcess) {
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) continue;
+        const headerRow = (XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })[0] || []) as unknown[];
+        const detected = detectDeliveryFormat(headerRow);
+        if (detected) {
+            deliveryFormat = detected;
+            const parsed = parseHr640Sheet(sheet);
+            hr640Rows.push(...parsed.rows);
+            hr640Errors.push(...parsed.errors);
+        } else {
+            hr580Sheets.push(sheetName);
+        }
+    }
+
+    // HR640 is procurement, not tank movement — it writes FuelDelivery and
+    // returns early rather than being forced into FuelTransaction, where it
+    // would double-count the FRE receipts describing the same deliveries.
+    if (hr640Rows.length > 0) {
+        const result = await importHr640Rows(hr640Rows, hr640Errors, deliveryFormat);
+        await (prisma as any).uploadedFile.create({
+            data: {
+                id: uploadId,
+                fileName: originalFileName,
+                filePath: `storage/uploads/${diskName}`,
+                fileSize: buffer.length,
+                rowCount: result.created + result.updated,
+            },
+        });
+        return result;
+    }
+
+    for (const sheetName of hr580Sheets) {
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) continue;
+
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        for (const row of jsonData as any[]) {
         try {
             // Normalize keys (trim and case-insensitive check)
             const rowData: Record<string, any> = {};
@@ -47,7 +143,10 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
                 rowData[key.trim()] = row[key];
             });
 
-            const tankNo = String(rowData["Tank"] || rowData["Store No"] || rowData["Store"] || "");
+            // Trimmed on write: the source pads tank numbers inconsistently, so
+            // "937" and "937       " were being stored as two different tanks,
+            // splitting every per-tank total in half.
+            const tankNo = String(rowData["Tank"] || rowData["Store No"] || rowData["Store"] || "").trim();
             if (!tankNo || tankNo.toLowerCase() === 'undefined') continue;
 
             const fuelType = fuelMap[tankNo] || "Unknown";
@@ -107,9 +206,19 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
                 storeNo: tankNo,
                 pumpNo: String(rowData["Pump"] || ""),
                 transDate: transDate,
-                transRefNo: String(rowData["Trans Ref No"] || rowData["Reference No"] || rowData["Ref No"] || rowData["Trans No"] || ""),
-                issueTime: String(rowData["Issue Time"] || rowData["Time"] || rowData["Issue"] || ""),
-                transVoteNo: String(rowData["Trans Vote No"] || rowData["Issue Vote"] || rowData["Vote"] || ""),
+                // Both are part of the @@unique duplicate key, so both are
+                // normalised on write. The source pads reference numbers
+                // ("F01297      "), and one export of a report carried Issue Time
+                // while another left it blank — that single difference defeated
+                // the index and let the same report import twice, duplicating
+                // 8,513 transactions before it was caught.
+                transRefNo: String(rowData["Trans Ref No"] || rowData["Reference No"] || rowData["Ref No"] || rowData["Trans No"] || "").trim(),
+                issueTime: String(rowData["Issue Time"] || rowData["Time"] || rowData["Issue"] || "").trim(),
+                transVoteNo: (() => {
+                    const raw = String(rowData["Trans Vote No"] || rowData["Issue Vote"] || rowData["Vote"] || "");
+                    // Repair Excel scientific-notation degradation against the registry
+                    return voteRepairMap[raw] || raw;
+                })(),
                 transQty: transQty,
                 transAmt: transAmt,
                 vehicleId: vehicleId,
@@ -130,38 +239,46 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
             console.warn(`[Ingestion] Skipping row due to error: ${e.message}`, row);
             errors.push({ row, error: e.message });
         }
+        }
     }
 
     let insertedCount = 0;
-    // 4. Intelligent Insertion with Duplicate Detection (SQLite INSERT OR IGNORE)
+    // 4. Insert with duplicate detection.
+    //
+    //    transDate MUST be written as an ISO-8601 STRING. Every analytics query
+    //    filters it by string comparison (see lib/analytics.ts), and SQLite sorts
+    //    every INTEGER below every TEXT — so a DateTime written Prisma-natively
+    //    lands as epoch milliseconds and becomes invisible to all of them: it is
+    //    in the table, counted as imported, and matches no date filter anywhere.
+    //    That regression silently hid a whole month of uploaded data.
+    //
+    //    This is $executeRaw, NOT $executeRawUnsafe: it is a tagged template, so
+    //    every value below is bound as a parameter and nothing is interpolated.
+    //    INSERT OR IGNORE lets the @@unique index on
+    //    (transDate, transRefNo, vehicleId, issueTime) skip duplicates, matching
+    //    the original behaviour.
     for (const tx of transactions) {
-        const rowsAffected = await (prisma as any).$executeRawUnsafe(
-            `INSERT OR IGNORE INTO FuelTransaction (id, storeNo, pumpNo, transDate, transRefNo, issueTime, transVoteNo, transQty, transAmt, vehicleId, fleetUnit, fleetEI, fleetReading, jobNo, activity, itemCat, transType, fuelType, isIssue)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            uuidv4(),
-            tx.storeNo,
-            tx.pumpNo,
-            tx.transDate.toISOString(),
-            tx.transRefNo,
-            tx.issueTime,
-            tx.transVoteNo,
-            tx.transQty,
-            tx.transAmt,
-            tx.vehicleId,
-            tx.fleetUnit,
-            tx.fleetEI,
-            tx.fleetReading,
-            tx.jobNo,
-            tx.activity,
-            tx.itemCat,
-            tx.transType,
-            tx.fuelType,
-            tx.isIssue ? 1 : 0
-        );
+        const isoDate = tx.transDate.toISOString();
+        const affected = await prisma.$executeRaw`
+            INSERT OR IGNORE INTO FuelTransaction (
+                id, storeNo, pumpNo, transDate, transRefNo, issueTime, transVoteNo,
+                transQty, transAmt, vehicleId, fleetUnit, fleetEI, fleetReading,
+                jobNo, activity, itemCat, transType, fuelType, isIssue, createdAt
+            ) VALUES (
+                ${randomUUID()}, ${tx.storeNo}, ${tx.pumpNo}, ${isoDate}, ${tx.transRefNo},
+                ${tx.issueTime}, ${tx.transVoteNo}, ${tx.transQty}, ${tx.transAmt},
+                ${tx.vehicleId}, ${tx.fleetUnit}, ${tx.fleetEI}, ${tx.fleetReading},
+                ${tx.jobNo}, ${tx.activity}, ${tx.itemCat}, ${tx.transType},
+                ${tx.fuelType}, ${tx.isIssue ? 1 : 0}, ${new Date().toISOString()}
+            )`;
+        // INSERT OR IGNORE reports 0 affected rows when the unique index skipped a duplicate.
+        const inserted = affected > 0;
 
-        if (rowsAffected > 0) {
+        if (inserted) {
             insertedCount++;
-            // Calculate aggregations only for new records
+            // Daily consumption stats track FIS (issues) only — FRE and other
+            // stock movements into tanks are not fleet consumption.
+            if (!tx.isIssue) continue;
             const dateKey = tx.transDate.toISOString().split('T')[0];
             const key = `${dateKey}_${tx.fuelType}`;
             if (!dailyAggMap[key]) {
@@ -194,20 +311,38 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
         });
     }
 
+    // 6. Prefix self-heal — register derived cost centres for any vote in this
+    // batch whose 7-digit division prefix maps unambiguously to one division.
+    // Keeps new uploads resolving without changing the transactions' own codes.
+    let votesResolved = 0;
+    try {
+        const batchVotes = transactions.map(t => t.transVoteNo).filter(Boolean);
+        const res = await resolveVotesByPrefix(batchVotes);
+        votesResolved = res.created.length;
+        if (votesResolved > 0) {
+            console.log(`[Ingestion] Prefix-resolved ${votesResolved} new vote code(s):`,
+                res.created.map(c => `${c.voteNo}→${c.division}`).join(', '));
+        }
+    } catch (e: any) {
+        console.warn(`[Ingestion] Prefix resolution skipped: ${e.message}`);
+    }
+
     await (prisma as any).uploadedFile.create({
         data: {
             id: uploadId,
             fileName: originalFileName,
-            filePath: `/uploads/${safeFileName}`,
+            filePath: `storage/uploads/${diskName}`,
             fileSize: buffer.length,
             rowCount: insertedCount
         }
     });
 
     return {
+        format: "hr580" as const,
         count: insertedCount,
         totalProcessed: transactions.length,
         duplicates: transactions.length - insertedCount,
-        errors: errors.length
+        errors: errors.length,
+        votesResolved
     };
 }

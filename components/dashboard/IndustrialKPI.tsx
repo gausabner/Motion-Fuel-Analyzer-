@@ -6,63 +6,84 @@ interface IndustrialKPIProps {
     value: string | number;
     icon: LucideIcon;
     subValue?: string;
-    trend?: { value: number; direction: 'up' | 'down' };
+    /** Percentage change. `sentiment` decides colour: consumption/cost rising is usually 'bad'. */
+    trend?: { value: number; direction: 'up' | 'down'; sentiment?: 'good' | 'bad' | 'neutral'; label?: string };
     accent?: boolean;
     className?: string;
     onClick?: () => void;
     bottomTrend?: boolean;
 }
 
-export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, accent, className, onClick, bottomTrend }: IndustrialKPIProps) {
+function TrendBadge({ trend }: { trend: NonNullable<IndustrialKPIProps['trend']> }) {
+    const sentiment = trend.sentiment ?? 'neutral';
     return (
-        <div
-            onClick={onClick}
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+            <span className={cn(
+                "text-xs font-bold px-1.5 py-0.5 rounded-md inline-flex items-center gap-0.5",
+                sentiment === 'good' && "bg-emerald-100 text-emerald-700",
+                sentiment === 'bad' && "bg-red-100 text-red-700",
+                sentiment === 'neutral' && "bg-muted text-muted-foreground",
+            )}>
+                {trend.direction === 'up' ? '▲' : '▼'} {trend.value}%
+            </span>
+            {trend.label && <span className="text-xs text-muted-foreground">{trend.label}</span>}
+        </span>
+    );
+}
+
+export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, accent, className, onClick, bottomTrend }: IndustrialKPIProps) {
+    // A card that opens a detail modal is a button, not a clickable div. As a div
+    // it took no focus and no Enter/Space, so the four dashboard drill-downs were
+    // reachable by mouse only. The element only becomes interactive when there is
+    // somewhere to go, so static KPIs stay out of the tab order.
+    const Root = onClick ? "button" : "div";
+    const interactive = onClick
+        ? {
+            type: "button" as const,
+            onClick,
+            "aria-label": `${label}: ${value}. View breakdown`,
+        }
+        : {};
+
+    return (
+        <Root
+            {...interactive}
             className={cn(
-                "monumental-card group hover:border-black transition-colors duration-300 relative overflow-hidden",
-                accent && "border-yellow-400 border-2",
-                onClick && "cursor-pointer",
+                "monumental-card group hover:border-primary/50 transition-colors duration-300 relative overflow-hidden",
+                accent && "border-primary/40",
+                onClick && [
+                    "cursor-pointer w-full text-left",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                ],
                 className
             )}>
-            <div className="flex flex-col h-full justify-between relative z-10">
-                <div className="flex items-start justify-between mb-2">
-                    <span className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest truncate pr-2">{label}</span>
-                    <Icon className={cn(
-                        "w-4 h-4 md:w-5 md:h-5 group-hover:text-yellow-500 transition-colors shrink-0",
-                        accent ? "text-black" : "text-black"
-                    )} />
+            <div className="flex flex-col h-full justify-between relative z-10 gap-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                        <Icon className="w-[18px] h-[18px] text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                        <span className="block text-xs font-semibold text-muted-foreground uppercase tracking-widest truncate">{label}</span>
+                        {subValue && (
+                            <span className="block text-xs text-muted-foreground/80 truncate">{subValue}</span>
+                        )}
+                    </div>
                 </div>
 
                 <div>
                     <div className="flex items-baseline gap-2 flex-wrap max-w-full">
-                        <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight text-black mt-1 break-all">
+                        <div className="text-lg sm:text-xl md:text-2xl xl:text-3xl font-extrabold tracking-tight text-foreground tabular-nums break-words">
                             {value}
                         </div>
-                        {trend && !bottomTrend && (
-                            <div className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm flex items-center whitespace-nowrap",
-                                trend.direction === 'up' ? "bg-black text-white" : "bg-zinc-100 text-zinc-500"
-                            )}>
-                                {trend.direction === 'up' ? '+' : ''}{trend.value}%
-                            </div>
-                        )}
+                        {trend && !bottomTrend && <TrendBadge trend={trend} />}
                     </div>
-
                     {trend && bottomTrend && (
                         <div className="mt-2">
-                            <div className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm inline-flex items-center whitespace-nowrap",
-                                trend.direction === 'up' ? "bg-black text-white" : "bg-zinc-100 text-zinc-500"
-                            )}>
-                                {trend.direction === 'up' ? '+' : ''}{trend.value}%
-                            </div>
-                        </div>
-                    )}
-
-                    {subValue && (
-                        <div className="mt-1 text-[10px] md:text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                            {subValue}
+                            <TrendBadge trend={trend} />
                         </div>
                     )}
                 </div>
             </div>
-        </div>
+        </Root>
     );
 }
