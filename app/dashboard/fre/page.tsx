@@ -76,15 +76,19 @@ export default async function FREPage({
         from: sp.from, to: sp.to, fuelType: sp.fuelType,
         department: sp.department, division: sp.division, vehicleId: sp.vehicleId,
     };
-    const data = await getFreData(filters);
+    // Independent reads go out together rather than as a waterfall: this route
+    // has no `loading.tsx` (see components/dashboard/AppSidebar), so its render
+    // blocks the response.
+    const [data, costCentres] = await Promise.all([
+        getFreData(filters),
+        (prisma as any).costCentre.findMany({
+            select: { department: true, division: true },
+            distinct: ['department', 'division'],
+            orderBy: [{ department: 'asc' }, { division: 'asc' }],
+        }),
+    ]);
     const s = data.currencySymbol;
     const avgDelivery = data.kpi.count > 0 ? data.kpi.volume / data.kpi.count : 0;
-
-    const costCentres = await (prisma as any).costCentre.findMany({
-        select: { department: true, division: true },
-        distinct: ['department', 'division'],
-        orderBy: [{ department: 'asc' }, { division: 'asc' }],
-    });
 
     // CSV mirrors the active filters, so the download matches the KPIs on screen.
     const exportParams = new URLSearchParams({ report: "fre" });

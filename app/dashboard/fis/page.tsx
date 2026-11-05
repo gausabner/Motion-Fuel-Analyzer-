@@ -84,19 +84,21 @@ export default async function FISPage({
         from: sp.from, to: sp.to, fuelType: sp.fuelType,
         department: sp.department, division: sp.division, vehicleId: sp.vehicleId,
     };
-    const data = await getFisData(filters);
-    // Attribution only matters when the view is scoped to a unit.
-    const [attribution, sessionUser] = await Promise.all([
+    // Independent reads go out together rather than as a waterfall: this route
+    // has no `loading.tsx` (see components/dashboard/AppSidebar), so its render
+    // blocks the response.
+    const [data, attribution, sessionUser, costCentres] = await Promise.all([
+        getFisData(filters),
+        // Attribution only matters when the view is scoped to a unit.
         getVehicleAttribution(sp.vehicleId || "", filters),
         getSessionUser(),
+        (prisma as any).costCentre.findMany({
+            select: { department: true, division: true },
+            distinct: ['department', 'division'],
+            orderBy: [{ department: 'asc' }, { division: 'asc' }],
+        }),
     ]);
     const s = data.currencySymbol;
-
-    const costCentres = await (prisma as any).costCentre.findMany({
-        select: { department: true, division: true },
-        distinct: ['department', 'division'],
-        orderBy: [{ department: 'asc' }, { division: 'asc' }],
-    });
 
     // CSV mirrors the active filters, so the download matches the KPIs on screen.
     const exportParams = new URLSearchParams({ report: "fis" });

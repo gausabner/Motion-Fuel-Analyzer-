@@ -69,24 +69,24 @@ export default async function FuelLogsPage({
     const params = await searchParams;
     const currentPage = Number(params.page) || 1;
 
-    // Pass page to query
-    const { data: transactions, total } = await getRecentTransactions({ ...params, page: currentPage });
-
-    // 5. System Settings for Currency with safety fallback
-    let settings = null;
-    try {
-        settings = await (prisma as any).systemSettings.findFirst({ where: { id: 'global' } });
-    } catch (e) {
-        console.error('[Dashboard] Failed to fetch settings:', e);
-    }
+    // Independent reads go out together rather than as a waterfall: this route
+    // has no `loading.tsx` (see components/dashboard/AppSidebar), so its render
+    // blocks the response.
+    const [{ data: transactions, total }, settings, costCentres] = await Promise.all([
+        getRecentTransactions({ ...params, page: currentPage }),
+        // Currency settings, with a safety fallback if the table is missing.
+        (prisma as any).systemSettings.findFirst({ where: { id: 'global' } }).catch((e: any) => {
+            console.error('[Dashboard] Failed to fetch settings:', e);
+            return null;
+        }),
+        // Departments feed the filter bar.
+        (prisma as any).costCentre.findMany({
+            select: { department: true, division: true },
+            distinct: ['department', 'division'],
+            orderBy: [{ department: 'asc' }, { division: 'asc' }]
+        }),
+    ]);
     const currencySymbol = settings?.currencySymbol || "N$";
-
-    // Fetch Departments for Filter
-    const costCentres = await (prisma as any).costCentre.findMany({
-        select: { department: true, division: true },
-        distinct: ['department', 'division'],
-        orderBy: [{ department: 'asc' }, { division: 'asc' }]
-    });
 
     return (
         <div className="space-y-4">

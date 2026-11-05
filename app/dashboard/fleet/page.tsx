@@ -161,14 +161,32 @@ export default async function FleetPage({
         from: params.from,
         to: params.to,
     };
-    const fleet = await getFleetPerformance(filters);
-    // Attribution only matters when the view is scoped to a unit.
-    const [attribution, sessionUser] = await Promise.all([
+    // None of these seven reads depends on another, so they go out together
+    // rather than as a waterfall. This route has no `loading.tsx` (see
+    // components/dashboard/AppSidebar), so its render blocks the response.
+    const [
+        fleet,
+        // Attribution only matters when the view is scoped to a unit.
+        attribution,
+        sessionUser,
+        dailyData,
+        topVotesForChart,
+        settings,
+        costCentres,
+    ] = await Promise.all([
+        getFleetPerformance(filters),
         getVehicleAttribution(params.vehicleId || "", filters),
         getSessionUser(),
+        getFleetChartData(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to),
+        getDepartmentStats(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to),
+        (prisma as any).systemSettings.findFirst({ where: { id: "global" } }),
+        // Cost centres feed the filter bar.
+        (prisma as any).costCentre.findMany({
+            select: { department: true, division: true },
+            distinct: ['department', 'division'],
+            orderBy: [{ department: 'asc' }, { division: 'asc' }]
+        }),
     ]);
-    const dailyData = await getFleetChartData(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to);
-    const topVotesForChart = await getDepartmentStats(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to);
 
     const totalFuel = fleet.reduce((sum, v) => sum + v.petrolVolume + v.dieselVolume, 0);
     const avgFill = fleet.length > 0 ? totalFuel / fleet.length : 0;
@@ -226,15 +244,7 @@ export default async function FleetPage({
     if (params.to) exportParams.set("to", params.to);
     const fleetExportUrl = `/api/reports/export?${exportParams.toString()}`;
 
-    const settings = await (prisma as any).systemSettings.findFirst({ where: { id: "global" } });
     const cur = settings?.currencySymbol || DEFAULT_CURRENCY;
-
-    // Fetch CostCentres for Filter
-    const costCentres = await (prisma as any).costCentre.findMany({
-        select: { department: true, division: true },
-        distinct: ['department', 'division'],
-        orderBy: [{ department: 'asc' }, { division: 'asc' }]
-    });
 
     return (
         <div className="space-y-4">

@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import Link from "next/link";
+import { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import {
     LayoutDashboard,
@@ -45,6 +46,33 @@ function SidebarThemeToggle() {
             {/* Render a stable icon until mounted to avoid hydration mismatch */}
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
+    );
+}
+
+/**
+ * Pending dot for a nav link, shown while its route is being fetched.
+ *
+ * This is what replaced the dashboard's `loading.tsx` skeleton. A loading file
+ * puts the whole route inside a Suspense boundary, and React then streams the
+ * page into a hidden staging container that is only moved into place by a
+ * throttled callback — leaving a complete duplicate of the page in the DOM
+ * until it runs. Feedback now lives on the link that was clicked instead, which
+ * is the pattern Next documents for a dynamic route with no loading file.
+ *
+ * Always rendered at a fixed size and toggled by opacity, so it cannot shift
+ * the row. Decorative: the route change is announced by the page itself.
+ */
+function NavPendingDot({ small = false }: { small?: boolean }) {
+    const { pending } = useLinkStatus();
+    return (
+        <span
+            aria-hidden="true"
+            className={cn(
+                "ml-auto shrink-0 rounded-full bg-current transition-opacity duration-150",
+                small ? "h-1 w-1" : "h-1.5 w-1.5",
+                pending ? "opacity-70 animate-pulse" : "opacity-0"
+            )}
+        />
     );
 }
 
@@ -142,6 +170,7 @@ function NavContent({ pathname, session, setOpen, label }: { pathname: string, s
                                                     isActive ? "text-primary-foreground" : "text-sidebar-muted group-hover:text-sidebar-foreground"
                                                 )} />
                                                 <span>{item.name}</span>
+                                                <NavPendingDot />
                                             </Link>
 
                                             {children && (
@@ -163,6 +192,7 @@ function NavContent({ pathname, session, setOpen, label }: { pathname: string, s
                                                                 >
                                                                     <child.icon className="h-3.5 w-3.5 shrink-0" />
                                                                     <span>{child.name}</span>
+                                                                    <NavPendingDot small />
                                                                 </Link>
                                                             </li>
                                                         );

@@ -57,7 +57,8 @@ export default async function ReportsPage({
         fisData, freData, dailyData,
         fleetPetrol, fleetDiesel,
         costCentreData, topVotesPetrol, topVotesDiesel,
-        summary, settings, costCentres
+        summary, settings, costCentres,
+        attribution, sessionUser
     ] = await Promise.all([
         getFISData(100, filters),
         getFREData(100, freFilters),
@@ -74,10 +75,9 @@ export default async function ReportsPage({
             distinct: ['department', 'division'],
             orderBy: [{ department: 'asc' }, { division: 'asc' }],
         }),
-    ]);
-
-    // Attribution only matters when the report is scoped to a unit.
-    const [attribution, sessionUser] = await Promise.all([
+        // Attribution only matters when the report is scoped to a unit, but it
+        // depends on nothing above, so it rides along instead of costing a
+        // second sequential round trip.
         getVehicleAttribution(params.vehicleId || "", filters),
         getSessionUser(),
     ]);
