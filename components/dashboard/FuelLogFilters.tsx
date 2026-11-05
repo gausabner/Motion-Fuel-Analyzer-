@@ -106,7 +106,15 @@ export function FuelLogFilters({
                 {!hideVehicle && (
                     <div className="relative min-w-[180px] flex-1 max-w-xs">
                         <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        {/* Placeholder is not a label: it disappears on input and is
+                            not reliably announced. The visible magnifier carries the
+                            meaning for sighted users, so the label is screen-reader only. */}
+                        <label htmlFor="fleet-unit-search" className="sr-only">
+                            Search by vehicle or unit number
+                        </label>
                         <Input
+                            id="fleet-unit-search"
+                            type="search"
                             placeholder="Vehicle or unit no…"
                             value={vehicleId}
                             onChange={(e) => setVehicleId(e.target.value)}

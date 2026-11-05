@@ -32,13 +32,29 @@ function TrendBadge({ trend }: { trend: NonNullable<IndustrialKPIProps['trend']>
 }
 
 export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, accent, className, onClick, bottomTrend }: IndustrialKPIProps) {
+    // A card that opens a detail modal is a button, not a clickable div. As a div
+    // it took no focus and no Enter/Space, so the four dashboard drill-downs were
+    // reachable by mouse only. The element only becomes interactive when there is
+    // somewhere to go, so static KPIs stay out of the tab order.
+    const Root = onClick ? "button" : "div";
+    const interactive = onClick
+        ? {
+            type: "button" as const,
+            onClick,
+            "aria-label": `${label}: ${value}. View breakdown`,
+        }
+        : {};
+
     return (
-        <div
-            onClick={onClick}
+        <Root
+            {...interactive}
             className={cn(
                 "monumental-card group hover:border-primary/50 transition-colors duration-300 relative overflow-hidden",
                 accent && "border-primary/40",
-                onClick && "cursor-pointer",
+                onClick && [
+                    "cursor-pointer w-full text-left",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                ],
                 className
             )}>
             <div className="flex flex-col h-full justify-between relative z-10 gap-3">
@@ -68,6 +84,6 @@ export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, accen
                     )}
                 </div>
             </div>
-        </div>
+        </Root>
     );
 }

@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { getFleetPerformance, isUnattributedUnit, unitLabel } from "@/lib/analytics";
 import { TablePagination } from "@/components/dashboard/TablePagination";
 import { paginate } from "@/lib/pagination";
+import { fmtMoney, fmtLitres, DEFAULT_CURRENCY } from "@/lib/format";
 import { TableCsvButton } from "@/components/reports/ReportExports";
 import { getVehicleAttribution } from "@/lib/vehicle-attribution";
 import { UnitAttributionCard } from "@/components/dashboard/UnitAttributionCard";
@@ -196,6 +197,9 @@ export default async function FleetPage({
     if (params.to) exportParams.set("to", params.to);
     const fleetExportUrl = `/api/reports/export?${exportParams.toString()}`;
 
+    const settings = await (prisma as any).systemSettings.findFirst({ where: { id: "global" } });
+    const cur = settings?.currencySymbol || DEFAULT_CURRENCY;
+
     // Fetch CostCentres for Filter
     const costCentres = await (prisma as any).costCentre.findMany({
         select: { department: true, division: true },
@@ -250,7 +254,7 @@ export default async function FleetPage({
                         <TrendingUp className="h-4 w-4 text-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{avgFill.toFixed(1)} L</div>
+                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{fmtLitres(avgFill)}</div>
                         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Average per vehicle this period</p>
                     </CardContent>
                 </Card>
@@ -303,13 +307,13 @@ export default async function FleetPage({
                                                 ) : unit.id}
                                             </TableCell>
                                             <TableCell className="font-mono font-medium text-muted-foreground">
-                                                {unit.petrolVolume > 0 ? `${unit.petrolVolume.toFixed(1)} L` : '—'}
+                                                {unit.petrolVolume > 0 ? fmtLitres(unit.petrolVolume) : '—'}
                                             </TableCell>
                                             <TableCell className="font-mono font-medium text-muted-foreground">
-                                                {unit.dieselVolume > 0 ? `${unit.dieselVolume.toFixed(1)} L` : '—'}
+                                                {unit.dieselVolume > 0 ? fmtLitres(unit.dieselVolume) : '—'}
                                             </TableCell>
                                             <TableCell className="text-right font-bold text-foreground">
-                                                ${unit.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                {fmtMoney(unit.totalCost, { currency: cur })}
                                             </TableCell>
                                             <TableCell className="text-center font-medium text-muted-foreground">
                                                 {unit.transactionCount}

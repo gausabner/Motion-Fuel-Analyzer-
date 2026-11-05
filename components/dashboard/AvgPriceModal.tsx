@@ -1,5 +1,6 @@
 "use client";
 
+import { Coins } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -61,7 +62,7 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2">
                         <div className={`p-2 rounded-xl bg-accent`}>
-                            <span className="font-bold text-xl px-1">$</span>
+                            <Coins className="h-5 w-5 text-foreground" />
                         </div>
                         <div>
                             <DialogTitle className="text-2xl font-bold text-foreground">

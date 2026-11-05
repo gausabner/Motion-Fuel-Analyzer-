@@ -106,10 +106,13 @@ function NavContent({ pathname, session, setOpen }: { pathname: string, session:
                     if (filteredItems.length === 0) return null;
 
                     return (
-                        <div key={group.title}>
-                            <h3 className="px-3 text-[10px] font-semibold text-sidebar-muted uppercase tracking-[0.15em] mb-2">
+                        <section key={group.title} aria-labelledby={`nav-group-${group.title.replace(/\s+/g, "-").toLowerCase()}`}>
+                            <div
+                                id={`nav-group-${group.title.replace(/\s+/g, "-").toLowerCase()}`}
+                                className="px-3 text-[10px] font-semibold text-sidebar-muted uppercase tracking-[0.15em] mb-2"
+                            >
                                 {group.title}
-                            </h3>
+                            </div>
                             <ul className="space-y-0.5">
                                 {filteredItems.map((item) => {
                                     const children = (item as any).children as { name: string; href: string; icon: any }[] | undefined;
@@ -121,6 +124,7 @@ function NavContent({ pathname, session, setOpen }: { pathname: string, session:
                                                 onClick={() => setOpen && setOpen(false)}
                                                 className={cn(
                                                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors duration-150 group",
+                                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-foreground/70 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
                                                     isActive
                                                         ? "bg-primary text-primary-foreground font-semibold"
                                                         : "text-sidebar-muted font-medium hover:text-sidebar-foreground hover:bg-sidebar-hover"
@@ -144,6 +148,7 @@ function NavContent({ pathname, session, setOpen }: { pathname: string, session:
                                                                     onClick={() => setOpen && setOpen(false)}
                                                                     className={cn(
                                                                         "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors duration-150 group",
+                                                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-foreground/70 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
                                                                         childActive
                                                                             ? "bg-sidebar-hover text-sidebar-foreground font-semibold"
                                                                             : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover"
@@ -161,7 +166,7 @@ function NavContent({ pathname, session, setOpen }: { pathname: string, session:
                                     );
                                 })}
                             </ul>
-                        </div>
+                        </section>
                     );
                 })}
             </nav>

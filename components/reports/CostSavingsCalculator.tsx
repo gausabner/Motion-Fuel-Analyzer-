@@ -11,8 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { calculateSavingsAction } from "@/app/actions/calculator";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { fmtMoney, DEFAULT_CURRENCY } from "@/lib/format";
 
-export function CostSavingsCalculator() {
+export function CostSavingsCalculator({ currency = DEFAULT_CURRENCY }: { currency?: string } = {}) {
     const [dateA, setDateA] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
     const [dateB, setDateB] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
     const [result, setResult] = useState<any>(null);
@@ -95,11 +96,11 @@ export function CostSavingsCalculator() {
                                 <CardContent className="pt-6 space-y-4">
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground font-medium">Petrol ({result.statsA.petrolVolume.toFixed(0)} L)</span>
-                                        <span className="font-bold">${result.statsA.petrolCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span className="font-bold">{fmtMoney(result.statsA.petrolCost, { currency })}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground font-medium">Diesel ({result.statsA.dieselVolume.toFixed(0)} L)</span>
-                                        <span className="font-bold">${result.statsA.dieselCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span className="font-bold">{fmtMoney(result.statsA.dieselCost, { currency })}</span>
                                     </div>
                                     <div className="pt-4 border-t border-dashed border-border">
                                         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Cost</div>
@@ -117,11 +118,11 @@ export function CostSavingsCalculator() {
                                 <CardContent className="pt-6 space-y-4">
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground font-medium">Petrol ({result.statsB.petrolVolume.toFixed(0)} L)</span>
-                                        <span className="font-bold">${result.statsB.petrolCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span className="font-bold">{fmtMoney(result.statsB.petrolCost, { currency })}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground font-medium">Diesel ({result.statsB.dieselVolume.toFixed(0)} L)</span>
-                                        <span className="font-bold">${result.statsB.dieselCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span className="font-bold">{fmtMoney(result.statsB.dieselCost, { currency })}</span>
                                     </div>
                                     <div className="pt-4 border-t border-dashed border-border">
                                         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Cost</div>
