@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -86,7 +87,13 @@ const navGroups = [
     }
 ];
 
-function NavContent({ pathname, session, setOpen }: { pathname: string, session: any, setOpen?: (open: boolean) => void }) {
+function NavContent({ pathname, session, setOpen, label }: { pathname: string, session: any, setOpen?: (open: boolean) => void, label: string }) {
+    // The desktop sidebar is `hidden lg:flex` — display:none but still in the DOM —
+    // so when the mobile sheet opens, this component is mounted twice. Group ids
+    // must therefore be per-instance, or aria-labelledby resolves to the hidden
+    // copy and the page carries duplicate ids.
+    const instanceId = useId();
+    const groupId = (title: string) => `${instanceId}-${title.replace(/\s+/g, "-").toLowerCase()}`;
     const userRole = (session?.user as any)?.role || "EMPLOYEE";
     const userName = session?.user?.name || session?.user?.email || "Signed in";
     const initial = String(userName).charAt(0).toUpperCase();
@@ -100,15 +107,15 @@ function NavContent({ pathname, session, setOpen }: { pathname: string, session:
             </div>
 
             {/* Navigation Groups */}
-            <nav className="flex-1 px-3 py-2 space-y-6 overflow-y-auto">
+            <nav aria-label={label} className="flex-1 px-3 py-2 space-y-6 overflow-y-auto">
                 {navGroups.map((group) => {
                     const filteredItems = group.items.filter(item => item.roles.includes(userRole));
                     if (filteredItems.length === 0) return null;
 
                     return (
-                        <section key={group.title} aria-labelledby={`nav-group-${group.title.replace(/\s+/g, "-").toLowerCase()}`}>
+                        <section key={group.title} aria-labelledby={groupId(group.title)}>
                             <div
-                                id={`nav-group-${group.title.replace(/\s+/g, "-").toLowerCase()}`}
+                                id={groupId(group.title)}
                                 className="px-3 text-[10px] font-semibold text-sidebar-muted uppercase tracking-[0.15em] mb-2"
                             >
                                 {group.title}
@@ -202,7 +209,7 @@ export function AppSidebar() {
 
     return (
         <div className="hidden lg:flex w-64 flex-col h-screen fixed inset-y-0 left-0 z-50 border-r border-sidebar-border bg-sidebar">
-            <NavContent pathname={pathname} session={session} />
+            <NavContent pathname={pathname} session={session} label="Main" />
         </div>
     );
 }
@@ -220,7 +227,7 @@ export function MobileSidebar() {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-72 border-r border-sidebar-border">
-                <NavContent pathname={pathname} session={session} setOpen={setOpen} />
+                <NavContent pathname={pathname} session={session} setOpen={setOpen} label="Mobile" />
             </SheetContent>
         </Sheet>
     );

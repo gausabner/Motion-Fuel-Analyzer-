@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import { Building2, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react";
 import { TableCsvButton } from "@/components/reports/ReportExports";
+import { fmtLitres } from "@/lib/format";
 import type { AttributionResult, UnitVoteRow } from "@/lib/vehicle-attribution";
 
-const fmtL = (n: number) => `${n.toLocaleString(undefined, { maximumFractionDigits: 0 })} L`;
 
 /** Units listed inline for a multi-unit match; the CSV always has the full set. */
 const MULTI_LIST_LIMIT = 12;
@@ -92,7 +92,7 @@ export function UnitAttributionCard({
                                                 <span className="text-muted-foreground"> +{u.departments.length - 1} more</span>
                                             )}
                                         </td>
-                                        <td className="py-1.5 pr-3 text-right font-mono">{fmtL(u.litres)}</td>
+                                        <td className="py-1.5 pr-3 text-right font-mono">{fmtLitres(u.litres)}</td>
                                         <td className="py-1.5 text-right"><StatusBadge status={u.status} /></td>
                                     </tr>
                                 ))}
@@ -183,7 +183,7 @@ function SingleUnit({ unit, canAssign, exportUrl }: {
                                         )}
                                     </td>
                                     <td className="py-1.5 pr-3 text-muted-foreground">{v.division ?? "—"}</td>
-                                    <td className="py-1.5 pr-3 text-right font-mono">{fmtL(v.litres)}</td>
+                                    <td className="py-1.5 pr-3 text-right font-mono">{fmtLitres(v.litres)}</td>
                                     <td className="py-1.5 text-right font-mono">{v.txns}</td>
                                 </tr>
                             ))}
@@ -277,7 +277,7 @@ function AssignDialog({ vote, unitNo }: { vote: UnitVoteRow; unitNo: string }) {
                 <DialogHeader>
                     <DialogTitle>Register vote {vote.voteNo}</DialogTitle>
                     <DialogDescription>
-                        {unitNo} books {fmtL(vote.litres)} across {vote.txns} transaction{vote.txns === 1 ? "" : "s"} to this vote.
+                        {unitNo} books {fmtLitres(vote.litres)} across {vote.txns} transaction{vote.txns === 1 ? "" : "s"} to this vote.
                         Cost centres attach to the <strong>vote</strong>, not the unit — so registering it will also
                         attribute every other unit that books fuel to {vote.voteNo}.
                     </DialogDescription>

@@ -157,6 +157,7 @@ export default async function FISPage({
                 dailyData={data.daily}
                 topFleet={data.topFleet}
                 topVotes={data.topVotes}
+                currencySymbol={data.currencySymbol}
             />
         </div>
     );

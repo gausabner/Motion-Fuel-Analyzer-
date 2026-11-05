@@ -191,7 +191,7 @@ export default function RegistryPage() {
                                 <div className="space-y-1 min-w-[260px] flex-1">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department</label>
                                     <Select value={ccForm.department} onValueChange={v => setCcForm({ ...ccForm, department: v })}>
-                                        <SelectTrigger className="bg-background h-10">
+                                        <SelectTrigger aria-label="Department" className="bg-background h-10">
                                             <SelectValue placeholder="Select department..." />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -202,8 +202,9 @@ export default function RegistryPage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-1 min-w-[200px] flex-1">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Division</label>
+                                    <label htmlFor="division-204" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Division</label>
                                     <Input
+                                        id="division-204"
                                         placeholder="e.g. TRAFFIC MANAGEMENT UNIT"
                                         value={ccForm.division}
                                         onChange={e => setCcForm({ ...ccForm, division: e.target.value })}
@@ -211,8 +212,9 @@ export default function RegistryPage() {
                                     />
                                 </div>
                                 <div className="space-y-1 min-w-[180px]">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Vote Number</label>
+                                    <label htmlFor="vote-number-213" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Vote Number</label>
                                     <Input
+                                        id="vote-number-213"
                                         placeholder="e.g. 4520151100655"
                                         value={ccForm.voteNo}
                                         onChange={e => setCcForm({ ...ccForm, voteNo: e.target.value.replace(/\D/g, "") })}
@@ -275,8 +277,9 @@ export default function RegistryPage() {
                         <CardContent className="space-y-6">
                             <div className="flex items-end gap-3 p-4 bg-muted/40 rounded-md border border-border">
                                 <div className="space-y-1 flex-1">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department Name</label>
+                                    <label htmlFor="department-name-277" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department Name</label>
                                     <Input
+                                        id="department-name-277"
                                         placeholder="e.g. DEPARTMENT OF ELECTRICITY"
                                         value={newDept}
                                         onChange={e => setNewDept(e.target.value)}
@@ -348,8 +351,9 @@ export default function RegistryPage() {
                         <CardContent className="space-y-6">
                             <div className="flex flex-wrap items-end gap-3 p-4 bg-muted/40 rounded-md border border-border">
                                 <div className="space-y-1 min-w-[160px]">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Unit Number</label>
+                                    <label htmlFor="unit-number-350" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Unit Number</label>
                                     <Input
+                                        id="unit-number-350"
                                         placeholder="e.g. WM2711"
                                         value={unitForm.unitNo}
                                         onChange={e => setUnitForm({ ...unitForm, unitNo: e.target.value })}
@@ -357,8 +361,9 @@ export default function RegistryPage() {
                                     />
                                 </div>
                                 <div className="space-y-1 flex-1 min-w-[200px]">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Description (optional)</label>
+                                    <label htmlFor="description-359" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Description (optional)</label>
                                     <Input
+                                        id="description-359"
                                         placeholder="e.g. Refuse compactor - Solid Waste"
                                         value={unitForm.description}
                                         onChange={e => setUnitForm({ ...unitForm, description: e.target.value })}
@@ -459,7 +464,7 @@ export default function RegistryPage() {
                                         <div className="space-y-1 min-w-[220px] flex-1">
                                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department</label>
                                             <Select value={bulkForm.department} onValueChange={val => setBulkForm({ department: val, division: "" })}>
-                                                <SelectTrigger className="bg-background h-9"><SelectValue placeholder="Select department..." /></SelectTrigger>
+                                                <SelectTrigger aria-label="Department" className="bg-background h-9"><SelectValue placeholder="Select department..." /></SelectTrigger>
                                                 <SelectContent>
                                                     {departments.map(d => <SelectItem key={d.name} value={d.name}>{d.name}</SelectItem>)}
                                                 </SelectContent>
@@ -472,7 +477,7 @@ export default function RegistryPage() {
                                                 onValueChange={val => setBulkForm({ ...bulkForm, division: val })}
                                                 disabled={!bulkForm.department}
                                             >
-                                                <SelectTrigger className="bg-background h-9"><SelectValue placeholder="Select division..." /></SelectTrigger>
+                                                <SelectTrigger aria-label="Division" className="bg-background h-9"><SelectValue placeholder="Select division..." /></SelectTrigger>
                                                 <SelectContent>
                                                     {divisionsFor(bulkForm.department).map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                                                 </SelectContent>
@@ -554,7 +559,7 @@ export default function RegistryPage() {
                                                                     <div className="space-y-1 min-w-[240px] flex-1">
                                                                         <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department</label>
                                                                         <Select value={assignForm.department} onValueChange={val => setAssignForm({ ...assignForm, department: val })}>
-                                                                            <SelectTrigger className="bg-background h-9">
+                                                                            <SelectTrigger aria-label="Department" className="bg-background h-9">
                                                                                 <SelectValue placeholder="Select department..." />
                                                                             </SelectTrigger>
                                                                             <SelectContent>
@@ -565,8 +570,9 @@ export default function RegistryPage() {
                                                                         </Select>
                                                                     </div>
                                                                     <div className="space-y-1 min-w-[220px] flex-1">
-                                                                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Division</label>
+                                                                        <label htmlFor="division-567" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Division</label>
                                                                         <Input
+                                                                            id="division-567"
                                                                             placeholder="e.g. STREET LIGHTING"
                                                                             value={assignForm.division}
                                                                             onChange={e => setAssignForm({ ...assignForm, division: e.target.value })}

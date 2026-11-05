@@ -24,6 +24,7 @@ import { motion } from "framer-motion";
 import { BarChart3, LineChart as LineIcon, AreaChart as AreaIcon, CalendarDays, CalendarRange, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, startOfYear } from "date-fns";
+import { fmtMoney, DEFAULT_CURRENCY } from "@/lib/format";
 
 // Data palette — see UI_Redesign_Plan.pdf §05: petrol sky, diesel deep blue
 const PETROL = '#60A5FA';
@@ -46,11 +47,13 @@ interface TopItem {
 export function DashboardCharts({
     dailyData,
     topFleet,
-    topVotes
+    topVotes,
+    currencySymbol = DEFAULT_CURRENCY
 }: {
     dailyData: DailyDataPoint[],
     topFleet: TopItem[],
-    topVotes: TopItem[]
+    topVotes: TopItem[],
+    currencySymbol?: string
 }) {
     const [mainChartType, setMainChartType] = useState<'line' | 'area' | 'bar'>('area');
     const [granularity, setGranularity] = useState<'daily' | 'monthly' | 'yearly'>('daily');
@@ -405,7 +408,7 @@ export function DashboardCharts({
                         <div>
                             <CardTitle className="text-sm font-bold uppercase tracking-wide">Financial Velocity</CardTitle>
                             <p className="text-xs text-muted-foreground font-medium mt-1 tracking-wide">
-                                Cost accumulation over time (N$)
+                                Cost accumulation over time ({currencySymbol})
                             </p>
                         </div>
                     </div>
@@ -441,7 +444,7 @@ export function DashboardCharts({
                                     backgroundColor: '#FFFFFF',
                                     color: '#000000'
                                 }}
-                                formatter={(value: any) => [`N$${Number(value).toLocaleString()}`, 'Total Cost']}
+                                formatter={(value: any) => [fmtMoney(Number(value), { decimals: 0, currency: currencySymbol }), 'Total Cost']}
                             />
                             <Area type="monotone" dataKey="cost" stroke="#2563EB" strokeWidth={2.5} fillOpacity={1} fill="url(#colorCost)" name="Total Cost" />
                         </AreaChart>

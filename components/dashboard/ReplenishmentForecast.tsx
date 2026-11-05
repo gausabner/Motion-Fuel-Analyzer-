@@ -2,8 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, CheckCircle2, HelpCircle } from "lucide-react";
 import type { FuelForecast } from "@/lib/fuel-flow";
+import { fmtLitres } from "@/lib/format";
 
-const fmtL = (n: number) => `${Math.round(n).toLocaleString()} L`;
 const fmtDate = (d: Date | null) =>
     d ? d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
 
@@ -61,8 +61,8 @@ export function ReplenishmentForecast({
                             {forecasts.map(f => (
                                 <tr key={f.fuelType} className="border-b border-border/50 last:border-0">
                                     <td className="py-2.5 pr-3 font-bold text-foreground">{f.fuelType}</td>
-                                    <td className="py-2.5 pr-3 text-right font-mono">{fmtL(f.burnLitresPerDay)}/d</td>
-                                    <td className="py-2.5 pr-3 text-right font-mono">{fmtL(f.avgDeliveryLitres)}</td>
+                                    <td className="py-2.5 pr-3 text-right font-mono">{fmtLitres(f.burnLitresPerDay)}/d</td>
+                                    <td className="py-2.5 pr-3 text-right font-mono">{fmtLitres(f.avgDeliveryLitres)}</td>
                                     <td className="py-2.5 pr-3 text-right font-mono">
                                         {f.cycleDays ? `${f.cycleDays.toFixed(1)} d` : "—"}
                                         {f.observedGapDays !== null && (

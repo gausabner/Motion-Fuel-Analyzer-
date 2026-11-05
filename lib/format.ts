@@ -15,8 +15,8 @@
 
 export const DEFAULT_CURRENCY = "N$";
 
-/** Narrow non-breaking space: keeps "1 234" and "1 234 L" from wrapping mid-number. */
-const NNBSP = " ";
+/** Non-breaking space: keeps the figure and its unit together without closing the gap. */
+const NBSP = "\u00A0";
 
 type MoneyOptions = {
     /** Decimal places. Default 2 — use 0 for headline KPIs where cents are noise. */
@@ -54,7 +54,7 @@ export function fmtLitres(value: number | null | undefined, decimals = 0): strin
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
     });
-    return `${body}${NNBSP}L`;
+    return `${body}${NBSP}L`;
 }
 
 /** Price per litre, where cents genuinely matter: N$23.38/L. */
@@ -73,4 +73,14 @@ export function fmtPercent(value: number | null | undefined, decimals = 1): stri
 export function fmtShare(part: number, total: number, decimals = 1): string {
     if (!Number.isFinite(part) || !Number.isFinite(total) || total === 0) return "—";
     return fmtPercent((part / total) * 100, decimals);
+}
+
+/**
+ * A plain count (transactions, units, rows). Grouped, because an ungrouped
+ * "27419" sitting beside a grouped "1,851,214 L" in the same table row reads
+ * as a different kind of number than it is.
+ */
+export function fmtCount(value: number | null | undefined): string {
+    if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+    return Math.round(value).toLocaleString();
 }

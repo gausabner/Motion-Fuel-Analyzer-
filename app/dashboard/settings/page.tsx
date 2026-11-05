@@ -61,9 +61,9 @@ export default function SettingsPage() {
     return (
         <div className="max-w-4xl space-y-10">
             <div>
-                <h2 className="text-4xl font-extrabold tracking-tight text-brand-dark flex items-center gap-3">
-                    <Settings className="h-10 w-10 text-brand-primary" /> System Settings
-                </h2>
+                <h1 className="text-4xl font-extrabold tracking-tight text-brand-dark flex items-center gap-3">
+                    <Settings className="h-10 w-10 text-brand-primary" aria-hidden="true" /> System settings
+                </h1>
                 <p className="text-muted-foreground mt-2 font-medium">
                     Configure localization, currency, and standard fuel rates.
                 </p>
@@ -81,8 +81,9 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-6 pt-8">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Currency Symbol</label>
+                                <label htmlFor="currency-symbol" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Currency Symbol</label>
                                 <Input
+                                    id="currency-symbol"
                                     value={settings.currencySymbol}
                                     onChange={e => setSettings({ ...settings, currencySymbol: e.target.value })}
                                     className="bg-background/80 border-input rounded-2xl h-12 text-lg font-bold"
@@ -90,8 +91,9 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Currency Code</label>
+                                <label htmlFor="currency-code" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Currency Code</label>
                                 <Input
+                                    id="currency-code"
                                     value={settings.currencyCode}
                                     onChange={e => setSettings({ ...settings, currencyCode: e.target.value })}
                                     className="bg-background/80 border-input rounded-2xl h-12"
@@ -113,8 +115,9 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-6 pt-8">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Petrol Price ({settings.currencyCode})</label>
+                                <label htmlFor="petrol-price" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Petrol Price ({settings.currencyCode})</label>
                                 <Input
+                                    id="petrol-price"
                                     type="number"
                                     value={settings.petrolPrice}
                                     onChange={e => setSettings({ ...settings, petrolPrice: parseFloat(e.target.value) })}
@@ -123,8 +126,9 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Diesel Price ({settings.currencyCode})</label>
+                                <label htmlFor="diesel-price" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Diesel Price ({settings.currencyCode})</label>
                                 <Input
+                                    id="diesel-price"
                                     type="number"
                                     value={settings.dieselPrice}
                                     onChange={e => setSettings({ ...settings, dieselPrice: parseFloat(e.target.value) })}
@@ -133,7 +137,7 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <p className="text-xs text-muted-foreground italic p-4 bg-brand-light rounded-2xl">
-                                These rates are used by the Cost Savings Calculator to estimate spend.
+                                These rates are the benchmark the dashboard compares the actual average price against.
                             </p>
                         </CardContent>
                     </Card>
@@ -150,7 +154,7 @@ export default function SettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-6 pt-8">
                             <div className="flex items-center justify-between">
-                                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Interface Theme</label>
+                                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Interface Theme</span>
                                 <ThemeToggle />
                             </div>
                             <p className="text-sm text-muted-foreground">

@@ -7,9 +7,9 @@ import {
     ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import type { FlowBucket, Granularity } from "@/lib/fuel-flow";
+import { fmtLitres } from "@/lib/format";
 
 const GRANULARITIES: Granularity[] = ["daily", "monthly", "yearly"];
-const fmtL = (n: number) => `${Math.round(n).toLocaleString()} L`;
 
 /**
  * Issued (out to vehicles) against received (deliveries in). The two series are
@@ -81,7 +81,7 @@ export function FlowChart({
                             <XAxis dataKey="name" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={24} />
                             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} width={44} />
                             <Tooltip
-                                formatter={(value: any, name: any) => [fmtL(Number(value)), name]}
+                                formatter={(value: any, name: any) => [fmtLitres(Number(value)), name]}
                                 contentStyle={{ fontSize: 12, borderRadius: 8 }}
                             />
                             <Legend wrapperStyle={{ fontSize: 12 }} />

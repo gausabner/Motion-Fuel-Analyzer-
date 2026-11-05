@@ -279,6 +279,7 @@ export default async function DashboardPage({
                 dailyData={data.daily}
                 topFleet={data.topFleet}
                 topVotes={data.topVotes}
+                currencySymbol={data.currencySymbol}
             />
         </div>
     );

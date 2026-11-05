@@ -177,6 +177,35 @@ export default async function FleetPage({
     // Rankings exclude the no-unit placeholder: it is not a vehicle, and it would
     // otherwise rank 3rd overall. It stays in the table and in every total below.
     const rankable = fleet.filter(f => !isUnattributedUnit(f.id));
+
+    // "High usage" has to compare like with like. This badge used to test a
+    // unit's cost in N$ against the fleet's MEAN litres — two different units of
+    // measurement — so 785 of 921 units lit up. A flag that fires on 85% of the
+    // table is noise the reader learns to ignore.
+    //
+    // The stray 1.5 was the giveaway: that constant belongs to the Tukey fence,
+    // Q3 + 1.5 x IQR, the standard rule for "unusually high" in a skewed
+    // distribution. Fuel use is exactly that — a long tail of heavy plant — so
+    // mean and standard deviation both mislead here. The fence flags 89 of 921
+    // units (9.7%), which is what an exception flag is for.
+    //
+    // The placeholder row is excluded from the basis for the same reason it is
+    // excluded from the rankings: it is not a vehicle.
+    const sortedLitres = rankable
+        .map(v => v.petrolVolume + v.dieselVolume)
+        .sort((a, b) => a - b);
+    /** Linear-interpolated quantile; matches the usual spreadsheet definition. */
+    const quantile = (sorted: number[], q: number) => {
+        if (sorted.length === 0) return 0;
+        const pos = (sorted.length - 1) * q;
+        const base = Math.floor(pos);
+        const rest = pos - base;
+        const next = sorted[base + 1];
+        return next === undefined ? sorted[base] : sorted[base] + rest * (next - sorted[base]);
+    };
+    const q1 = quantile(sortedLitres, 0.25);
+    const q3 = quantile(sortedLitres, 0.75);
+    const highUsageLitres = q3 + 1.5 * (q3 - q1);
     const topFleetForChart = rankable.slice(0, 10).map(f => ({ name: f.id, value: f.petrolVolume + f.dieselVolume }));
 
     const highConsumer = rankable[0]?.id ?? "N/A";
@@ -266,6 +295,7 @@ export default async function FleetPage({
                     dailyData={dailyData}
                     topFleet={topFleetForChart}
                     topVotes={topVotesForChart}
+                    currencySymbol={cur}
                 />
             </section>
 
@@ -294,7 +324,10 @@ export default async function FleetPage({
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    pageRows.map((unit) => (
+                                    pageRows.map((unit) => {
+                                    const unitLitres = unit.petrolVolume + unit.dieselVolume;
+                                    const highUsage = highUsageLitres > 0 && unitLitres > highUsageLitres;
+                                    return (
                                         <TableRow key={unit.id} className="hover:bg-muted/40 transition-colors border-b border-border last:border-0 text-xs md:text-sm">
                                             <TableCell className="font-bold text-foreground py-4">
                                                 {isUnattributedUnit(unit.id) ? (
@@ -319,16 +352,22 @@ export default async function FleetPage({
                                                 {unit.transactionCount}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge
-                                                    className={unit.totalCost > (totalFuel / fleet.length * 1.5)
-                                                        ? 'bg-yellow-400 text-foreground hover:bg-yellow-500 rounded-none border-0'
-                                                        : 'bg-muted text-muted-foreground hover:bg-zinc-200 rounded-none border-0'}
-                                                >
-                                                    {unit.totalCost > (totalFuel / fleet.length * 1.5) ? 'High Usage' : 'Normal'}
-                                                </Badge>
+                                                {isUnattributedUnit(unit.id) ? (
+                                                    <span className="text-muted-foreground" title="Not a vehicle — no usage baseline applies">—</span>
+                                                ) : (
+                                                    <Badge
+                                                        title={`${fmtLitres(unitLitres)} this period. Flagged above ${fmtLitres(highUsageLitres)}, the fleet's upper quartile (${fmtLitres(q3)}) plus 1.5x the interquartile range.`}
+                                                        className={highUsage
+                                                            ? 'bg-yellow-400 text-foreground hover:bg-yellow-500 rounded-none border-0'
+                                                            : 'bg-muted text-muted-foreground hover:bg-zinc-200 rounded-none border-0'}
+                                                    >
+                                                        {highUsage ? 'High usage' : 'Normal'}
+                                                    </Badge>
+                                                )}
                                             </TableCell>
                                         </TableRow>
-                                    ))
+                                    );
+                                    })
                                 )}
                             </TableBody>
                         </Table>
