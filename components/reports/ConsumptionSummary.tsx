@@ -23,9 +23,9 @@ type Summary = {
 export function ConsumptionSummary({ data, currencySymbol = "N$" }: { data: Summary; currencySymbol?: string }) {
     const total = data.petrolVolume + data.dieselVolume;
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-                <div className="p-6 bg-muted/40 border border-border rounded-md">
+                <div className="p-4 bg-muted/40 border border-border rounded-md">
                     <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
                         <Fuel className="h-4 w-4" /> Total Petrol Consumption
                     </div>
@@ -34,7 +34,7 @@ export function ConsumptionSummary({ data, currencySymbol = "N$" }: { data: Summ
                         {fmtMoney(data.petrolCost, { currency: currencySymbol })} · {fmtCount(data.petrolCount)} transactions
                     </p>
                 </div>
-                <div className="p-6 bg-muted/40 border border-border rounded-md">
+                <div className="p-4 bg-muted/40 border border-border rounded-md">
                     <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
                         <Droplets className="h-4 w-4" /> Total Diesel Consumption
                     </div>
@@ -49,11 +49,11 @@ export function ConsumptionSummary({ data, currencySymbol = "N$" }: { data: Summ
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow>
-                            <TableHead className="font-bold uppercase tracking-wider text-[10px]">Fuel Type</TableHead>
-                            <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Volume (L)</TableHead>
-                            <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Cost</TableHead>
-                            <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Transactions</TableHead>
-                            <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Share</TableHead>
+                            <TableHead className="font-bold uppercase tracking-wider text-xs">Fuel Type</TableHead>
+                            <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Volume (L)</TableHead>
+                            <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Cost</TableHead>
+                            <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Transactions</TableHead>
+                            <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Share</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

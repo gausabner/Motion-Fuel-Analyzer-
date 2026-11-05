@@ -78,8 +78,8 @@ export function FlowChart({
                     <ResponsiveContainer width="100%" height={320}>
                         <ComposedChart data={rows} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
-                            <XAxis dataKey="name" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={24} />
-                            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} width={44} />
+                            <XAxis dataKey="name" tick={{ fontSize: 12 }} interval="preserveStartEnd" minTickGap={24} />
+                            <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} width={44} />
                             <Tooltip
                                 formatter={(value: any, name: any) => [fmtLitres(Number(value)), name]}
                                 contentStyle={{ fontSize: 12, borderRadius: 8 }}

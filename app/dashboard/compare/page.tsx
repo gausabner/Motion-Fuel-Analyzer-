@@ -34,7 +34,7 @@ function DeltaCell({ deltaVolume, deltaPct }: { deltaVolume: number; deltaPct: n
         <span className={`inline-flex items-center gap-1 justify-end font-semibold tabular-nums ${cls}`}>
             <Icon className="h-3.5 w-3.5" />
             {deltaVolume >= 0 ? "+" : ""}{deltaVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L
-            {deltaPct !== null && <span className="text-[10px] opacity-80">({deltaPct >= 0 ? "+" : ""}{deltaPct.toFixed(1)}%)</span>}
+            {deltaPct !== null && <span className="text-xs opacity-80">({deltaPct >= 0 ? "+" : ""}{deltaPct.toFixed(1)}%)</span>}
         </span>
     );
 }
@@ -109,7 +109,7 @@ export default async function ComparePage({
     ].filter(Boolean).join(" · ");
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader
                 title="Period comparison"
                 scope={`${DIM_LABEL[dimension]} · ${aLabel}  vs  ${bLabel}${activeFilters ? " · " + activeFilters : ""}`}
@@ -206,10 +206,10 @@ export default async function ComparePage({
                         <Table>
                             <TableHeader className="bg-muted/50 sticky top-0 z-10">
                                 <TableRow>
-                                    <TableHead className="font-bold uppercase tracking-wider text-[10px]">{DIM_LABEL[dimension]}</TableHead>
-                                    <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">A · Volume (L)</TableHead>
-                                    <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">B · Volume (L)</TableHead>
-                                    <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Change</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-wider text-xs">{DIM_LABEL[dimension]}</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-wider text-xs text-right">A · Volume (L)</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-wider text-xs text-right">B · Volume (L)</TableHead>
+                                    <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Change</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

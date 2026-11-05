@@ -150,7 +150,7 @@ export function FuelLogFilters({
                 <div className="flex flex-wrap items-end gap-4 pt-4 border-t border-border">
                     {!hideFuelType && (
                     <div className="w-[170px] space-y-1.5">
-                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Fuel type</label>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Fuel type</label>
                         <Select value={fuelType} onValueChange={setFuelType}>
                             <SelectTrigger className="bg-background h-9">
                                 <SelectValue placeholder="All types" />
@@ -167,7 +167,7 @@ export function FuelLogFilters({
 
                     {!hideCostCentres && (
                     <div className="flex-1 min-w-[200px] max-w-sm space-y-1.5" key="dept">
-                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Department</label>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Department</label>
                         <Popover open={openDept} onOpenChange={setOpenDept}>
                             <PopoverTrigger asChild>
                                 <Button
@@ -192,7 +192,7 @@ export function FuelLogFilters({
                                                 <CommandItem
                                                     key={dept}
                                                     value={dept}
-                                                    className="text-[0.7rem] py-2 cursor-pointer"
+                                                    className="text-xs py-2 cursor-pointer"
                                                     onSelect={(currentValue) => {
                                                         const newDept = currentValue === department ? "" : currentValue;
                                                         setDepartment(newDept);
@@ -222,7 +222,7 @@ export function FuelLogFilters({
                     {/* Division appears only once a department is chosen */}
                     {!hideCostCentres && department && availableDivisions.length > 0 && (
                         <div className="flex-1 min-w-[200px] max-w-sm space-y-1.5">
-                            <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Division</label>
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Division</label>
                             <Popover open={openDiv} onOpenChange={setOpenDiv}>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -247,7 +247,7 @@ export function FuelLogFilters({
                                                     <CommandItem
                                                         key={div}
                                                         value={div}
-                                                        className="text-[0.7rem] py-2 cursor-pointer"
+                                                        className="text-xs py-2 cursor-pointer"
                                                         onSelect={(currentValue) => {
                                                             setDivision(currentValue === division ? "" : currentValue);
                                                             setOpenDiv(false);

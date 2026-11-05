@@ -108,9 +108,9 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
                 <div className="flex items-center gap-2">
                     <ChartExportButton targetRef={chartRef} fileName={`fleet_matrix_${granularity}`} />
                     <ToggleGroup type="single" value={granularity} onValueChange={(v) => v && setGranularity(v as Granularity)}>
-                        <ToggleGroupItem value="daily" className="text-[10px] font-bold uppercase" aria-label="Daily">Daily</ToggleGroupItem>
-                        <ToggleGroupItem value="weekly" className="text-[10px] font-bold uppercase" aria-label="Weekly">Weekly</ToggleGroupItem>
-                        <ToggleGroupItem value="monthly" className="text-[10px] font-bold uppercase" aria-label="Monthly">Monthly</ToggleGroupItem>
+                        <ToggleGroupItem value="daily" className="text-xs font-bold uppercase" aria-label="Daily">Daily</ToggleGroupItem>
+                        <ToggleGroupItem value="weekly" className="text-xs font-bold uppercase" aria-label="Weekly">Weekly</ToggleGroupItem>
+                        <ToggleGroupItem value="monthly" className="text-xs font-bold uppercase" aria-label="Monthly">Monthly</ToggleGroupItem>
                     </ToggleGroup>
                 </div>
             </CardHeader>
@@ -125,7 +125,7 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
                             domain={[-1, vehiclesList.length]}
                             ticks={vehiclesList.map((_, i) => i)}
                             tickFormatter={(i) => vehiclesList[i] || ''}
-                            tick={{ fontSize: 10, fill: PALETTE.text, dy: 10, fontWeight: 600 }}
+                            tick={{ fontSize: 12, fill: PALETTE.text, dy: 10, fontWeight: 600 }}
                             angle={-45}
                             textAnchor="end"
                             axisLine={false}
@@ -138,7 +138,7 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
                             dataKey="quantity"
                             name="Volume"
                             unit=" L"
-                            tick={{ fontSize: 10, fill: PALETTE.text, fontWeight: 600 }}
+                            tick={{ fontSize: 12, fill: PALETTE.text, fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
                         />
@@ -168,7 +168,7 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
                         <Legend
                             verticalAlign="top"
                             height={36}
-                            wrapperStyle={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                            wrapperStyle={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                         />
                         <Scatter name="Petrol" data={chartData.filter(d => d.fuelType === 'Petrol')} fill={PALETTE.petrol} shape="circle" />
                         <Scatter name="Diesel" data={chartData.filter(d => d.fuelType === 'Diesel')} fill={PALETTE.diesel} shape="square" />

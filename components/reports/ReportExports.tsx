@@ -52,7 +52,7 @@ export function TableCsvButton({ filename, headers, rows, serverUrl }: {
     return (
         <Button
             variant="outline" size="sm" onClick={handleClick}
-            className="h-8 font-bold uppercase text-[10px] tracking-wider"
+            className="h-8 font-bold uppercase text-xs tracking-wider"
         >
             <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
         </Button>

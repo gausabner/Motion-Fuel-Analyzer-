@@ -89,7 +89,7 @@ export default async function FuelLogsPage({
     });
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader
                 title="Fuel logs"
                 scope="Raw transaction log — all types (FIS, FRE, GRN, ISS, RET, TRN)."
@@ -137,14 +137,14 @@ export default async function FuelLogsPage({
                                                 <Badge
                                                     variant="outline"
                                                     className={tx.fuelType?.toLowerCase().includes('petrol')
-                                                        ? 'border-black text-foreground font-bold bg-card text-[10px] uppercase rounded-sm'
-                                                        : 'border-yellow-400 text-foreground font-bold bg-yellow-400 text-[10px] uppercase rounded-sm'}
+                                                        ? 'border-black text-foreground font-bold bg-card text-xs uppercase rounded-sm'
+                                                        : 'border-yellow-400 text-foreground font-bold bg-yellow-400 text-xs uppercase rounded-sm'}
                                                 >
                                                     {tx.fuelType}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="font-black text-foreground text-xs">{tx.vehicleId || 'N/A'}</TableCell>
-                                            <TableCell className="text-muted-foreground text-[10px] font-mono">{tx.transVoteNo || '—'}</TableCell>
+                                            <TableCell className="text-muted-foreground text-xs font-mono">{tx.transVoteNo || '—'}</TableCell>
                                             <TableCell className="text-right font-mono font-bold text-xs">
                                                 {tx.transQty.toFixed(2)}
                                             </TableCell>

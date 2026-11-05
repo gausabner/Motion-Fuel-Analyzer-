@@ -17,10 +17,10 @@ export function DailyConsumptionTable({ data }: { data: any[] }) {
             <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Date</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Fuel Type</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Total Volume</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Total Cost</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Date</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Fuel Type</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Total Volume</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Total Cost</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

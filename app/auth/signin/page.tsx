@@ -57,7 +57,7 @@ export default function SignInPage() {
                         <img src="/logo-on-light.svg" alt="Motion Fuel Analyzer" className="w-44 h-auto object-contain" />
                     </Link>
 
-                    <div className="space-y-6 max-w-sm w-full">
+                    <div className="space-y-4 max-w-sm w-full">
                         <div>
                             <h1 className="text-3xl font-extrabold tracking-tight">Welcome back</h1>
                             <p className="text-muted-foreground font-medium mt-2">Sign in to open the fleet command centre.</p>
@@ -154,13 +154,13 @@ export default function SignInPage() {
 
                 {/* Glass preview card */}
                 <motion.div
-                    className="relative z-10 w-full max-w-md bg-white/[0.06] backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-2xl"
+                    className="relative z-10 w-full max-w-md bg-white/[0.06] backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl"
                     animate={reduceMotion ? undefined : { y: [0, -6, 0] }}
                     transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                 >
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <p className="text-[10px] text-[#94A3B8] font-semibold uppercase tracking-widest mb-1">May consumption</p>
+                            <p className="text-xs text-[#94A3B8] font-semibold uppercase tracking-widest mb-1">May consumption</p>
                             <h3 className="text-3xl font-extrabold text-white tabular-nums">111,424 L</h3>
                         </div>
                         <div className="bg-emerald-500/15 text-emerald-300 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1">
@@ -185,11 +185,11 @@ export default function SignInPage() {
                             { label: "Petrol", w: "32%", c: "#60A5FA" },
                         ].map((r) => (
                             <div key={r.label} className="flex items-center gap-3">
-                                <span className="w-12 text-[10px] font-semibold uppercase tracking-wider text-[#94A3B8]">{r.label}</span>
+                                <span className="w-12 text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">{r.label}</span>
                                 <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
                                     <div className="h-full rounded-full" style={{ width: r.w, background: r.c }} />
                                 </div>
-                                <span className="text-[10px] font-bold text-white tabular-nums flex items-center gap-1">
+                                <span className="text-xs font-bold text-white tabular-nums flex items-center gap-1">
                                     <Droplets className="w-3 h-3 text-[#60A5FA]" /> {r.w}
                                 </span>
                             </div>

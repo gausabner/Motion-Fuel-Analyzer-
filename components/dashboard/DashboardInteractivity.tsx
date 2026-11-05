@@ -88,7 +88,7 @@ export function DashboardInteractivity({
             </div>
 
             {/* Status Widget Row */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
                 <StatusProgressWidget
                     petrolPercentage={petrolPct}
                     dieselPercentage={dieselPct}

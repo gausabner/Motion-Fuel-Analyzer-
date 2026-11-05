@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export default function DashboardLoading() {
     return (
-        <div className="space-y-10 animate-in fade-in duration-300">
+        <div className="space-y-8 animate-in fade-in duration-300">
             {/* Page header */}
             <div className="flex justify-between items-center gap-4">
                 <div className="space-y-2">
@@ -33,7 +33,7 @@ export default function DashboardLoading() {
             </div>
 
             {/* KPI row */}
-            <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 {Array.from({ length: 4 }).map((_, i) => (
                     <Skeleton key={i} className="h-[130px] rounded-xl" />
                 ))}

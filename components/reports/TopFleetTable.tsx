@@ -15,10 +15,10 @@ export function TopFleetTable({ data }: { data: any[] }) {
             <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Rank</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Fleet Unit</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Total Volume (L)</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Total Cost</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Rank</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Fleet Unit</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Total Volume (L)</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Total Cost</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

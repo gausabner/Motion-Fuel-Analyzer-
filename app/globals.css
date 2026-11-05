@@ -138,12 +138,25 @@
 @layer base {
 
   /*
-   * Global density: everything rem-based (text, menus, logo widths, paddings,
-   * section gaps) renders 32% smaller than the browser default, per the
-   * 2026-07 sizing directive. Adjust this one value to retune the whole app.
+   * The root stays at the browser default. It was pinned to 68%, which bought
+   * density by shrinking the root em — and the root em is also the unit the
+   * user's own font-size preference arrives in, so scaling it down overrode
+   * that preference for everyone, including the people who had raised it.
+   *
+   * The cost was measured, not theoretical: body text landed at 10.88px, 160
+   * elements on the Fleet page rendered at 9.52px or below, and the largest
+   * heading on the page reached only 20.4px. It also inverted the type scale,
+   * because the px-pinned labels scattered through the components did not
+   * shrink with it: text-xs resolved to 8.16px while text-[10px] stayed at
+   * 10px, so the class named "extra small" rendered larger than the one
+   * written as a hard minimum.
+   *
+   * Density now comes from spacing — padding, gaps and the sidebar width —
+   * which is where density belongs, because tightening those does not touch
+   * what the reader can actually resolve.
    */
   html {
-    font-size: 68%;
+    font-size: 100%;
   }
 
   * {

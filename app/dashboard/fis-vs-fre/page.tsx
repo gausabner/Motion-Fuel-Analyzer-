@@ -61,7 +61,7 @@ export default async function FisVsFrePage({
     const frequencyDays = deliveries > 1 && spanDays > 0 ? spanDays / (deliveries - 1) : null;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader
                 title="FIS vs FRE"
                 scope="Fuel issued to the fleet against fuel received into storage · issues and deliveries are separate flows and are never summed"
@@ -69,7 +69,7 @@ export default async function FisVsFrePage({
 
             <FuelLogFilters costCentres={costCentres} hideVehicle hideCostCentres />
 
-            <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 <IndustrialKPI
                     label="Issued (FIS)"
                     value={`${Math.round(issued).toLocaleString()} L`}
@@ -96,7 +96,7 @@ export default async function FisVsFrePage({
                 />
             </div>
 
-            <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 <IndustrialKPI
                     label="Fuel spend"
                     value={money(cost.receivedCost)}

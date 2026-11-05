@@ -210,7 +210,7 @@ export default async function ReportsPage({
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader
                 title="Fuel report"
                 scope={`${scopeLabel} · every table exports to CSV, the full report to PDF`}

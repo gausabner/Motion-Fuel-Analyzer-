@@ -18,7 +18,7 @@ function Delta({ a, b, unit, currency }: { a: number; b: number; unit?: string; 
         <span className={`inline-flex items-center gap-1 justify-end font-semibold tabular-nums ${cls}`}>
             <Icon className="h-3.5 w-3.5" />
             {d >= 0 ? "+" : "−"}{val}
-            {pct !== null && <span className="text-[10px] opacity-80">({pct >= 0 ? "+" : ""}{pct.toFixed(1)}%)</span>}
+            {pct !== null && <span className="text-xs opacity-80">({pct >= 0 ? "+" : ""}{pct.toFixed(1)}%)</span>}
         </span>
     );
 }
@@ -33,12 +33,12 @@ function FuelPanel({ label, icon: Icon, stat, aLabel, bLabel, currency }: {
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{aLabel}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{aLabel}</p>
                     <p className="text-xl font-extrabold tabular-nums mt-1">{stat.aVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L</p>
                     <p className="text-xs text-muted-foreground">{currency}{stat.aCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
                 <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{bLabel}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{bLabel}</p>
                     <p className="text-xl font-extrabold tabular-nums mt-1">{stat.bVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L</p>
                     <p className="text-xs text-muted-foreground">{currency}{stat.bCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
@@ -82,13 +82,13 @@ export function FuelSplitComparison({
                     <Table>
                         <TableHeader className="bg-muted/50">
                             <TableRow>
-                                <TableHead className="font-bold uppercase tracking-wider text-[10px]">Fuel</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">A · Volume (L)</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">A · Cost</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">B · Volume (L)</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">B · Cost</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Δ Volume</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Δ Cost</TableHead>
+                                <TableHead className="font-bold uppercase tracking-wider text-xs">Fuel</TableHead>
+                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">A · Volume (L)</TableHead>
+                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">A · Cost</TableHead>
+                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">B · Volume (L)</TableHead>
+                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">B · Cost</TableHead>
+                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Δ Volume</TableHead>
+                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Δ Cost</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

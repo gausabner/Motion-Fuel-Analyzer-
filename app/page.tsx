@@ -90,7 +90,7 @@ export default function HomePage() {
                                     <Droplets className="w-4 h-4 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">This month</p>
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">This month</p>
                                     <p className="text-lg font-extrabold tabular-nums">111,424 L</p>
                                 </div>
                             </div>
@@ -106,7 +106,7 @@ export default function HomePage() {
                                     <TrendingDown className="w-4 h-4 text-emerald-700" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Consumption</p>
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Consumption</p>
                                     <p className="text-lg font-extrabold tabular-nums text-emerald-700">▼ 4% vs April</p>
                                 </div>
                             </div>
@@ -122,7 +122,7 @@ export default function HomePage() {
                                     <Truck className="w-4 h-4 text-primary" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Active units</p>
+                                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Active units</p>
                                     <p className="text-lg font-extrabold tabular-nums">570</p>
                                 </div>
                             </div>

@@ -34,10 +34,10 @@ export function RecentUploads() {
                     <Table>
                         <TableHeader className="bg-muted/50 sticky top-0 z-10">
                             <TableRow>
-                                <TableHead className="text-[10px] uppercase font-bold">File</TableHead>
-                                <TableHead className="text-[10px] uppercase font-bold">Uploaded</TableHead>
-                                <TableHead className="text-[10px] uppercase font-bold text-right">Rows</TableHead>
-                                <TableHead className="text-[10px] uppercase font-bold text-right">Original</TableHead>
+                                <TableHead className="text-xs uppercase font-bold">File</TableHead>
+                                <TableHead className="text-xs uppercase font-bold">Uploaded</TableHead>
+                                <TableHead className="text-xs uppercase font-bold text-right">Rows</TableHead>
+                                <TableHead className="text-xs uppercase font-bold text-right">Original</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

@@ -38,7 +38,7 @@ export function UploadTemplates() {
                         <div className="min-w-0">
                             <p className="text-sm font-bold text-foreground">{t.label}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">{t.description}</p>
-                            <p className="text-[10px] text-muted-foreground mt-1 font-mono truncate">
+                            <p className="text-xs text-muted-foreground mt-1 font-mono truncate">
                                 {t.headers.slice(0, 4).join(" · ")} · +{t.headers.length - 4} more
                             </p>
                         </div>
@@ -52,7 +52,7 @@ export function UploadTemplates() {
                         </Button>
                     </div>
                 ))}
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                     Each file carries a “How to use” sheet with the column rules — date formats especially, since both
                     reports use yyyymmdd rather than a real date.
                 </p>

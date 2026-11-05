@@ -19,14 +19,14 @@ function TrendBadge({ trend }: { trend: NonNullable<IndustrialKPIProps['trend']>
     return (
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
             <span className={cn(
-                "text-[10px] font-bold px-1.5 py-0.5 rounded-md inline-flex items-center gap-0.5",
+                "text-xs font-bold px-1.5 py-0.5 rounded-md inline-flex items-center gap-0.5",
                 sentiment === 'good' && "bg-emerald-100 text-emerald-700",
                 sentiment === 'bad' && "bg-red-100 text-red-700",
                 sentiment === 'neutral' && "bg-muted text-muted-foreground",
             )}>
                 {trend.direction === 'up' ? '▲' : '▼'} {trend.value}%
             </span>
-            {trend.label && <span className="text-[10px] text-muted-foreground">{trend.label}</span>}
+            {trend.label && <span className="text-xs text-muted-foreground">{trend.label}</span>}
         </span>
     );
 }
@@ -63,16 +63,16 @@ export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, accen
                         <Icon className="w-[18px] h-[18px] text-primary" />
                     </div>
                     <div className="min-w-0">
-                        <span className="block text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-widest truncate">{label}</span>
+                        <span className="block text-xs font-semibold text-muted-foreground uppercase tracking-widest truncate">{label}</span>
                         {subValue && (
-                            <span className="block text-[10px] md:text-[11px] text-muted-foreground/80 truncate">{subValue}</span>
+                            <span className="block text-xs text-muted-foreground/80 truncate">{subValue}</span>
                         )}
                     </div>
                 </div>
 
                 <div>
                     <div className="flex items-baseline gap-2 flex-wrap max-w-full">
-                        <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight text-foreground tabular-nums break-all">
+                        <div className="text-lg sm:text-xl md:text-2xl xl:text-3xl font-extrabold tracking-tight text-foreground tabular-nums break-words">
                             {value}
                         </div>
                         {trend && !bottomTrend && <TrendBadge trend={trend} />}

@@ -19,7 +19,7 @@ function StatusPill({ status }: { status: string }) {
     const cls = status === "ACTIVE" ? "bg-emerald-100 text-emerald-700"
         : status === "PENDING" ? "bg-amber-100 text-amber-700"
             : "bg-red-100 text-red-700";
-    return <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${cls}`}>{status}</span>;
+    return <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${cls}`}>{status}</span>;
 }
 
 export default function UsersPage() {
@@ -75,7 +75,7 @@ export default function UsersPage() {
     const others = users.filter(u => u.status !== "PENDING");
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader title="Users" scope="Approve registrations, create accounts, and manage roles and access.">
                 <Button onClick={() => setShowCreate(v => !v)} className="h-11 px-5 font-semibold"><Plus className="h-4 w-4 mr-1.5" /> Create user</Button>
             </PageHeader>
@@ -85,15 +85,15 @@ export default function UsersPage() {
                     <CardHeader><CardTitle className="text-base">Create a new user</CardTitle><CardDescription>The account is active immediately.</CardDescription></CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap items-end gap-3">
-                            <div className="space-y-1 flex-1 min-w-[160px]"><label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Name</label><Input value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className="bg-background h-9" /></div>
-                            <div className="space-y-1 flex-1 min-w-[200px]"><label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Email</label><Input type="email" value={createForm.email} onChange={e => setCreateForm({ ...createForm, email: e.target.value })} className="bg-background h-9" /></div>
-                            <div className="space-y-1 w-[170px]"><label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Role</label>
+                            <div className="space-y-1 flex-1 min-w-[160px]"><label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</label><Input value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className="bg-background h-9" /></div>
+                            <div className="space-y-1 flex-1 min-w-[200px]"><label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email</label><Input type="email" value={createForm.email} onChange={e => setCreateForm({ ...createForm, email: e.target.value })} className="bg-background h-9" /></div>
+                            <div className="space-y-1 w-[170px]"><label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Role</label>
                                 <Select value={createForm.role} onValueChange={v => setCreateForm({ ...createForm, role: v })}>
                                     <SelectTrigger className="bg-background h-9"><SelectValue /></SelectTrigger>
                                     <SelectContent>{ROLES.map(r => <SelectItem key={r} value={r} className="capitalize">{roleLabel(r)}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-1 w-[170px]"><label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Password</label><Input type="text" value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} placeholder="min 8 chars" className="bg-background h-9" /></div>
+                            <div className="space-y-1 w-[170px]"><label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</label><Input type="text" value={createForm.password} onChange={e => setCreateForm({ ...createForm, password: e.target.value })} placeholder="min 8 chars" className="bg-background h-9" /></div>
                             <Button disabled={busy} onClick={async () => { const ok = await call("/api/admin/users", "POST", createForm, "User created"); if (ok) { setCreateForm({ name: "", email: "", role: "EMPLOYEE", password: "" }); setShowCreate(false); } }} className="h-9 font-semibold">Create</Button>
                         </div>
                     </CardContent>
@@ -107,9 +107,9 @@ export default function UsersPage() {
                         <div className="rounded-sm border border-border">
                             <Table>
                                 <TableHeader className="bg-muted/50"><TableRow>
-                                    <TableHead className="text-[10px] uppercase font-bold">Name</TableHead>
-                                    <TableHead className="text-[10px] uppercase font-bold">Email</TableHead>
-                                    <TableHead className="text-[10px] uppercase font-bold text-right">Actions</TableHead>
+                                    <TableHead className="text-xs uppercase font-bold">Name</TableHead>
+                                    <TableHead className="text-xs uppercase font-bold">Email</TableHead>
+                                    <TableHead className="text-xs uppercase font-bold text-right">Actions</TableHead>
                                 </TableRow></TableHeader>
                                 <TableBody>
                                     {pending.map(u => (
@@ -135,11 +135,11 @@ export default function UsersPage() {
                     <div className="rounded-sm border border-border">
                         <Table>
                             <TableHeader className="bg-muted/50"><TableRow>
-                                <TableHead className="text-[10px] uppercase font-bold">Name</TableHead>
-                                <TableHead className="text-[10px] uppercase font-bold">Email</TableHead>
-                                <TableHead className="text-[10px] uppercase font-bold">Role</TableHead>
-                                <TableHead className="text-[10px] uppercase font-bold">Status</TableHead>
-                                <TableHead className="text-[10px] uppercase font-bold text-right">Actions</TableHead>
+                                <TableHead className="text-xs uppercase font-bold">Name</TableHead>
+                                <TableHead className="text-xs uppercase font-bold">Email</TableHead>
+                                <TableHead className="text-xs uppercase font-bold">Role</TableHead>
+                                <TableHead className="text-xs uppercase font-bold">Status</TableHead>
+                                <TableHead className="text-xs uppercase font-bold text-right">Actions</TableHead>
                             </TableRow></TableHeader>
                             <TableBody>
                                 {others.map(u => (

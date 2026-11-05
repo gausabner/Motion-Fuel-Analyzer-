@@ -97,7 +97,7 @@ export default async function FREPage({
     const exportUrl = `/api/reports/export?${exportParams.toString()}`;
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-8">
             <PageHeader
                 title={<>Fuel receipts <span className="text-muted-foreground">(FRE)</span></>}
                 scope="Fuel delivered into storage tanks — stock replenishment, not fleet consumption."
@@ -109,7 +109,7 @@ export default async function FREPage({
                 type + date range apply here. */}
             <FuelLogFilters costCentres={costCentres} hideVehicle hideCostCentres />
 
-            <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 <IndustrialKPI
                     label="Fuel Received"
                     value={`${data.kpi.volume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L`}
@@ -155,7 +155,7 @@ export default async function FREPage({
                 </CardContent>
             </Card>
 
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-2 gap-4">
                 <Card className="monumental-card">
                     <CardHeader>
                         <CardTitle className="text-sm font-bold uppercase tracking-wide">Receipts by Tank</CardTitle>
@@ -166,10 +166,10 @@ export default async function FREPage({
                             <Table>
                                 <TableHeader className="bg-muted/50">
                                     <TableRow>
-                                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Tank</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Fuel</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Deliveries</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Volume (L)</TableHead>
+                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Tank</TableHead>
+                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Fuel</TableHead>
+                                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Deliveries</TableHead>
+                                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Volume (L)</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -202,10 +202,10 @@ export default async function FREPage({
                             <Table>
                                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                                     <TableRow>
-                                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Date</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Ref No</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Tank</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Volume (L)</TableHead>
+                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Date</TableHead>
+                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Ref No</TableHead>
+                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Tank</TableHead>
+                                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Volume (L)</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

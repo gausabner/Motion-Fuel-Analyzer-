@@ -159,7 +159,7 @@ export default function RegistryPage() {
                 scope="Manage departments, cost centre vote numbers, and fleet units independently."
             />
 
-            <Tabs value={tab} onValueChange={setTab} className="space-y-6">
+            <Tabs value={tab} onValueChange={setTab} className="space-y-4">
                 <TabsList className="bg-muted p-1">
                     <TabsTrigger value="costcentres" className="data-[state=active]:bg-background font-bold uppercase text-xs tracking-wider">
                         <Hash className="h-3.5 w-3.5 mr-1.5" /> Vote Numbers ({costCentres.length})
@@ -174,7 +174,7 @@ export default function RegistryPage() {
                         <FileWarning className={`h-3.5 w-3.5 mr-1.5 ${unassigned.length ? 'text-amber-600' : ''}`} />
                         Unassigned votes
                         {unassigned.length > 0 && (
-                            <span className="ml-1.5 rounded-full bg-amber-100 text-amber-700 px-1.5 py-0.5 text-[10px] leading-none">{unassigned.length}</span>
+                            <span className="ml-1.5 rounded-full bg-amber-100 text-amber-700 px-1.5 py-0.5 text-xs leading-none">{unassigned.length}</span>
                         )}
                     </TabsTrigger>
                 </TabsList>
@@ -186,10 +186,10 @@ export default function RegistryPage() {
                             <CardTitle>Issue Vote Numbers</CardTitle>
                             <CardDescription>Each vote number belongs to a division within a department. Transactions are matched by vote number.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent className="space-y-4">
                             <div className="flex flex-wrap items-end gap-3 p-4 bg-muted/40 rounded-md border border-border">
                                 <div className="space-y-1 min-w-[260px] flex-1">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department</label>
+                                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Department</label>
                                     <Select value={ccForm.department} onValueChange={v => setCcForm({ ...ccForm, department: v })}>
                                         <SelectTrigger aria-label="Department" className="bg-background h-10">
                                             <SelectValue placeholder="Select department..." />
@@ -202,7 +202,7 @@ export default function RegistryPage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-1 min-w-[200px] flex-1">
-                                    <label htmlFor="division-204" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Division</label>
+                                    <label htmlFor="division-204" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Division</label>
                                     <Input
                                         id="division-204"
                                         placeholder="e.g. TRAFFIC MANAGEMENT UNIT"
@@ -212,7 +212,7 @@ export default function RegistryPage() {
                                     />
                                 </div>
                                 <div className="space-y-1 min-w-[180px]">
-                                    <label htmlFor="vote-number-213" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Vote Number</label>
+                                    <label htmlFor="vote-number-213" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Vote Number</label>
                                     <Input
                                         id="vote-number-213"
                                         placeholder="e.g. 4520151100655"
@@ -237,9 +237,9 @@ export default function RegistryPage() {
                                 <Table>
                                     <TableHeader className="bg-muted/50 sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead className="font-bold uppercase tracking-wider text-[10px]">Vote No</TableHead>
-                                            <TableHead className="font-bold uppercase tracking-wider text-[10px]">Division</TableHead>
-                                            <TableHead className="font-bold uppercase tracking-wider text-[10px]">Department</TableHead>
+                                            <TableHead className="font-bold uppercase tracking-wider text-xs">Vote No</TableHead>
+                                            <TableHead className="font-bold uppercase tracking-wider text-xs">Division</TableHead>
+                                            <TableHead className="font-bold uppercase tracking-wider text-xs">Department</TableHead>
                                             <TableHead className="w-12"></TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -274,10 +274,10 @@ export default function RegistryPage() {
                             <CardTitle>Departments</CardTitle>
                             <CardDescription>Departments can be registered before any vote numbers are assigned to them.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent className="space-y-4">
                             <div className="flex items-end gap-3 p-4 bg-muted/40 rounded-md border border-border">
                                 <div className="space-y-1 flex-1">
-                                    <label htmlFor="department-name-277" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department Name</label>
+                                    <label htmlFor="department-name-277" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Department Name</label>
                                     <Input
                                         id="department-name-277"
                                         placeholder="e.g. DEPARTMENT OF ELECTRICITY"
@@ -302,8 +302,8 @@ export default function RegistryPage() {
                                 <Table>
                                     <TableHeader className="bg-muted/50">
                                         <TableRow>
-                                            <TableHead className="font-bold uppercase tracking-wider text-[10px]">Department</TableHead>
-                                            <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Vote Numbers</TableHead>
+                                            <TableHead className="font-bold uppercase tracking-wider text-xs">Department</TableHead>
+                                            <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Vote Numbers</TableHead>
                                             <TableHead className="w-12"></TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -348,10 +348,10 @@ export default function RegistryPage() {
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent className="space-y-4">
                             <div className="flex flex-wrap items-end gap-3 p-4 bg-muted/40 rounded-md border border-border">
                                 <div className="space-y-1 min-w-[160px]">
-                                    <label htmlFor="unit-number-350" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Unit Number</label>
+                                    <label htmlFor="unit-number-350" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Unit Number</label>
                                     <Input
                                         id="unit-number-350"
                                         placeholder="e.g. WM2711"
@@ -361,7 +361,7 @@ export default function RegistryPage() {
                                     />
                                 </div>
                                 <div className="space-y-1 flex-1 min-w-[200px]">
-                                    <label htmlFor="description-359" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Description (optional)</label>
+                                    <label htmlFor="description-359" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description (optional)</label>
                                     <Input
                                         id="description-359"
                                         placeholder="e.g. Refuse compactor - Solid Waste"
@@ -393,8 +393,8 @@ export default function RegistryPage() {
                                 <Table>
                                     <TableHeader className="bg-muted/50 sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead className="font-bold uppercase tracking-wider text-[10px]">Unit No</TableHead>
-                                            <TableHead className="font-bold uppercase tracking-wider text-[10px]">Description</TableHead>
+                                            <TableHead className="font-bold uppercase tracking-wider text-xs">Unit No</TableHead>
+                                            <TableHead className="font-bold uppercase tracking-wider text-xs">Description</TableHead>
                                             <TableHead className="w-12"></TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -462,7 +462,7 @@ export default function RegistryPage() {
                                             {selected.size} code{selected.size === 1 ? "" : "s"} selected
                                         </div>
                                         <div className="space-y-1 min-w-[220px] flex-1">
-                                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department</label>
+                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Department</label>
                                             <Select value={bulkForm.department} onValueChange={val => setBulkForm({ department: val, division: "" })}>
                                                 <SelectTrigger aria-label="Department" className="bg-background h-9"><SelectValue placeholder="Select department..." /></SelectTrigger>
                                                 <SelectContent>
@@ -471,7 +471,7 @@ export default function RegistryPage() {
                                             </Select>
                                         </div>
                                         <div className="space-y-1 min-w-[220px] flex-1">
-                                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Division</label>
+                                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Division</label>
                                             <Select
                                                 value={bulkForm.division}
                                                 onValueChange={val => setBulkForm({ ...bulkForm, division: val })}
@@ -508,10 +508,10 @@ export default function RegistryPage() {
                                                         onChange={e => setSelected(e.target.checked ? new Set(unassigned.map(u => u.voteNo)) : new Set())}
                                                     />
                                                 </TableHead>
-                                                <TableHead className="font-bold uppercase tracking-wider text-[10px]">Vote code</TableHead>
-                                                <TableHead className="font-bold uppercase tracking-wider text-[10px]">Suggested department</TableHead>
-                                                <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Txns</TableHead>
-                                                <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Litres</TableHead>
+                                                <TableHead className="font-bold uppercase tracking-wider text-xs">Vote code</TableHead>
+                                                <TableHead className="font-bold uppercase tracking-wider text-xs">Suggested department</TableHead>
+                                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Txns</TableHead>
+                                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Litres</TableHead>
                                                 <TableHead className="w-24"></TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -557,7 +557,7 @@ export default function RegistryPage() {
                                                             <TableCell colSpan={6} className="py-3">
                                                                 <div className="flex flex-wrap items-end gap-3">
                                                                     <div className="space-y-1 min-w-[240px] flex-1">
-                                                                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Department</label>
+                                                                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Department</label>
                                                                         <Select value={assignForm.department} onValueChange={val => setAssignForm({ ...assignForm, department: val })}>
                                                                             <SelectTrigger aria-label="Department" className="bg-background h-9">
                                                                                 <SelectValue placeholder="Select department..." />
@@ -570,7 +570,7 @@ export default function RegistryPage() {
                                                                         </Select>
                                                                     </div>
                                                                     <div className="space-y-1 min-w-[220px] flex-1">
-                                                                        <label htmlFor="division-567" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Division</label>
+                                                                        <label htmlFor="division-567" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Division</label>
                                                                         <Input
                                                                             id="division-567"
                                                                             placeholder="e.g. STREET LIGHTING"

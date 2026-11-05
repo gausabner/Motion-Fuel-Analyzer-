@@ -109,7 +109,7 @@ export default async function FISPage({
     const exportUrl = `/api/reports/export?${exportParams.toString()}`;
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-8">
             <PageHeader
                 title={<>Fuel issues <span className="text-primary">(FIS)</span></>}
                 scope="Fuel extracted from tanks and issued to fleet vehicles — this is true consumption."
@@ -125,7 +125,7 @@ export default async function FISPage({
                 exportUrl={`/api/reports/export?report=vehicle-attribution&vehicleId=${encodeURIComponent(sp.vehicleId || "")}`}
             />
 
-            <div className="grid gap-6 grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 <IndustrialKPI
                     label="Fuel Issued"
                     value={`${data.kpi.volume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L`}

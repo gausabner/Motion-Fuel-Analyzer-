@@ -27,7 +27,7 @@ const PALETTE = {
 
 export function FleetRankings({ topFreqVehicles, topCostCentres }: RankingProps) {
     return (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
             {/* Top Frequent Consumers */}
             <Card className="shadow-sm border-0 bg-card/50 backdrop-blur-sm">
                 <CardHeader>
@@ -38,8 +38,8 @@ export function FleetRankings({ topFreqVehicles, topCostCentres }: RankingProps)
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart layout="vertical" data={topFreqVehicles} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={PALETTE.grid} />
-                            <XAxis type="number" tick={{ fontSize: 11, fill: PALETTE.text }} />
-                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11, fill: PALETTE.text }} />
+                            <XAxis type="number" tick={{ fontSize: 12, fill: PALETTE.text }} />
+                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12, fill: PALETTE.text }} />
                             <Tooltip
                                 cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
@@ -64,8 +64,8 @@ export function FleetRankings({ topFreqVehicles, topCostCentres }: RankingProps)
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart layout="vertical" data={topCostCentres} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={PALETTE.grid} />
-                            <XAxis type="number" tick={{ fontSize: 11, fill: PALETTE.text }} />
-                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11, fill: PALETTE.text }} />
+                            <XAxis type="number" tick={{ fontSize: 12, fill: PALETTE.text }} />
+                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12, fill: PALETTE.text }} />
                             <Tooltip
                                 cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}

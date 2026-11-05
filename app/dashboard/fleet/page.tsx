@@ -237,7 +237,7 @@ export default async function FleetPage({
     });
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader
                 title="Fleet"
                 scope="Unit-by-unit fuel efficiency and consumption analysis · FIS transactions only"
@@ -254,15 +254,15 @@ export default async function FleetPage({
             />
 
             {/* KPI Cards */}
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3">
                 <Card className="monumental-card">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Active Units</CardTitle>
                         <Truck className="h-4 w-4 text-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{fleet.length} Units</div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Tracking individual performance</p>
+                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{fleet.length} Units</div>
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Tracking individual performance</p>
                     </CardContent>
                 </Card>
 
@@ -272,8 +272,8 @@ export default async function FleetPage({
                         <AlertTriangle className="h-4 w-4 text-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{highConsumer}</div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Highest fuel usage unit</p>
+                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{highConsumer}</div>
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Highest fuel usage unit</p>
                     </CardContent>
                 </Card>
 
@@ -283,8 +283,8 @@ export default async function FleetPage({
                         <TrendingUp className="h-4 w-4 text-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{fmtLitres(avgFill)}</div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Average per vehicle this period</p>
+                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{fmtLitres(avgFill)}</div>
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Average per vehicle this period</p>
                     </CardContent>
                 </Card>
             </div>
@@ -300,7 +300,7 @@ export default async function FleetPage({
             </section>
 
             <Card className="monumental-card bg-card p-0 overflow-hidden">
-                <CardHeader className="p-6 border-b border-border">
+                <CardHeader className="p-4 border-b border-border">
                     <CardTitle className="text-lg font-extrabold uppercase tracking-tight">Fleet Performance Table</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">

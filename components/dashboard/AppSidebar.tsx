@@ -107,7 +107,7 @@ function NavContent({ pathname, session, setOpen, label }: { pathname: string, s
             </div>
 
             {/* Navigation Groups */}
-            <nav aria-label={label} className="flex-1 px-3 py-2 space-y-6 overflow-y-auto">
+            <nav aria-label={label} className="flex-1 px-3 py-2 space-y-4 overflow-y-auto">
                 {navGroups.map((group) => {
                     const filteredItems = group.items.filter(item => item.roles.includes(userRole));
                     if (filteredItems.length === 0) return null;
@@ -116,7 +116,7 @@ function NavContent({ pathname, session, setOpen, label }: { pathname: string, s
                         <section key={group.title} aria-labelledby={groupId(group.title)}>
                             <div
                                 id={groupId(group.title)}
-                                className="px-3 text-[10px] font-semibold text-sidebar-muted uppercase tracking-[0.15em] mb-2"
+                                className="px-3 text-xs font-semibold text-sidebar-muted uppercase tracking-[0.15em] mb-2"
                             >
                                 {group.title}
                             </div>
@@ -180,13 +180,16 @@ function NavContent({ pathname, session, setOpen, label }: { pathname: string, s
 
             {/* User block */}
             <div className="px-3 py-4 border-t border-sidebar-border">
-                <div className="flex items-center gap-3 px-3 py-2">
+                {/* The inner px-3 doubled the block's own padding, and with four
+                    items on one row the name column collapsed to 39px — enough
+                    for "Sup…", which identifies nobody. */}
+                <div className="flex items-center gap-2 py-2">
                     <div className="w-9 h-9 rounded-full bg-sidebar-hover flex items-center justify-center shrink-0">
                         <span className="text-sm font-bold text-[#60A5FA]">{initial}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-sidebar-foreground truncate">{userName}</p>
-                        <p className="text-[11px] text-sidebar-muted capitalize truncate">{roleLabel}</p>
+                        <p className="text-sm font-semibold text-sidebar-foreground truncate" title={userName}>{userName}</p>
+                        <p className="text-xs text-sidebar-muted capitalize truncate">{roleLabel}</p>
                     </div>
                     <SidebarThemeToggle />
                     <button
@@ -208,7 +211,7 @@ export function AppSidebar() {
     const { data: session } = useSession();
 
     return (
-        <div className="hidden lg:flex w-64 flex-col h-screen fixed inset-y-0 left-0 z-50 border-r border-sidebar-border bg-sidebar">
+        <div className="hidden lg:flex w-56 flex-col h-screen fixed inset-y-0 left-0 z-50 border-r border-sidebar-border bg-sidebar">
             <NavContent pathname={pathname} session={session} label="Main" />
         </div>
     );

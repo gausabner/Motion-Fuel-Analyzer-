@@ -27,9 +27,9 @@ export function ComparisonChart({
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} layout="vertical" margin={{ top: 8, right: 24, left: 8, bottom: 8 }} barGap={2}>
                     <CartesianGrid horizontal={false} stroke="#F1F5F9" />
-                    <XAxis type="number" tick={{ fontSize: 10, fill: "#64748B" }} axisLine={false} tickLine={false}
+                    <XAxis type="number" tick={{ fontSize: 12, fill: "#64748B" }} axisLine={false} tickLine={false}
                         tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} />
-                    <YAxis type="category" dataKey="label" width={150} tick={{ fontSize: 10, fill: "#334155" }} axisLine={false} tickLine={false} interval={0} />
+                    <YAxis type="category" dataKey="label" width={150} tick={{ fontSize: 12, fill: "#334155" }} axisLine={false} tickLine={false} interval={0} />
                     <Tooltip
                         contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(15,23,42,0.25)", backgroundColor: "#0F172A", color: "#F8FAFC" }}
                         labelStyle={{ color: "#94A3B8", fontSize: "11px" }}

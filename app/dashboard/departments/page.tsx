@@ -88,7 +88,7 @@ export default async function DepartmentsPage({
     });
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-8">
             <PageHeader
                 title="Cost centres"
                 scope="Departmental fuel expenditure and allocation analysis · FIS transactions only"
@@ -98,15 +98,15 @@ export default async function DepartmentsPage({
 
             <FuelLogFilters costCentres={costCentres} />
 
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3">
                 <Card className="monumental-card">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Primary Depts</CardTitle>
                         <Building2 className="h-4 w-4 text-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{departments.length} Units</div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Active cost centers recorded</p>
+                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{departments.length} Units</div>
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Active cost centers recorded</p>
                     </CardContent>
                 </Card>
 
@@ -116,8 +116,8 @@ export default async function DepartmentsPage({
                         <Users className="h-4 w-4 text-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground break-all">{fmtMoneyCompact(totalSpend, cur)}</div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Aggregated period cost</p>
+                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{fmtMoneyCompact(totalSpend, cur)}</div>
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Aggregated period cost</p>
                     </CardContent>
                 </Card>
 
@@ -129,16 +129,16 @@ export default async function DepartmentsPage({
                             : <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground">{attributedShare}</div>
+                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground">{attributedShare}</div>
                         {openCodes > 0 ? (
                             <Link
                                 href="/dashboard/registry?tab=unassigned"
-                                className="mt-1 inline-flex items-center gap-1 rounded-sm text-[10px] font-bold uppercase tracking-wider text-amber-700 underline underline-offset-2 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-amber-400 dark:hover:text-amber-300"
+                                className="mt-1 inline-flex items-center gap-1 rounded-sm text-xs font-bold uppercase tracking-wider text-amber-700 underline underline-offset-2 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-amber-400 dark:hover:text-amber-300"
                             >
                                 {openCodes} code{openCodes === 1 ? "" : "s"} · {fmtLitres(Number(cov.openLitres || 0))} unassigned
                             </Link>
                         ) : (
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">Every vote resolves to a cost centre</p>
+                            <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Every vote resolves to a cost centre</p>
                         )}
                     </CardContent>
                 </Card>
@@ -150,7 +150,7 @@ export default async function DepartmentsPage({
             </section>
 
             <Card className="monumental-card bg-card p-0 overflow-hidden">
-                <CardHeader className="p-6 border-b border-border">
+                <CardHeader className="p-4 border-b border-border">
                     <CardTitle className="text-lg font-extrabold uppercase tracking-tight">Departmental Breakdown</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">

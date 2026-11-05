@@ -42,9 +42,9 @@ export function FuelPriceChart({ data, currency = "N$" }: { data: FlowBucket[]; 
                     <ResponsiveContainer width="100%" height={260}>
                         <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
-                            <XAxis dataKey="name" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={24} />
+                            <XAxis dataKey="name" tick={{ fontSize: 12 }} interval="preserveStartEnd" minTickGap={24} />
                             <YAxis
-                                tick={{ fontSize: 11 }}
+                                tick={{ fontSize: 12 }}
                                 domain={["auto", "auto"]}
                                 tickFormatter={(v) => `${currency}${Number(v).toFixed(0)}`}
                                 width={48}

@@ -9,7 +9,7 @@ import { CloudUpload } from "lucide-react";
 
 export default function IngestionPage() {
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader
                 title="Uploads"
                 scope="Import fuel log spreadsheets — Excel or CSV, duplicates skipped automatically."
@@ -17,7 +17,7 @@ export default function IngestionPage() {
 
             <UploadTemplates />
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="monumental-card bg-card col-span-1 md:col-span-2">
                     <CardHeader className="pb-4 border-b border-border">
                         <div className="flex items-center gap-3">
@@ -43,7 +43,7 @@ export default function IngestionPage() {
                             <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Required Columns</h4>
                             <div className="flex flex-wrap gap-2">
                                 {["Trans Date", "Vehicle ID", "Fuel Type", "Quantity", "Amount", "Odometer"].map((col) => (
-                                    <span key={col} className="text-[10px] font-mono font-medium px-2 py-1 bg-card border border-border rounded-sm text-muted-foreground">
+                                    <span key={col} className="text-xs font-mono font-medium px-2 py-1 bg-card border border-border rounded-sm text-muted-foreground">
                                         {col}
                                     </span>
                                 ))}

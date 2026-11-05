@@ -74,7 +74,7 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
                     </div>
 
                     {/* Name Column: 25% of Total Width (62.5% of Axis) */}
-                    <div className="w-[62.5%] font-bold text-foreground whitespace-normal leading-[1.1] flex items-center text-[10px] pr-1" title={name}>
+                    <div className="w-[62.5%] font-bold text-foreground whitespace-normal leading-[1.1] flex items-center text-xs pr-1" title={name}>
                         <span className="line-clamp-3">{name}</span>
                     </div>
                 </div>
@@ -143,7 +143,7 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
                     </div>
                     <div className="flex items-center gap-2">
                         <ChartExportButton targetRef={volumeRef} fileName="top_50_consumers_volume" />
-                        <div className="bg-accent text-accent-foreground text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded-md">
+                        <div className="bg-accent text-accent-foreground text-xs font-bold px-2 py-1 uppercase tracking-widest rounded-md">
                             Top {topConsumers.length}
                         </div>
                     </div>
@@ -162,7 +162,7 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
                     </div>
                     <div className="flex items-center gap-2">
                         <ChartExportButton targetRef={frequencyRef} fileName="most_frequent_refills" />
-                        <div className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 uppercase tracking-widest rounded-md">
+                        <div className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 uppercase tracking-widest rounded-md">
                             Top {topFrequency.length}
                         </div>
                     </div>

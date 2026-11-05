@@ -16,12 +16,12 @@ export function FISTable({ data }: { data: any[] }) {
             <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Date</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Vote No</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Vehicle</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Tank</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Volume (L)</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Cost</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Date</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Vote No</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Vehicle</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Tank</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Volume (L)</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Cost</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

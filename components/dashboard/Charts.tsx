@@ -123,13 +123,13 @@ export function DashboardCharts({
                     <CartesianGrid vertical={false} stroke="#F1F5F9" />
                     <XAxis
                         dataKey="date"
-                        tick={{ fontSize: 10, fill: '#64748B', fontWeight: 500 }}
+                        tick={{ fontSize: 12, fill: '#64748B', fontWeight: 500 }}
                         axisLine={false}
                         tickLine={false}
                         dy={10}
                     />
                     <YAxis
-                        tick={{ fontSize: 10, fill: '#64748B', fontWeight: 500 }}
+                        tick={{ fontSize: 12, fill: '#64748B', fontWeight: 500 }}
                         axisLine={false}
                         tickLine={false}
                         dx={-10}
@@ -142,7 +142,7 @@ export function DashboardCharts({
                             backgroundColor: '#0F172A',
                             color: '#F8FAFC'
                         }}
-                        labelStyle={{ color: '#94A3B8', fontSize: '11px' }}
+                        labelStyle={{ color: '#94A3B8', fontSize: '12px' }}
                         itemStyle={{ color: '#F8FAFC', fontSize: '12px', fontWeight: 'bold' }}
                         cursor={{ stroke: '#93C5FD', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                     />
@@ -150,7 +150,7 @@ export function DashboardCharts({
                         verticalAlign="top"
                         height={36}
                         iconType="square"
-                        wrapperStyle={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                        wrapperStyle={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                     />
                 </>
             )
@@ -220,7 +220,7 @@ export function DashboardCharts({
                             <Button
                                 variant={granularity === 'daily' ? 'default' : 'ghost'}
                                 size="sm"
-                                className={`rounded-md h-7 px-3 text-[10px] font-bold uppercase tracking-wide ${granularity === 'daily' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                className={`rounded-md h-7 px-3 text-xs font-bold uppercase tracking-wide ${granularity === 'daily' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                 onClick={() => setGranularity('daily')}
                             >
                                 Daily
@@ -228,7 +228,7 @@ export function DashboardCharts({
                             <Button
                                 variant={granularity === 'monthly' ? 'default' : 'ghost'}
                                 size="sm"
-                                className={`rounded-md h-7 px-3 text-[10px] font-bold uppercase tracking-wide ${granularity === 'monthly' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                className={`rounded-md h-7 px-3 text-xs font-bold uppercase tracking-wide ${granularity === 'monthly' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                 onClick={() => setGranularity('monthly')}
                             >
                                 Monthly
@@ -236,7 +236,7 @@ export function DashboardCharts({
                             <Button
                                 variant={granularity === 'yearly' ? 'default' : 'ghost'}
                                 size="sm"
-                                className={`rounded-md h-7 px-3 text-[10px] font-bold uppercase tracking-wide ${granularity === 'yearly' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                className={`rounded-md h-7 px-3 text-xs font-bold uppercase tracking-wide ${granularity === 'yearly' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                 onClick={() => setGranularity('yearly')}
                             >
                                 Yearly
@@ -282,7 +282,7 @@ export function DashboardCharts({
                 </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Top 10 Vote Numbers */}
                 <Card className="monumental-card bg-card col-span-1 md:col-span-2 lg:col-span-2" ref={departmentRef}>
                     <CardHeader className="px-0 pt-0 pb-6 border-b border-border mb-6 flex flex-row items-center justify-between">
@@ -313,7 +313,7 @@ export function DashboardCharts({
                                                                 <div className="w-[30%] text-muted-foreground font-medium pl-2 flex items-center h-full">
                                                                     #{rank}
                                                                 </div>
-                                                                <div className={`w-[70%] font-bold whitespace-normal leading-[1.1] flex items-center text-[10px] pr-1 ${name === 'Unassigned' ? 'text-amber-600' : 'text-foreground'}`} title={name}>
+                                                                <div className={`w-[70%] font-bold whitespace-normal leading-[1.1] flex items-center text-xs pr-1 ${name === 'Unassigned' ? 'text-amber-600' : 'text-foreground'}`} title={name}>
                                                                     <span className="line-clamp-3">{name === 'Unassigned' ? '⚑ Unassigned' : name}</span>
                                                                 </div>
                                                             </div>
@@ -385,7 +385,7 @@ export function DashboardCharts({
                         <BarChart data={topFleet} barGap={2} margin={{ bottom: 20 }}>
                             <XAxis
                                 dataKey="name"
-                                tick={{ fontSize: 11, fill: '#334155', fontWeight: 600, dy: 10 }}
+                                tick={{ fontSize: 12, fill: '#334155', fontWeight: 600, dy: 10 }}
                                 interval={0}
                                 height={40}
                                 axisLine={false}
@@ -425,13 +425,13 @@ export function DashboardCharts({
                             </defs>
                             <XAxis
                                 dataKey="date"
-                                tick={{ fontSize: 10, fill: '#64748B', fontWeight: 500 }}
+                                tick={{ fontSize: 12, fill: '#64748B', fontWeight: 500 }}
                                 axisLine={false}
                                 tickLine={false}
                                 dy={10}
                             />
                             <YAxis
-                                tick={{ fontSize: 10, fill: '#64748B', fontWeight: 500 }}
+                                tick={{ fontSize: 12, fill: '#64748B', fontWeight: 500 }}
                                 axisLine={false}
                                 tickLine={false}
                                 dx={-10}
@@ -484,13 +484,13 @@ export function FocusedChart({ data, fuelType, currencySymbol = "N$", color: col
                     </defs>
                     <XAxis
                         dataKey="date"
-                        tick={{ fontSize: 10, fill: '#64748B' }}
+                        tick={{ fontSize: 12, fill: '#64748B' }}
                         axisLine={false}
                         tickLine={false}
                         minTickGap={30}
                     />
                     <YAxis
-                        tick={{ fontSize: 10, fill: '#64748B' }}
+                        tick={{ fontSize: 12, fill: '#64748B' }}
                         axisLine={false}
                         tickLine={false}
                     />

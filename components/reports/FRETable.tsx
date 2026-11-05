@@ -16,11 +16,11 @@ export function FRETable({ data }: { data: any[] }) {
             <Table>
                 <TableHeader className="bg-muted/50 sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Date</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Ref No</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Tank</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Volume (L)</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Value</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Date</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Ref No</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs">Tank</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Volume (L)</TableHead>
+                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Value</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

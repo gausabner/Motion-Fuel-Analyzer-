@@ -258,7 +258,7 @@ export default async function DashboardPage({
         : "all recorded data";
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-8">
             <PageHeader
                 title="Fuel intelligence"
                 scope={`Fleet consumption for ${scopeRange} · FIS transactions only`}

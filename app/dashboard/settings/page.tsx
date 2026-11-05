@@ -59,7 +59,7 @@ export default function SettingsPage() {
     );
 
     return (
-        <div className="max-w-4xl space-y-10">
+        <div className="max-w-4xl space-y-8">
             <div>
                 <h1 className="text-4xl font-extrabold tracking-tight text-brand-dark flex items-center gap-3">
                     <Settings className="h-10 w-10 text-brand-primary" aria-hidden="true" /> System settings
@@ -79,7 +79,7 @@ export default function SettingsPage() {
                             <CardTitle className="text-2xl">Localization</CardTitle>
                             <CardDescription>Visual currency and code settings</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6 pt-8">
+                        <CardContent className="space-y-4 pt-8">
                             <div className="space-y-2">
                                 <label htmlFor="currency-symbol" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Currency Symbol</label>
                                 <Input
@@ -113,7 +113,7 @@ export default function SettingsPage() {
                             <CardTitle className="text-2xl">Fuel Economics</CardTitle>
                             <CardDescription>Default rate per litre for calculations</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6 pt-8">
+                        <CardContent className="space-y-4 pt-8">
                             <div className="space-y-2">
                                 <label htmlFor="petrol-price" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Petrol Price ({settings.currencyCode})</label>
                                 <Input
@@ -152,7 +152,7 @@ export default function SettingsPage() {
                             <CardTitle className="text-2xl">Appearance</CardTitle>
                             <CardDescription>Customize the interface theme</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6 pt-8">
+                        <CardContent className="space-y-4 pt-8">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Interface Theme</span>
                                 <ThemeToggle />

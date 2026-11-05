@@ -80,7 +80,7 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
                     {/* Scatter Chart Section */}
                     <div className="h-[200px] w-full border border-border/50 rounded-xl p-3 bg-card/40 backdrop-blur-sm shadow-sm flex flex-col">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
                             Consumption Distribution (Top 20)
                         </h3>
                         <div className="flex-1 w-full min-h-0">
@@ -92,7 +92,7 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
                                         dataKey="y"
                                         name="Consumption"
                                         unit="L"
-                                        tick={{ fontSize: 9, fill: '#71717A' }}
+                                        tick={{ fontSize: 12, fill: '#71717A' }}
                                         axisLine={false}
                                         tickLine={false}
                                         dx={-5}
@@ -114,7 +114,7 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
                                 </ScatterChart>
                             </ResponsiveContainer>
                         </div>
-                        <div className="flex justify-center gap-4 mt-1 text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
+                        <div className="flex justify-center gap-4 mt-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                             <div className="flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#60A5FA]"></span>
                                 Petrol Dominant
@@ -128,7 +128,7 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
 
                     {/* Scrollable List Section */}
                     <div className="flex flex-col h-[200px]">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
                             Detailed Fleet Metrics
                         </h3>
                         <div className="border border-border/50 rounded-xl overflow-hidden flex-1 bg-card/40 backdrop-blur-sm shadow-sm">
@@ -136,23 +136,23 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
                                 <Table>
                                     <TableHeader className="sticky top-0 bg-background/95 backdrop-blur z-10 border-b border-border/50">
                                         <TableRow className="border-border/50 hover:bg-transparent h-8">
-                                            <TableHead className="text-[9px] uppercase font-bold text-muted-foreground h-8 py-0">Unit ID</TableHead>
-                                            <TableHead className="text-right text-[9px] uppercase font-bold text-muted-foreground h-8 py-0">Petrol</TableHead>
-                                            <TableHead className="text-right text-[9px] uppercase font-bold text-muted-foreground h-8 py-0">Diesel</TableHead>
-                                            <TableHead className="text-right text-[9px] uppercase font-bold text-muted-foreground h-8 py-0">Total</TableHead>
+                                            <TableHead className="text-xs uppercase font-bold text-muted-foreground h-8 py-0">Unit ID</TableHead>
+                                            <TableHead className="text-right text-xs uppercase font-bold text-muted-foreground h-8 py-0">Petrol</TableHead>
+                                            <TableHead className="text-right text-xs uppercase font-bold text-muted-foreground h-8 py-0">Diesel</TableHead>
+                                            <TableHead className="text-right text-xs uppercase font-bold text-muted-foreground h-8 py-0">Total</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {activeUnitsList.map((unit) => (
                                             <TableRow key={unit.vehicleId} className="border-border/50 hover:bg-muted/30 transition-colors h-8">
-                                                <TableCell className="font-mono text-[10px] font-bold text-foreground py-1">{unit.vehicleId}</TableCell>
-                                                <TableCell className="text-right text-[10px] py-1 text-[#3B82F6]">
+                                                <TableCell className="font-mono text-xs font-bold text-foreground py-1">{unit.vehicleId}</TableCell>
+                                                <TableCell className="text-right text-xs py-1 text-[#3B82F6]">
                                                     {unit.petrol > 0 ? unit.petrol.toFixed(0) : '-'}
                                                 </TableCell>
-                                                <TableCell className="text-right text-[10px] py-1 text-[#1D4ED8] dark:text-[#60A5FA]">
+                                                <TableCell className="text-right text-xs py-1 text-[#1D4ED8] dark:text-[#60A5FA]">
                                                     {unit.diesel > 0 ? unit.diesel.toFixed(0) : '-'}
                                                 </TableCell>
-                                                <TableCell className="text-right text-[10px] font-bold text-foreground py-1">
+                                                <TableCell className="text-right text-xs font-bold text-foreground py-1">
                                                     {unit.total.toFixed(0)}
                                                 </TableCell>
                                             </TableRow>

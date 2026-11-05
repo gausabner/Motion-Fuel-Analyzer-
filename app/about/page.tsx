@@ -10,7 +10,7 @@ function FeatureVisualAnalytics() {
     const reduceMotion = useReducedMotion();
     return (
         <div className="relative aspect-video bg-card border border-border rounded-2xl overflow-hidden p-8">
-            <div className="absolute top-6 left-8 right-8 flex justify-between text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            <div className="absolute top-6 left-8 right-8 flex justify-between text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 <span>Consumption trend</span><span>May 2026</span>
             </div>
             <svg viewBox="0 0 400 160" className="absolute inset-x-8 bottom-6 top-14 w-auto h-auto">
@@ -58,7 +58,7 @@ function FeatureVisualFleet() {
     ];
     return (
         <div className="relative aspect-video bg-[#0F172A] rounded-2xl overflow-hidden p-8">
-            <div className="absolute top-6 left-8 text-[10px] font-semibold uppercase tracking-widest text-[#94A3B8]">Top fleet utilisation</div>
+            <div className="absolute top-6 left-8 text-xs font-semibold uppercase tracking-widest text-[#94A3B8]">Top fleet utilisation</div>
             <div className="absolute inset-x-10 bottom-8 top-16 flex gap-4 items-end justify-center">
                 {bars.map((b, i) => (
                     <motion.div
@@ -78,8 +78,8 @@ function FeatureVisualFleet() {
 
 function FeatureVisualSplit() {
     return (
-        <div className="relative aspect-video bg-card border border-border rounded-2xl overflow-hidden p-8 flex flex-col justify-center gap-6">
-            <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <div className="relative aspect-video bg-card border border-border rounded-2xl overflow-hidden p-8 flex flex-col justify-center gap-4">
+            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 <span className="flex items-center gap-1.5"><Flame className="w-3.5 h-3.5 text-primary" /> Issues (FIS)</span>
                 <span className="flex items-center gap-1.5"><Container className="w-3.5 h-3.5" /> Receipts (FRE)</span>
             </div>
@@ -99,7 +99,7 @@ function FeatureVisualSplit() {
                     </div>
                 </div>
             </div>
-            <p className="text-[11px] text-muted-foreground">Issues and receipts are tracked separately — deliveries never inflate consumption.</p>
+            <p className="text-xs text-muted-foreground">Issues and receipts are tracked separately — deliveries never inflate consumption.</p>
         </div>
     );
 }
@@ -190,7 +190,7 @@ export default function AboutPage() {
                 <section className="container mx-auto px-6">
                     <div className="rounded-3xl bg-[#0F172A] text-white text-center py-16 px-8 relative overflow-hidden">
                         <div className="absolute -top-24 -right-16 w-80 h-80 bg-primary/25 rounded-full blur-3xl" />
-                        <div className="relative z-10 space-y-6">
+                        <div className="relative z-10 space-y-4">
                             <img src="/logo-mark.svg" alt="" aria-hidden="true" className="w-12 h-12 mx-auto" />
                             <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">Ready to start?</h2>
                             <p className="text-[#94A3B8] max-w-xl mx-auto">Sign in to open the dashboard and see this month's consumption at a glance.</p>

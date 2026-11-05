@@ -9,7 +9,7 @@ export function PublicHeader({ backLink }: { backLink?: boolean }) {
                 <Link href="/" className="flex items-center">
                     <img src="/logo-on-light.svg" alt="Motion Fuel Analyzer" className="w-36 md:w-44 h-auto object-contain" />
                 </Link>
-                <nav className="flex items-center gap-6">
+                <nav className="flex items-center gap-4">
                     {!backLink && (
                         <Link
                             href="/about"

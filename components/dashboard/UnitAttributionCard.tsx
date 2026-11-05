@@ -73,7 +73,7 @@ export function UnitAttributionCard({
                     <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                             <thead>
-                                <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                                     <th className="py-1.5 pr-3 font-bold">Unit</th>
                                     <th className="py-1.5 pr-3 font-bold">Cost centre</th>
                                     <th className="py-1.5 pr-3 font-bold text-right">Litres</th>
@@ -160,7 +160,7 @@ function SingleUnit({ unit, canAssign, exportUrl }: {
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                         <thead>
-                            <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                            <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                                 <th className="py-1.5 pr-3 font-bold">Issue vote</th>
                                 <th className="py-1.5 pr-3 font-bold">Department</th>
                                 <th className="py-1.5 pr-3 font-bold">Division</th>
@@ -285,11 +285,11 @@ function AssignDialog({ vote, unitNo }: { vote: UnitVoteRow; unitNo: string }) {
 
                 <div className="space-y-3">
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Department</label>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Department</label>
                         <Input value={department} onChange={e => setDepartment(e.target.value)} placeholder="DEPARTMENT OF …" />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Division</label>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Division</label>
                         <Input value={division} onChange={e => setDivision(e.target.value)} placeholder="DIVISION NAME" />
                     </div>
                     {vote.suggestedDepartment && (

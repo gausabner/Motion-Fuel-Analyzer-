@@ -89,7 +89,7 @@ export function ComparisonControls({ costCentres }: { costCentres: CostCentre[] 
             {/* Row 1: dimension + periods */}
             <div className="flex flex-wrap items-end gap-4">
                 <div className="space-y-1.5 w-[180px]">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Compare</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Compare</label>
                     <Select value={dimension} onValueChange={setDimension}>
                         <SelectTrigger className="bg-background h-10"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -99,7 +99,7 @@ export function ComparisonControls({ costCentres }: { costCentres: CostCentre[] 
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Period A</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Period A</label>
                     <DateRangePicker dateRange={periodA} onDateChange={setPeriodA} />
                 </div>
 
@@ -108,7 +108,7 @@ export function ComparisonControls({ costCentres }: { costCentres: CostCentre[] 
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Period B</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Period B</label>
                     <DateRangePicker dateRange={periodB} onDateChange={setPeriodB} />
                 </div>
 
@@ -121,7 +121,7 @@ export function ComparisonControls({ costCentres }: { costCentres: CostCentre[] 
             {/* Row 2: optional filters + actions */}
             <div className="flex flex-wrap items-end gap-3 pt-4 border-t border-border">
                 <div className="space-y-1.5 w-[150px]">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Fuel type</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fuel type</label>
                     <Select value={fuelType} onValueChange={setFuelType}>
                         <SelectTrigger className="bg-background h-9"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -132,7 +132,7 @@ export function ComparisonControls({ costCentres }: { costCentres: CostCentre[] 
                     </Select>
                 </div>
                 <div className="space-y-1.5 min-w-[200px] flex-1 max-w-xs">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Department</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Department</label>
                     <Select value={department} onValueChange={(v) => { setDepartment(v); setDivision("all"); }}>
                         <SelectTrigger className="bg-background h-9"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -142,7 +142,7 @@ export function ComparisonControls({ costCentres }: { costCentres: CostCentre[] 
                     </Select>
                 </div>
                 <div className="space-y-1.5 min-w-[180px] flex-1 max-w-xs">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Division</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Division</label>
                     <Select value={division} onValueChange={setDivision}>
                         <SelectTrigger className="bg-background h-9"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -152,7 +152,7 @@ export function ComparisonControls({ costCentres }: { costCentres: CostCentre[] 
                     </Select>
                 </div>
                 <div className="space-y-1.5 w-[150px]">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Fleet unit</label>
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fleet unit</label>
                     <Input placeholder="e.g. WM2711" value={vehicleId} onChange={e => setVehicleId(e.target.value)} className="bg-background h-9 font-mono" />
                 </div>
 

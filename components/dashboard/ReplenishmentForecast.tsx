@@ -48,7 +48,7 @@ export function ReplenishmentForecast({
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                         <thead>
-                            <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                            <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                                 <th className="py-2 pr-3 font-bold">Fuel</th>
                                 <th className="py-2 pr-3 font-bold text-right">Burn rate</th>
                                 <th className="py-2 pr-3 font-bold text-right">Typical delivery</th>
@@ -66,7 +66,7 @@ export function ReplenishmentForecast({
                                     <td className="py-2.5 pr-3 text-right font-mono">
                                         {f.cycleDays ? `${f.cycleDays.toFixed(1)} d` : "—"}
                                         {f.observedGapDays !== null && (
-                                            <span className="block text-[10px] text-muted-foreground font-sans">
+                                            <span className="block text-xs text-muted-foreground font-sans">
                                                 observed {f.observedGapDays.toFixed(1)} d
                                             </span>
                                         )}
@@ -77,7 +77,7 @@ export function ReplenishmentForecast({
                                             <>
                                                 <span className="font-semibold text-foreground">{fmtDate(f.nextDue)}</span>
                                                 {f.orderBy && (
-                                                    <span className="block text-[10px] text-muted-foreground">
+                                                    <span className="block text-xs text-muted-foreground">
                                                         order by {fmtDate(f.orderBy)}
                                                     </span>
                                                 )}
@@ -98,7 +98,7 @@ export function ReplenishmentForecast({
                     </table>
                 </div>
 
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                     <CheckCircle2 className="h-3 w-3 inline mr-1 text-emerald-600" />
                     Cycle is the typical delivery divided by the measured burn rate. It is shown against the observed gap between
                     deliveries as a cross-check — the two agree closely, which is what gives the figure its confidence. A true
