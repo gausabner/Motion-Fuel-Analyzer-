@@ -39,13 +39,15 @@ export default async function DepartmentsPage({
         from: params.from,
         to: params.to,
     };
-    const departments = await getDepartmentBreakdown(filters);
-
-    const totalSpend = departments.reduce((sum, d) => sum + d.totalCost, 0);
-
-    // What the removed "Cost allocation 100%" card claimed, measured instead of
-    // asserted: litres whose vote number resolves to a registered cost centre.
-    const [settings, coverage] = await Promise.all([
+    // Independent reads go out together rather than as a waterfall: this route
+    // has no `loading.tsx` (see components/dashboard/AppSidebar), so its render
+    // blocks the response.
+    //
+    // `coverage` is what the removed "Cost allocation 100%" card claimed,
+    // measured instead of asserted: litres whose vote number resolves to a
+    // registered cost centre.
+    const [departments, settings, coverage, costCentres] = await Promise.all([
+        getDepartmentBreakdown(filters),
         (prisma as any).systemSettings.findFirst({ where: { id: "global" } }),
         (prisma as any).$queryRawUnsafe(`
             SELECT
@@ -57,7 +59,15 @@ export default async function DepartmentsPage({
             LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
             WHERE t.transType = 'FIS' AND t.transVoteNo != ''
         `) as Promise<{ attributed: number; total: number; openCodes: number; openLitres: number }[]>,
+        // Cost centres feed the filter bar.
+        (prisma as any).costCentre.findMany({
+            select: { department: true, division: true },
+            distinct: ['department', 'division'],
+            orderBy: [{ department: 'asc' }, { division: 'asc' }]
+        }),
     ]);
+
+    const totalSpend = departments.reduce((sum: any, d: any) => sum + d.totalCost, 0);
     const cur = settings?.currencySymbol || DEFAULT_CURRENCY;
     const cov = coverage[0] ?? { attributed: 0, total: 0, openCodes: 0, openLitres: 0 };
     const openCodes = Number(cov.openCodes || 0);
@@ -79,13 +89,6 @@ export default async function DepartmentsPage({
     if (params.from) exportParams.set("from", params.from);
     if (params.to) exportParams.set("to", params.to);
     const departmentsExportUrl = `/api/reports/export?${exportParams.toString()}`;
-
-    // Fetch CostCentres for Filter
-    const costCentres = await (prisma as any).costCentre.findMany({
-        select: { department: true, division: true },
-        distinct: ['department', 'division'],
-        orderBy: [{ department: 'asc' }, { division: 'asc' }]
-    });
 
     return (
         <div className="space-y-8">

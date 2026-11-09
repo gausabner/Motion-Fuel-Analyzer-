@@ -201,6 +201,10 @@ export function DashboardCharts({
     const fleetRef = useRef<HTMLDivElement>(null);
     const costRef = useRef<HTMLDivElement>(null);
 
+    // One scrollable row per department, with a floor so an empty result set
+    // still gives the chart a positive height to measure.
+    const voteChartHeight = Math.max(topVotes.length, 1) * 50;
+
     return (
         <div className="space-y-8">
             {/* Main Trend Chart */}
@@ -292,8 +296,12 @@ export function DashboardCharts({
                     <CardContent className="px-0 pb-0">
                         <div className="w-full relative border border-border rounded-md bg-muted/40">
                             <div className="overflow-y-auto pr-4 custom-scrollbar" style={{ height: '250px' }}>
-                                <div style={{ height: `${topVotes.length * 50}px`, width: '100%' }}>
-                                    <ResponsiveContainer width="100%" height="100%">
+                                <div style={{ height: `${voteChartHeight}px`, width: '100%' }}>
+                                    {/* An explicit pixel height, not "100%": recharts cannot
+                                        resolve a percentage height on its first render pass and
+                                        logs "The width(-1) and height(-1) of chart should be
+                                        greater than 0" before its ResizeObserver reports. */}
+                                    <ResponsiveContainer width="100%" height={voteChartHeight}>
                                         <BarChart data={topVotes} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 10 }} barGap={2}>
                                             <XAxis type="number" hide />
                                             <YAxis

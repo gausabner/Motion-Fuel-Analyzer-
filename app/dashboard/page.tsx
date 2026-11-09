@@ -48,38 +48,41 @@ async function getDashboardData(filters: { vehicleId?: string, fuelType?: string
         params.push(toDate.toISOString());
     }
 
-    // 1. KPI Cards
-    const totalStats = await (prisma as any).$queryRawUnsafe(`
+    // All seven reads are independent of each other, so they are issued
+    // together rather than as a waterfall of awaits. No dashboard route has a
+    // `loading.tsx` any more (see components/dashboard/AppSidebar), so this
+    // render blocks the response — keeping it short is what keeps the page
+    // feeling instant.
+    const [
+        totalStats,
+        rawDaily,
+        topFleet,
+        topVotes,
+        settings,
+        costCentres,
+        activeUnitsList,
+    ] = await Promise.all([
+        // 1. KPI Cards
+        (prisma as any).$queryRawUnsafe(`
         SELECT t.fuelType, SUM(t.transQty) as totalQty, SUM(t.transAmt) as totalAmt
         FROM FuelTransaction t
         LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
         WHERE ${queryCondition}
         GROUP BY t.fuelType
-    `, ...params) as any[];
+    `, ...params) as Promise<any[]>,
 
-    const petrol = totalStats.filter((s: any) => s.fuelType.toLowerCase().includes('petrol')).reduce((acc: number, curr: any) => acc + (curr.totalQty || 0), 0);
-    const diesel = totalStats.filter((s: any) => s.fuelType.toLowerCase().includes('diesel')).reduce((acc: number, curr: any) => acc + (curr.totalQty || 0), 0);
-    const totalCost = totalStats.reduce((acc: number, curr: any) => acc + (curr.totalAmt || 0), 0);
-
-    // 2. Trend Line Chart
-    const rawDaily = await (prisma as any).$queryRawUnsafe(`
+        // 2. Trend Line Chart
+        (prisma as any).$queryRawUnsafe(`
         SELECT t.transDate, t.fuelType, SUM(t.transQty) as totalQty, SUM(t.transAmt) as totalAmt
         FROM FuelTransaction t
         LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
         WHERE ${queryCondition}
         GROUP BY t.transDate, t.fuelType
         ORDER BY t.transDate ASC
-    `, ...params) as any[];
+    `, ...params) as Promise<any[]>,
 
-    const dailyData = rawDaily.map((d: any) => ({
-        date: d.transDate,
-        fuelType: d.fuelType,
-        totalVolume: d.totalQty || 0,
-        totalCost: d.totalAmt || 0
-    }));
-
-    // 3. Top Fleet Units
-    const topFleet = await (prisma as any).$queryRawUnsafe(`
+        // 3. Top Fleet Units
+        (prisma as any).$queryRawUnsafe(`
         SELECT t.vehicleId, SUM(t.transQty) as totalQty
         FROM FuelTransaction t
         LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
@@ -87,11 +90,11 @@ async function getDashboardData(filters: { vehicleId?: string, fuelType?: string
         GROUP BY t.vehicleId
         ORDER BY totalQty DESC
         LIMIT 10
-    `, ...params) as any[];
+    `, ...params) as Promise<any[]>,
 
-    // 4. Top divisions by consumption — resolved votes roll up under their
-    // division; every unresolved vote collapses into one "Unassigned" row.
-    const topVotes = await (prisma as any).$queryRawUnsafe(`
+        // 4. Top divisions by consumption — resolved votes roll up under their
+        // division; every unresolved vote collapses into one "Unassigned" row.
+        (prisma as any).$queryRawUnsafe(`
         SELECT
             COALESCE(c.division, 'Unassigned') as label,
             SUM(CASE WHEN t.fuelType LIKE '%Petrol%' THEN t.transQty ELSE 0 END) as petrolQty,
@@ -103,24 +106,23 @@ async function getDashboardData(filters: { vehicleId?: string, fuelType?: string
         GROUP BY COALESCE(c.division, 'Unassigned')
         ORDER BY totalQty DESC
         LIMIT 10
-    `, ...params) as any[];
+    `, ...params) as Promise<any[]>,
 
-    // 5. System Settings
-    let settings = null;
-    try {
-        settings = await (prisma as any).systemSettings.findFirst({ where: { id: 'global' } });
-    } catch (e: any) {
-        console.error('[Dashboard] Failed to fetch settings:', e.message);
-    }
+        // 5. System Settings — a missing/unmigrated table must not fail the page.
+        (prisma as any).systemSettings.findFirst({ where: { id: 'global' } }).catch((e: any) => {
+            console.error('[Dashboard] Failed to fetch settings:', e.message);
+            return null;
+        }),
 
-    // 6. Departments & Divisions (Cost Centres)
-    const costCentres = await (prisma as any).costCentre.findMany({
-        select: { department: true, division: true },
-        distinct: ['department', 'division'],
-        orderBy: [{ department: 'asc' }, { division: 'asc' }]
-    });
+        // 6. Departments & Divisions (Cost Centres)
+        (prisma as any).costCentre.findMany({
+            select: { department: true, division: true },
+            distinct: ['department', 'division'],
+            orderBy: [{ department: 'asc' }, { division: 'asc' }]
+        }),
 
-    const activeUnitsList = await (prisma as any).$queryRawUnsafe(`
+        // 7. Every active unit, for the scatter plot and the drill-down modal
+        (prisma as any).$queryRawUnsafe(`
         SELECT 
             t.vehicleId,
             SUM(CASE WHEN t.fuelType LIKE '%Petrol%' THEN t.transQty ELSE 0.0 END) as petrolQty,
@@ -131,7 +133,19 @@ async function getDashboardData(filters: { vehicleId?: string, fuelType?: string
         WHERE ${queryCondition}
         GROUP BY t.vehicleId
         ORDER BY totalQty DESC
-    `, ...params) as any[];
+    `, ...params) as Promise<any[]>,
+    ]);
+
+    const petrol = totalStats.filter((s: any) => s.fuelType.toLowerCase().includes('petrol')).reduce((acc: number, curr: any) => acc + (curr.totalQty || 0), 0);
+    const diesel = totalStats.filter((s: any) => s.fuelType.toLowerCase().includes('diesel')).reduce((acc: number, curr: any) => acc + (curr.totalQty || 0), 0);
+    const totalCost = totalStats.reduce((acc: number, curr: any) => acc + (curr.totalAmt || 0), 0);
+
+    const dailyData = rawDaily.map((d: any) => ({
+        date: d.transDate,
+        fuelType: d.fuelType,
+        totalVolume: d.totalQty || 0,
+        totalCost: d.totalAmt || 0
+    }));
 
     const activeUnitsCount = activeUnitsList.length;
 
