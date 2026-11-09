@@ -16,7 +16,7 @@ export default function DashboardLayout({
                 <img src="/logo-on-light.svg" alt="Motion Fuel Analyzer Logo" className="ml-3 w-32 h-auto object-contain" />
             </div>
 
-            <main className="lg:pl-56 min-h-screen transition-all duration-300">
+            <main className="lg:pl-56 min-h-screen">
                 <div className="container mx-auto p-4 md:p-10 lg:p-16 max-w-[1600px]">
                     <PageTransition>
                         {children}

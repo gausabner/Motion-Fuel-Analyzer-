@@ -14,6 +14,7 @@ import {
     Legend
 } from "recharts";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useChartTheme, AXIS, tooltipStyles } from "@/lib/chart-theme";
 
 interface FleetTransaction {
     vehicleId: string;
@@ -23,16 +24,15 @@ interface FleetTransaction {
     cost: number;
 }
 
-const PALETTE = {
-    petrol: '#60A5FA', // Sky
-    diesel: '#1D4ED8', // Deep blue
-    grid: 'transparent',
-    text: '#71717A'  // zinc-500
-};
+
 
 type Granularity = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
+    // Scatter puts all series on screen at once, which is the all-pairs case —
+    // the shared three-slot set is validated for exactly that.
+    const PALETTE = useChartTheme();
+    const tip = tooltipStyles(PALETTE);
     const [granularity, setGranularity] = useState<Granularity>('daily');
 
     // Process data based on granularity
@@ -125,7 +125,7 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
                             domain={[-1, vehiclesList.length]}
                             ticks={vehiclesList.map((_, i) => i)}
                             tickFormatter={(i) => vehiclesList[i] || ''}
-                            tick={{ fontSize: 12, fill: PALETTE.text, dy: 10, fontWeight: 600 }}
+                            tick={{ fontSize: 12, fill: PALETTE.axis, dy: 10, fontWeight: 600 }}
                             angle={-45}
                             textAnchor="end"
                             axisLine={false}
@@ -138,12 +138,12 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
                             dataKey="quantity"
                             name="Volume"
                             unit=" L"
-                            tick={{ fontSize: 12, fill: PALETTE.text, fontWeight: 600 }}
+                            tick={{ fontSize: 12, fill: PALETTE.axis, fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
                         />
                         <Tooltip
-                            cursor={{ strokeDasharray: '3 3', stroke: '#E4E4E7' }}
+                            cursor={tip.cursor}
                             content={({ active, payload }) => {
                                 if (active && payload && payload.length) {
                                     const data = payload[0].payload;

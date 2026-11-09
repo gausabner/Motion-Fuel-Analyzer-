@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useChartTheme, AXIS, tooltipStyles } from "@/lib/chart-theme";
 import {
     LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
 } from "recharts";
@@ -12,6 +13,8 @@ import type { FlowBucket } from "@/lib/fuel-flow";
  * than it cost to buy.
  */
 export function FuelPriceChart({ data, currency = "N$" }: { data: FlowBucket[]; currency?: string }) {
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
     const rows = data
         .filter(b => b.receivedLitres > 0 || b.issuedLitres > 0)
         .map(b => ({
@@ -41,21 +44,28 @@ export function FuelPriceChart({ data, currency = "N$" }: { data: FlowBucket[]; 
                 ) : (
                     <ResponsiveContainer width="100%" height={260}>
                         <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
-                            <XAxis dataKey="name" tick={{ fontSize: 12 }} interval="preserveStartEnd" minTickGap={24} />
+                            <CartesianGrid vertical={false} stroke={chart.grid} strokeOpacity={0.7} />
+                            <XAxis dataKey="name" tick={{ fontSize: AXIS.tickSize, fill: chart.axis }} stroke={chart.grid} tickLine={false} interval="preserveStartEnd" minTickGap={24} />
                             <YAxis
-                                tick={{ fontSize: 12 }}
+                                tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
+                                axisLine={false}
+                                tickLine={false}
                                 domain={["auto", "auto"]}
                                 tickFormatter={(v) => `${currency}${Number(v).toFixed(0)}`}
-                                width={48}
+                                width={52}
                             />
                             <Tooltip
                                 formatter={(value: any, name: any) => [`${currency}${Number(value).toFixed(2)}/L`, name]}
-                                contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                                contentStyle={tip.contentStyle}
+                                labelStyle={tip.labelStyle}
+                                itemStyle={tip.itemStyle}
+                                cursor={tip.cursor}
                             />
-                            <Legend wrapperStyle={{ fontSize: 12 }} />
-                            <Line type="monotone" dataKey="Purchase" stroke="#D85A30" strokeWidth={2} dot={false} connectNulls />
-                            <Line type="monotone" dataKey="Issue" stroke="#378ADD" strokeWidth={2} dot={false} connectNulls />
+                            <Legend wrapperStyle={{ fontSize: 12, color: chart.axis }} iconType="plainline" iconSize={14} />
+                            {/* Purchase is what the depot paid, Issue what the fleet was
+                                charged — two measures, so two hues from the shared set. */}
+                            <Line type="monotone" dataKey="Purchase" stroke={chart.diesel} strokeWidth={2} dot={false} connectNulls />
+                            <Line type="monotone" dataKey="Issue" stroke={chart.petrol} strokeWidth={2} dot={false} connectNulls />
                         </LineChart>
                     </ResponsiveContainer>
                 )}

@@ -18,6 +18,7 @@ import {
     Cell
 } from "recharts";
 import { Droplets } from "lucide-react";
+import { useChartTheme, AXIS, tooltipStyles } from "@/lib/chart-theme";
 
 interface TotalVolumeModalProps {
     open: boolean;
@@ -42,6 +43,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalProps) {
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
+
     if (!data || data.length === 0) return null;
 
     // Calculate stats
@@ -80,7 +84,7 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
                                     <XAxis
                                         dataKey="date"
                                         name="Date"
-                                        tick={{ fontSize: 12, fill: '#71717A' }}
+                                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                                         tickFormatter={(val) => format(new Date(val), "MMM dd")}
                                         axisLine={false}
                                         tickLine={false}
@@ -92,7 +96,7 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
                                         dataKey="totalVol"
                                         name="Volume"
                                         unit="L"
-                                        tick={{ fontSize: 12, fill: '#71717A' }}
+                                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                                         tickFormatter={(val) => val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val.toFixed(0)}
                                         axisLine={false}
                                         tickLine={false}
@@ -100,15 +104,15 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
                                         domain={['0', 'auto']}
                                     />
                                     <Tooltip
-                                        cursor={{ strokeDasharray: '3 3' }}
+                                        cursor={tip.cursor}
                                         content={<CustomTooltip />}
                                         wrapperStyle={{ outline: 'none' }}
                                     />
-                                    <Scatter name="Daily Volume" data={data} fill="#2563EB">
+                                    <Scatter name="Daily Volume" data={data} fill={chart.petrol}>
                                         {data.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
-                                                fill={entry.totalVol > avgVolume ? "#2563EB" : "#93C5FD"}
+                                                fill={entry.totalVol > avgVolume ? chart.diesel : chart.axis}
                                                 fillOpacity={entry.totalVol > avgVolume ? 1 : 0.5}
                                             />
                                         ))}

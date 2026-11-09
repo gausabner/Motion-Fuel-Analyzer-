@@ -4,10 +4,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-    ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
+    ComposedChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import type { FlowBucket, Granularity } from "@/lib/fuel-flow";
 import { fmtLitres } from "@/lib/format";
+import { useChartTheme, AXIS, axisLitres, tooltipStyles } from "@/lib/chart-theme";
 
 const GRANULARITIES: Granularity[] = ["daily", "monthly", "yearly"];
 
@@ -25,6 +26,8 @@ export function FlowChart({
 }) {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
 
     const setGranularity = (g: Granularity) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -77,17 +80,23 @@ export function FlowChart({
                 ) : (
                     <ResponsiveContainer width="100%" height={320}>
                         <ComposedChart data={rows} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
-                            <XAxis dataKey="name" tick={{ fontSize: 12 }} interval="preserveStartEnd" minTickGap={24} />
-                            <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} width={44} />
+                            <CartesianGrid vertical={false} stroke={chart.grid} strokeOpacity={0.7} />
+                            <XAxis dataKey="name" tick={{ fontSize: AXIS.tickSize, fill: chart.axis }} stroke={chart.grid} tickLine={false} interval="preserveStartEnd" minTickGap={24} />
+                            <YAxis tick={{ fontSize: AXIS.tickSize, fill: chart.axis }} axisLine={false} tickLine={false} tickFormatter={axisLitres} width={52} />
                             <Tooltip
                                 formatter={(value: any, name: any) => [fmtLitres(Number(value)), name]}
-                                contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                                contentStyle={tip.contentStyle}
+                                labelStyle={tip.labelStyle}
+                                itemStyle={tip.itemStyle}
+                                cursor={tip.bandCursor}
                             />
-                            <Legend wrapperStyle={{ fontSize: 12 }} />
-                            <Bar dataKey="Issued" fill="#378ADD" radius={[2, 2, 0, 0]} maxBarSize={26} />
-                            <Bar dataKey="Received" fill="#1D9E75" radius={[2, 2, 0, 0]} maxBarSize={26} />
-                            <Line type="monotone" dataKey="Received" stroke="#0F6E56" dot={false} strokeWidth={1} legendType="none" />
+                            <Legend wrapperStyle={{ fontSize: 12, color: chart.axis }} iconType="square" iconSize={9} />
+                            {/* Issues are slot 1 and receipts slot 3 everywhere in the app,
+                                so the same quantity keeps its colour across pages. The
+                                Line that used to sit on top of Received drew the same
+                                series twice — one encoding is enough. */}
+                            <Bar dataKey="Issued" fill={chart.petrol} radius={[3, 3, 0, 0]} maxBarSize={26} />
+                            <Bar dataKey="Received" fill={chart.received} radius={[3, 3, 0, 0]} maxBarSize={26} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 )}

@@ -40,6 +40,21 @@
   --color-brand-light: var(--accent);
   --color-brand-dark: var(--foreground);
 
+  /* Motion. Three curves cover the app: things arriving or leaving, things
+     moving on screen, and colour. Nothing uses ease-in — it withholds movement
+     in exactly the frames the eye is fixed on, which reads as lag. */
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* Chart series, by entity and never by rank, so a filter that drops a series
+     cannot repaint the survivors. Dark is a selected set of steps for the dark
+     surface, not the same hex dimmed. */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+
   /* App shell (sidebar) */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -88,6 +103,16 @@
 
   --radius: 0.75rem;
 
+  /* Charts — Petrol, Diesel, Received. Two hues rather than two steps of one,
+     because these are different fuels, not more and less of one thing. */
+  --chart-1: #2A78D6;
+  --chart-2: #EB6834;
+  --chart-3: #1BAF7A;
+  --chart-grid: #E2E8F0;
+  --chart-axis: #64748B;
+  --chart-cursor: #94A3B8;
+  --chart-surface: #FFFFFF;
+
   /* App shell — ink sidebar in both modes */
   --sidebar: #0F172A;
   --sidebar-foreground: #E2E8F0;
@@ -128,6 +153,15 @@
   --input: #1E293B;
   --ring: #3B82F6;
 
+  /* Stepped for the dark surface and validated against it; all three clear 3:1. */
+  --chart-1: #3987E5;
+  --chart-2: #D95926;
+  --chart-3: #199E70;
+  --chart-grid: #1E293B;
+  --chart-axis: #94A3B8;
+  --chart-cursor: #475569;
+  --chart-surface: #111C33;
+
   --sidebar: #0F172A;
   --sidebar-foreground: #E2E8F0;
   --sidebar-muted: #94A3B8;
@@ -166,6 +200,105 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  }
+
+  /*
+   * Browser surfaces. Selection, the caret, scrollbars and the focus ring ship
+   * with defaults that belong to no design system, and they are visible on
+   * every screen of the app. Theming them is the cheapest signal that this was
+   * built rather than assembled.
+   */
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
+    color: var(--foreground);
+  }
+
+  :root {
+    caret-color: var(--primary);
+    scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin;
+  }
+
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 99px;
+    border: 3px solid var(--background);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+  ::-webkit-scrollbar-corner { background: transparent; }
+
+  /* One focus ring for the whole app, drawn outside the element so it never
+     shifts layout. */
+  :where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Figures are read down a column, so the digits have to share a width. */
+  table, .tabular, [data-slot="table"] { font-variant-numeric: tabular-nums; }
+}
+
+/*
+ * Route entrance and the one staggered group on the page.
+ *
+ * Both are CSS so they run on the compositor rather than through a
+ * requestAnimationFrame loop that competes with data fetching — which is
+ * precisely when these play.
+ */
+@keyframes route-enter {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+.route-enter {
+  animation: route-enter 180ms var(--ease-out-soft) both;
+}
+
+/*
+ * The KPI row is the only thing in the app that animates as a group, because
+ * it is the only thing that IS a group: one row of figures that the reader
+ * takes in together. 50ms apart, capped at four, so the last tile is on screen
+ * within 330ms of the first.
+ */
+@keyframes tile-rise {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+.stagger-tiles > * {
+  animation: tile-rise 260ms var(--ease-out-soft) both;
+}
+.stagger-tiles > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-tiles > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-tiles > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-tiles > *:nth-child(n+4) { animation-delay: 150ms; }
+
+/*
+ * Reduced motion: fewer and gentler, not none. Movement goes; opacity and
+ * colour stay, because those are what confirm an action happened.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Entrances resolve immediately rather than being removed, so the page is
+     never left mid-animation at opacity 0. */
+  .route-enter, .stagger-tiles > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Keep the two that carry meaning rather than motion. */
+  :where(button, [role="button"], a, [data-slot="card"]) {
+    transition-property: background-color, border-color, color, opacity !important;
+    transition-duration: 120ms !important;
   }
 }
 

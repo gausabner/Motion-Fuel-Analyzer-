@@ -25,22 +25,22 @@ export function StatusProgressWidget({ petrolPercentage, dieselPercentage, class
 
             <div className="h-3 w-full bg-muted rounded-full overflow-hidden flex">
                 <div
-                    className="h-full bg-[#60A5FA] rounded-l-full"
+                    className="h-full bg-chart-1 rounded-l-full"
                     style={{ width: `${petrolPercentage}%` }}
                 />
                 <div
-                    className="h-full bg-[#1D4ED8] rounded-r-full"
+                    className="h-full bg-chart-2 rounded-r-full"
                     style={{ width: `${dieselPercentage}%` }}
                 />
             </div>
 
             <div className="mt-4 flex justify-between text-xs font-medium text-muted-foreground">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-[#60A5FA] rounded-full"></div>
+                    <div className="w-2 h-2 bg-chart-1 rounded-full"></div>
                     <span>Petrol volume</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-[#1D4ED8] rounded-full"></div>
+                    <div className="w-2 h-2 bg-chart-2 rounded-full"></div>
                     <span>Diesel volume</span>
                 </div>
             </div>

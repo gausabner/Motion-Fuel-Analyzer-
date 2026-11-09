@@ -64,7 +64,7 @@ export function DateRangePresets({ className }: { className?: string }) {
                     type="button"
                     onClick={() => apply(key)}
                     className={cn(
-                        "h-9 px-3.5 rounded-lg text-xs font-semibold border transition-colors",
+                        "h-9 px-3.5 rounded-lg text-xs font-semibold border [transition:transform_160ms_var(--ease-out-soft),background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease] active:scale-[0.97] motion-reduce:active:scale-100 ",
                         activePreset === key
                             ? "bg-accent text-accent-foreground border-transparent"
                             : "bg-card text-foreground/80 border-border hover:bg-muted"

@@ -132,6 +132,7 @@ function NavContent({ pathname, session, setOpen, label }: { pathname: string, s
                                                 className={cn(
                                                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors duration-150 group",
                                                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-foreground/70 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
+                                                    "[transition:background-color_150ms_ease,color_150ms_ease,transform_150ms_var(--ease-out-soft)] active:scale-[0.98] motion-reduce:active:scale-100",
                                                     isActive
                                                         ? "bg-primary text-primary-foreground font-semibold"
                                                         : "text-sidebar-muted font-medium hover:text-sidebar-foreground hover:bg-sidebar-hover"
@@ -156,6 +157,7 @@ function NavContent({ pathname, session, setOpen, label }: { pathname: string, s
                                                                     className={cn(
                                                                         "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors duration-150 group",
                                                                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-foreground/70 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
+                                                    "[transition:background-color_150ms_ease,color_150ms_ease,transform_150ms_var(--ease-out-soft)] active:scale-[0.98] motion-reduce:active:scale-100",
                                                                         childActive
                                                                             ? "bg-sidebar-hover text-sidebar-foreground font-semibold"
                                                                             : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover"

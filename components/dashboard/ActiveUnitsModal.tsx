@@ -25,7 +25,7 @@ import {
     ResponsiveContainer,
     Cell,
 } from "recharts";
-import { motion } from "framer-motion";
+import { useChartTheme, AXIS, tooltipStyles } from "@/lib/chart-theme";
 
 interface UnitData {
     vehicleId: string;
@@ -50,6 +50,9 @@ interface ActiveUnitsModalProps {
 }
 
 export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Scatter }: ActiveUnitsModalProps) {
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
+
 
     // Custom Tooltip for Scatter Chart
     const CustomTooltip = ({ active, payload }: any) => {
@@ -92,21 +95,21 @@ export function ActiveUnitsModal({ open, onOpenChange, activeUnitsList, top20Sca
                                         dataKey="y"
                                         name="Consumption"
                                         unit="L"
-                                        tick={{ fontSize: 12, fill: '#71717A' }}
+                                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                                         axisLine={false}
                                         tickLine={false}
                                         dx={-5}
                                     />
                                     <Tooltip
-                                        cursor={{ strokeDasharray: '3 3' }}
+                                        cursor={tip.cursor}
                                         content={<CustomTooltip />}
                                         wrapperStyle={{ outline: 'none' }}
                                     />
-                                    <Scatter name="Units" data={top20Scatter} fill="#eab308">
+                                    <Scatter name="Units" data={top20Scatter} fill={chart.petrol}>
                                         {top20Scatter.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
-                                                fill={entry.petrol > entry.diesel ? "#60A5FA" : "#1D4ED8"}
+                                                fill={entry.petrol > entry.diesel ? chart.petrol : chart.diesel}
                                                 stroke="transparent"
                                             />
                                         ))}

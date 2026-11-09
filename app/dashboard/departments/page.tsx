@@ -98,7 +98,7 @@ export default async function DepartmentsPage({
 
             <FuelLogFilters costCentres={costCentres} />
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3 stagger-tiles">
                 <Card className="monumental-card">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Primary Depts</CardTitle>

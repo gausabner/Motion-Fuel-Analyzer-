@@ -16,7 +16,7 @@ interface IndustrialKPIProps {
 export function IndustrialKPI({ label, value, subValue, trend, icon: Icon, accent = false }: IndustrialKPIProps) {
     return (
         <div className={cn(
-            "monumental-card flex flex-col justify-between h-full min-h-[160px] transition-all hover:-translate-y-1 duration-300 overflow-hidden",
+            "monumental-card flex flex-col justify-between h-full min-h-[160px] overflow-hidden [transition:border-color_180ms_ease,box-shadow_180ms_ease,transform_160ms_var(--ease-out-soft)] [@media(hover:hover){&:hover}]:border-primary/35 [@media(hover:hover){&:hover}]:shadow-md",
             accent ? "bg-accent border-accent" : "bg-card"
         )}>
             <div className="flex justify-between items-start">
@@ -77,13 +77,13 @@ export function StatusWidget({ petrolVol, dieselVol, totalVol }: { petrolVol: nu
             {/* Progress Bar "Hudson Style" */}
             <div className="h-12 w-full flex rounded-none overflow-hidden mt-auto">
                 <div
-                    className="h-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground transition-all duration-500"
+                    className="h-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground"
                     style={{ width: `${petrolPercent}%` }}
                 >
                     {petrolPercent > 10 && `PETROL ${petrolPercent.toFixed(0)}%`}
                 </div>
                 <div
-                    className="h-full bg-foreground flex items-center justify-center text-xs font-bold text-background transition-all duration-500"
+                    className="h-full bg-foreground flex items-center justify-center text-xs font-bold text-background"
                     style={{ width: `${dieselPercent}%` }}
                 >
                     {dieselPercent > 10 && `DIESEL ${dieselPercent.toFixed(0)}%`}

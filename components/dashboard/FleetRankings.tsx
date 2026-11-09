@@ -8,24 +8,21 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
-    Cell
+    ResponsiveContainer
 } from "recharts";
+import { useChartTheme, AXIS, tooltipStyles } from "@/lib/chart-theme";
 
 interface RankingProps {
     topFreqVehicles: { name: string; value: number }[];
     topCostCentres: { name: string; value: number }[];
 }
 
-const PALETTE = {
-    purple: '#7c3aed',
-    turquoise: '#14b8a6',
-    coral: '#f43f5e',
-    grid: '#e2e8f0',
-    text: '#64748b'
-};
-
 export function FleetRankings({ topFreqVehicles, topCostCentres }: RankingProps) {
+    // Both charts carry a single series, so one hue is the whole palette. The
+    // previous version repainted the top three a different colour, which made
+    // colour mean rank — and the bars are already sorted, so position says it.
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
     return (
         <div className="grid gap-4 md:grid-cols-2">
             {/* Top Frequent Consumers */}
@@ -37,18 +34,14 @@ export function FleetRankings({ topFreqVehicles, topCostCentres }: RankingProps)
                 <CardContent className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart layout="vertical" data={topFreqVehicles} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={PALETTE.grid} />
-                            <XAxis type="number" tick={{ fontSize: 12, fill: PALETTE.text }} />
-                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12, fill: PALETTE.text }} />
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={chart.grid} strokeOpacity={0.7} />
+                            <XAxis type="number" tick={{ fontSize: AXIS.tickSize, fill: chart.axis }} />
+                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: AXIS.tickSize, fill: chart.axis }} />
                             <Tooltip
                                 cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                             />
-                            <Bar dataKey="value" name="Refills" fill={PALETTE.purple} radius={[0, 4, 4, 0]} barSize={20}>
-                                {topFreqVehicles.map((_, index) => (
-                                    <Cell key={`cell-${index}`} fill={index < 3 ? PALETTE.coral : PALETTE.purple} />
-                                ))}
-                            </Bar>
+                            <Bar dataKey="value" name="Refills" fill={chart.petrol} radius={[0, 4, 4, 0]} barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
@@ -63,19 +56,15 @@ export function FleetRankings({ topFreqVehicles, topCostCentres }: RankingProps)
                 <CardContent className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart layout="vertical" data={topCostCentres} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={PALETTE.grid} />
-                            <XAxis type="number" tick={{ fontSize: 12, fill: PALETTE.text }} />
-                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12, fill: PALETTE.text }} />
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={chart.grid} strokeOpacity={0.7} />
+                            <XAxis type="number" tick={{ fontSize: AXIS.tickSize, fill: chart.axis }} />
+                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: AXIS.tickSize, fill: chart.axis }} />
                             <Tooltip
                                 cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                 formatter={(value: any) => [`${Number(value).toLocaleString()} L`, 'Volume']}
                             />
-                            <Bar dataKey="value" name="Volume" fill={PALETTE.turquoise} radius={[0, 4, 4, 0]} barSize={20}>
-                                {topCostCentres.map((_, index) => (
-                                    <Cell key={`cell-${index}`} fill={index < 3 ? PALETTE.coral : PALETTE.turquoise} />
-                                ))}
-                            </Bar>
+                            <Bar dataKey="value" name="Volume" fill={chart.petrol} radius={[0, 4, 4, 0]} barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>

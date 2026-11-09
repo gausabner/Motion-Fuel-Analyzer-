@@ -19,6 +19,7 @@ import {
 } from "recharts";
 import { format } from "date-fns";
 import { Wallet } from "lucide-react";
+import { useChartTheme, AXIS, tooltipStyles } from "@/lib/chart-theme";
 
 interface SpendData {
     date: string;
@@ -33,6 +34,9 @@ interface TotalSpendModalProps {
 }
 
 export function TotalSpendModal({ open, onOpenChange, data, currencySymbol }: TotalSpendModalProps) {
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
+
 
     // Custom Tooltip
     const CustomTooltip = ({ active, payload }: any) => {
@@ -87,7 +91,7 @@ export function TotalSpendModal({ open, onOpenChange, data, currencySymbol }: To
                                     <XAxis
                                         dataKey="date"
                                         name="Date"
-                                        tick={{ fontSize: 12, fill: '#71717A' }}
+                                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                                         tickFormatter={(val) => format(new Date(val), "MMM dd")}
                                         axisLine={false}
                                         tickLine={false}
@@ -99,7 +103,7 @@ export function TotalSpendModal({ open, onOpenChange, data, currencySymbol }: To
                                         dataKey="value"
                                         name="Spend"
                                         unit=""
-                                        tick={{ fontSize: 12, fill: '#71717A' }}
+                                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                                         tickFormatter={(val) => val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val.toFixed(0)}
                                         axisLine={false}
                                         tickLine={false}
@@ -107,15 +111,15 @@ export function TotalSpendModal({ open, onOpenChange, data, currencySymbol }: To
                                         domain={['0', 'auto']}
                                     />
                                     <Tooltip
-                                        cursor={{ strokeDasharray: '3 3' }}
+                                        cursor={tip.cursor}
                                         content={<CustomTooltip />}
                                         wrapperStyle={{ outline: 'none' }}
                                     />
-                                    <Scatter name="Daily Spend" data={data} fill="#2563EB">
+                                    <Scatter name="Daily Spend" data={data} fill={chart.petrol}>
                                         {data.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
-                                                fill={entry.value > avgSpend ? "#000000" : "#A1A1AA"} // Black for high spend, Grey for low
+                                                fill={entry.value > avgSpend ? chart.diesel : chart.axis} // Black for high spend, Grey for low
                                                 fillOpacity={entry.value > avgSpend ? 1 : 0.5}
                                             />
                                         ))}

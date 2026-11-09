@@ -42,7 +42,7 @@ export function DashboardInteractivity({
 
     return (
         <div className="space-y-8">
-            <div className="industrial-grid">
+            <div className="industrial-grid stagger-tiles">
                 {/* 1. Total Sales (Spend) */}
                 <IndustrialKPI
                     label="Total spend"

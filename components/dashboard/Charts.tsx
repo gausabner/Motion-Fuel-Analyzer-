@@ -20,16 +20,12 @@ import {
     Legend,
     ResponsiveContainer
 } from "recharts";
-import { motion } from "framer-motion";
 import { BarChart3, LineChart as LineIcon, AreaChart as AreaIcon, CalendarDays, CalendarRange, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, startOfMonth, startOfYear } from "date-fns";
-import { fmtMoney, DEFAULT_CURRENCY } from "@/lib/format";
+import { fmtMoney, fmtLitres, fmtShare, DEFAULT_CURRENCY } from "@/lib/format";
 
-// Data palette — see UI_Redesign_Plan.pdf §05: petrol sky, diesel deep blue
-const PETROL = '#60A5FA';
-const DIESEL = '#1D4ED8';
-const COLORS = [PETROL, DIESEL, '#E2E8F0'];
+import { useChartTheme, AXIS, axisLitres, tooltipStyles } from "@/lib/chart-theme";
 
 interface DailyDataPoint {
     date: Date;
@@ -55,6 +51,13 @@ export function DashboardCharts({
     topVotes: TopItem[],
     currencySymbol?: string
 }) {
+    // Resolved from CSS custom properties, so the dark theme gets steps picked
+    // for the dark surface rather than the same hex on a darker card.
+    const chart = useChartTheme();
+    const PETROL = chart.petrol;
+    const DIESEL = chart.diesel;
+    const tip = tooltipStyles(chart);
+
     const [mainChartType, setMainChartType] = useState<'line' | 'area' | 'bar'>('area');
     const [granularity, setGranularity] = useState<'daily' | 'monthly' | 'yearly'>('daily');
 
@@ -120,37 +123,40 @@ export function DashboardCharts({
             data: aggregatedData,
             children: (
                 <>
-                    <CartesianGrid vertical={false} stroke="#F1F5F9" />
+                    {/* Rules recede; the baseline is the only solid line, so the
+                        eye reads the data against the zero line and not a cage. */}
+                    <CartesianGrid vertical={false} stroke={chart.grid} strokeOpacity={0.7} />
                     <XAxis
                         dataKey="date"
-                        tick={{ fontSize: 12, fill: '#64748B', fontWeight: 500 }}
-                        axisLine={false}
+                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis, fontWeight: 500 }}
+                        stroke={chart.grid}
                         tickLine={false}
                         dy={10}
+                        minTickGap={24}
                     />
                     <YAxis
-                        tick={{ fontSize: 12, fill: '#64748B', fontWeight: 500 }}
+                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis, fontWeight: 500 }}
                         axisLine={false}
                         tickLine={false}
-                        dx={-10}
+                        dx={-8}
+                        width={52}
+                        /* Six digits of litres in the gutter read as a shape, not a
+                           number. The exact figure lives in the tooltip. */
+                        tickFormatter={axisLitres}
                     />
                     <Tooltip
-                        contentStyle={{
-                            borderRadius: '8px',
-                            border: 'none',
-                            boxShadow: '0 4px 12px rgba(15,23,42,0.25)',
-                            backgroundColor: '#0F172A',
-                            color: '#F8FAFC'
-                        }}
-                        labelStyle={{ color: '#94A3B8', fontSize: '12px' }}
-                        itemStyle={{ color: '#F8FAFC', fontSize: '12px', fontWeight: 'bold' }}
-                        cursor={{ stroke: '#93C5FD', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+                        contentStyle={tip.contentStyle}
+                        labelStyle={tip.labelStyle}
+                        itemStyle={tip.itemStyle}
+                        cursor={tip.cursor}
+                        formatter={(v: any, n: any) => [`${Number(v).toLocaleString()}\u00A0L`, n]}
                     />
                     <Legend
                         verticalAlign="top"
                         height={36}
                         iconType="square"
-                        wrapperStyle={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                        iconSize={9}
+                        wrapperStyle={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: chart.axis }}
                     />
                 </>
             )
@@ -326,7 +332,7 @@ export function DashboardCharts({
                                                 interval={0}
                                             />
                                             <Tooltip
-                                                cursor={{ fill: '#F1F5F9' }}
+                                                cursor={tip.bandCursor}
                                                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
                                                 labelFormatter={(label) => label.substring(label.indexOf(' ') + 1)}
                                             />
@@ -346,30 +352,58 @@ export function DashboardCharts({
                         <CardTitle className="text-sm font-bold uppercase tracking-wide">Energy Mix</CardTitle>
                         <ChartExportButton targetRef={energyRef} fileName="energy_mix" />
                     </CardHeader>
-                    <CardContent className="px-0 pb-0 flex items-center justify-center">
-                        <ResponsiveContainer width="100%" height={210}>
-                            <PieChart>
-                                <Pie
-                                    data={pieData}
-                                    cx="50%"
-                                    cy="75%"
-                                    startAngle={180}
-                                    endAngle={0}
-                                    innerRadius={70}
-                                    outerRadius={120}
-                                    paddingAngle={6}
-                                    dataKey="value"
-                                    stroke="none"
-                                    cornerRadius={12}
-                                    isAnimationActive={true}
-                                >
-                                    <Cell fill={PETROL} name="Petrol" />
-                                    <Cell fill={DIESEL} name="Diesel" />
-                                </Pie>
-                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                                <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ bottom: '20px' }} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                    {/*
+                        Two slices of a semi-donut asked the reader to compare two
+                        arc lengths to judge a split. One stacked bar states the
+                        same thing exactly, carries its own labels, and needs no
+                        chart library — so the figures are real text that can be
+                        selected, read aloud, and found by search.
+                    */}
+                    <CardContent className="px-0 pb-0">
+                        {(() => {
+                            const petrolVal = pieData[0]?.value ?? 0;
+                            const dieselVal = pieData[1]?.value ?? 0;
+                            const mixTotal = petrolVal + dieselVal;
+                            const pct = (v: number) => mixTotal > 0 ? (v / mixTotal) * 100 : 0;
+                            return (
+                                <div className="flex flex-col gap-5 py-2">
+                                    <div
+                                        className="flex h-14 w-full gap-[2px] overflow-hidden rounded-md"
+                                        role="img"
+                                        aria-label={`Energy mix: petrol ${fmtLitres(petrolVal)} at ${fmtShare(petrolVal, mixTotal)}, diesel ${fmtLitres(dieselVal)} at ${fmtShare(dieselVal, mixTotal)}`}
+                                    >
+                                        <div
+                                            className="flex items-center justify-center text-xs font-bold text-white"
+                                            style={{ width: `${pct(petrolVal)}%`, background: chart.petrol }}
+                                        >
+                                            {pct(petrolVal) >= 12 && fmtShare(petrolVal, mixTotal)}
+                                        </div>
+                                        <div
+                                            className="flex items-center justify-center text-xs font-bold text-white"
+                                            style={{ width: `${pct(dieselVal)}%`, background: chart.diesel }}
+                                        >
+                                            {pct(dieselVal) >= 12 && fmtShare(dieselVal, mixTotal)}
+                                        </div>
+                                    </div>
+                                    <dl className="grid grid-cols-2 gap-4">
+                                        {[
+                                            { name: "Petrol", value: petrolVal, color: chart.petrol },
+                                            { name: "Diesel", value: dieselVal, color: chart.diesel },
+                                        ].map((row) => (
+                                            <div key={row.name} className="flex flex-col gap-1 min-w-0">
+                                                <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                    <span className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ background: row.color }} />
+                                                    {row.name}
+                                                </dt>
+                                                <dd className="text-lg font-extrabold tabular-nums text-foreground">
+                                                    {fmtLitres(row.value)}
+                                                </dd>
+                                            </div>
+                                        ))}
+                                    </dl>
+                                </div>
+                            );
+                        })()}
                     </CardContent>
                 </Card>
             </div>
@@ -385,17 +419,17 @@ export function DashboardCharts({
                         <BarChart data={topFleet} barGap={2} margin={{ bottom: 20 }}>
                             <XAxis
                                 dataKey="name"
-                                tick={{ fontSize: 12, fill: '#334155', fontWeight: 600, dy: 10 }}
+                                tick={{ fontSize: AXIS.tickSize, fill: chart.axis, fontWeight: 600, dy: 10 }}
                                 interval={0}
                                 height={40}
                                 axisLine={false}
                                 tickLine={false}
                             />
                             <Tooltip
-                                cursor={{ fill: '#F4F4F5' }}
+                                cursor={tip.bandCursor}
                                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
                             />
-                            <Bar dataKey="value" name="Volume" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={80} />
+                            <Bar dataKey="value" name="Volume" fill={chart.petrol} radius={[4, 4, 0, 0]} barSize={80} />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
@@ -419,19 +453,19 @@ export function DashboardCharts({
                         <AreaChart data={costAggregatedData}>
                             <defs>
                                 <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
-                                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                                    <stop offset="5%" stopColor={chart.petrol} stopOpacity={0.25} />
+                                    <stop offset="95%" stopColor={chart.petrol} stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <XAxis
                                 dataKey="date"
-                                tick={{ fontSize: 12, fill: '#64748B', fontWeight: 500 }}
+                                tick={{ fontSize: AXIS.tickSize, fill: chart.axis, fontWeight: 500 }}
                                 axisLine={false}
                                 tickLine={false}
                                 dy={10}
                             />
                             <YAxis
-                                tick={{ fontSize: 12, fill: '#64748B', fontWeight: 500 }}
+                                tick={{ fontSize: AXIS.tickSize, fill: chart.axis, fontWeight: 500 }}
                                 axisLine={false}
                                 tickLine={false}
                                 dx={-10}
@@ -439,14 +473,14 @@ export function DashboardCharts({
                             <Tooltip
                                 contentStyle={{
                                     borderRadius: '8px',
-                                    border: '1px solid #E4E4E7',
+                                    border: `1px solid ${chart.grid}`,
                                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                                    backgroundColor: '#FFFFFF',
-                                    color: '#000000'
+                                    backgroundColor: chart.surface,
+                                    color: chart.ink
                                 }}
                                 formatter={(value: any) => [fmtMoney(Number(value), { decimals: 0, currency: currencySymbol }), 'Total Cost']}
                             />
-                            <Area type="monotone" dataKey="cost" stroke="#2563EB" strokeWidth={2.5} fillOpacity={1} fill="url(#colorCost)" name="Total Cost" />
+                            <Area type="monotone" dataKey="cost" stroke={chart.petrol} strokeWidth={2} fillOpacity={1} fill="url(#colorCost)" name="Total Cost" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </CardContent>
@@ -470,7 +504,9 @@ export function FocusedChart({ data, fuelType, currencySymbol = "N$", color: col
         return Object.values(groups);
     }, [data, fuelType]);
 
-    const color = colorOverride ?? (fuelType === 'Petrol' ? PETROL : fuelType === 'Diesel' ? DIESEL : '#2563EB');
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
+    const color = colorOverride ?? (fuelType === 'Petrol' ? chart.petrol : fuelType === 'Diesel' ? chart.diesel : chart.petrol);
 
     return (
         <div className="h-[280px] w-full mt-4">
@@ -484,13 +520,13 @@ export function FocusedChart({ data, fuelType, currencySymbol = "N$", color: col
                     </defs>
                     <XAxis
                         dataKey="date"
-                        tick={{ fontSize: 12, fill: '#64748B' }}
+                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                         axisLine={false}
                         tickLine={false}
                         minTickGap={30}
                     />
                     <YAxis
-                        tick={{ fontSize: 12, fill: '#64748B' }}
+                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                         axisLine={false}
                         tickLine={false}
                     />
@@ -506,7 +542,7 @@ export function FocusedChart({ data, fuelType, currencySymbol = "N$", color: col
                         fillOpacity={1}
                         fill="url(#focusedGradient)"
                         name={fuelType}
-                        animationDuration={1500}
+                        animationDuration={400}
                     />
                 </AreaChart>
             </ResponsiveContainer>

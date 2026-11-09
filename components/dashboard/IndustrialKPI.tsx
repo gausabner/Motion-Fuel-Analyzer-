@@ -49,10 +49,16 @@ export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, accen
         <Root
             {...interactive}
             className={cn(
-                "monumental-card group hover:border-primary/50 transition-colors duration-300 relative overflow-hidden",
+                "monumental-card group relative overflow-hidden @container",
+                "[transition:border-color_180ms_ease,box-shadow_180ms_ease,transform_160ms_var(--ease-out-soft)]",
+                "[@media(hover:hover){&:hover}]:border-primary/50",
                 accent && "border-primary/40",
                 onClick && [
                     "cursor-pointer w-full text-left",
+                    // These open a drill-down modal, so the press has to be felt
+                    // before the dialog has mounted anything.
+                    "active:scale-[0.985] motion-reduce:active:scale-100",
+                    "[@media(hover:hover){&:hover}]:shadow-md",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 ],
                 className
@@ -63,16 +69,16 @@ export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, accen
                         <Icon className="w-[18px] h-[18px] text-primary" />
                     </div>
                     <div className="min-w-0">
-                        <span className="block text-xs font-semibold text-muted-foreground uppercase tracking-widest truncate">{label}</span>
+                        <span className="block text-xs font-semibold text-muted-foreground uppercase tracking-widest text-balance">{label}</span>
                         {subValue && (
-                            <span className="block text-xs text-muted-foreground/80 truncate">{subValue}</span>
+                            <span className="block text-xs text-muted-foreground/80 line-clamp-2">{subValue}</span>
                         )}
                     </div>
                 </div>
 
                 <div>
                     <div className="flex items-baseline gap-2 flex-wrap max-w-full">
-                        <div className="text-lg sm:text-xl md:text-2xl xl:text-3xl font-extrabold tracking-tight text-foreground tabular-nums break-words">
+                        <div className="text-lg @[170px]:text-xl @[230px]:text-2xl @[310px]:text-3xl font-extrabold tracking-tight text-foreground tabular-nums break-words">
                             {value}
                         </div>
                         {trend && !bottomTrend && <TrendBadge trend={trend} />}

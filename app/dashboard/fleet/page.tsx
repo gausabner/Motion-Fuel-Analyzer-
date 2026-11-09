@@ -254,7 +254,7 @@ export default async function FleetPage({
             />
 
             {/* KPI Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3 stagger-tiles">
                 <Card className="monumental-card">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Active Units</CardTitle>

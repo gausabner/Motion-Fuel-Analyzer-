@@ -19,6 +19,7 @@ import {
     Cell,
 } from "recharts";
 import { format } from "date-fns";
+import { useChartTheme, AXIS, tooltipStyles } from "@/lib/chart-theme";
 
 interface AvgPriceData {
     date: string;
@@ -33,6 +34,9 @@ interface AvgPriceModalProps {
 }
 
 export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgPriceModalProps) {
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
+
 
     // Custom Tooltip
     const CustomTooltip = ({ active, payload }: any) => {
@@ -87,7 +91,7 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
                                     <XAxis
                                         dataKey="date"
                                         name="Date"
-                                        tick={{ fontSize: 12, fill: '#71717A' }}
+                                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                                         tickFormatter={(val) => format(new Date(val), "MMM dd")}
                                         axisLine={false}
                                         tickLine={false}
@@ -99,7 +103,7 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
                                         dataKey="value"
                                         name="Price"
                                         unit=""
-                                        tick={{ fontSize: 12, fill: '#71717A' }}
+                                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                                         tickFormatter={(val) => val.toFixed(2)}
                                         axisLine={false}
                                         tickLine={false}
@@ -107,11 +111,11 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
                                         domain={['dataMin - 1', 'dataMax + 1']}
                                     />
                                     <Tooltip
-                                        cursor={{ strokeDasharray: '3 3' }}
+                                        cursor={tip.cursor}
                                         content={<CustomTooltip />}
                                         wrapperStyle={{ outline: 'none' }}
                                     />
-                                    <Scatter name="Daily Price" data={data} fill="#2563EB">
+                                    <Scatter name="Daily Price" data={data} fill={chart.petrol}>
                                         {data.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}

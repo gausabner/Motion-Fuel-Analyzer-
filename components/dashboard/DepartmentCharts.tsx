@@ -12,6 +12,7 @@ import {
     ResponsiveContainer,
     Cell
 } from "recharts";
+import { useChartTheme, AXIS, tooltipStyles } from "@/lib/chart-theme";
 
 interface DepartmentStat {
     id: string;
@@ -23,6 +24,9 @@ interface DepartmentStat {
 }
 
 export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
+
 
     const topConsumers = useMemo(() => {
         return [...data]
@@ -110,15 +114,15 @@ export function DepartmentCharts({ data }: { data: DepartmentStat[] }) {
                                     interval={0} // Force show all ticks
                                 />
                                 <Tooltip
-                                    cursor={{ fill: '#F4F4F5' }}
-                                    contentStyle={{ borderRadius: '0px', border: '1px solid #E4E4E7', boxShadow: 'none' }}
-                                    itemStyle={{ color: '#0F172A', fontSize: '12px', fontWeight: 'bold' }}
+                                    cursor={tip.bandCursor}
+                                    contentStyle={tip.contentStyle}
+                                    itemStyle={tip.itemStyle}
                                     formatter={(value: any) => [`${Number(value).toLocaleString()} ${unit}`, 'Total']}
                                     labelFormatter={(label) => label.substring(label.indexOf(' ') + 1)} // Clean label in tooltip
                                 />
-                                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={42} background={{ fill: '#f4f4f5' }}>
+                                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={42} background={{ fill: chart.grid, fillOpacity: 0.45 }}>
                                     {data.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={index < 3 ? '#2563EB' : '#93C5FD'} />
+                                        <Cell key={`cell-${index}`} fill={chart.petrol} />
                                     ))}
                                 </Bar>
                             </BarChart>

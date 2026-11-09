@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Settings, Coins, Fuel, Save, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function SettingsPage() {
@@ -69,8 +68,8 @@ export default function SettingsPage() {
                 </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2">
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+            <div className="grid gap-8 md:grid-cols-2 stagger-tiles">
+                <div>
                     <Card className="glass-panel border-0 shadow-xl rounded-[2rem] overflow-hidden">
                         <CardHeader className="bg-brand-primary/5 pb-8">
                             <div className="h-12 w-12 bg-brand-primary rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-brand-primary/20">
@@ -102,9 +101,9 @@ export default function SettingsPage() {
                             </div>
                         </CardContent>
                     </Card>
-                </motion.div>
+                </div>
 
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                <div>
                     <Card className="glass-panel border-0 shadow-xl rounded-[2rem] overflow-hidden">
                         <CardHeader className="bg-[#B99A8B]/5 pb-8">
                             <div className="h-12 w-12 bg-[#B99A8B] rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-[#B99A8B]/20">
@@ -141,9 +140,9 @@ export default function SettingsPage() {
                             </p>
                         </CardContent>
                     </Card>
-                </motion.div>
+                </div>
 
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                <div>
                     <Card className="glass-panel border-0 shadow-xl rounded-[2rem] overflow-hidden">
                         <CardHeader className="bg-muted/400/10 pb-8">
                             <div className="h-12 w-12 bg-zinc-800 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-zinc-800/20">
@@ -162,7 +161,7 @@ export default function SettingsPage() {
                             </p>
                         </CardContent>
                     </Card>
-                </motion.div>
+                </div>
             </div>
 
             <div className="flex justify-end pt-6">
