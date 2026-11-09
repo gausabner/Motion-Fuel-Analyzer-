@@ -319,8 +319,10 @@
     animation: logo-drift 1.4s ease-in-out infinite;
   }
 
+  /* The app's one card. Padding and gutter match the 16px step the rest of
+     the layout uses — density lives here, not in the root font size. */
   .monumental-card {
-    @apply bg-card text-card-foreground shadow-none rounded-lg p-6 border border-border;
+    @apply bg-card text-card-foreground shadow-none rounded-lg p-4 border border-border;
   }
 
   .glass-panel {
@@ -328,15 +330,6 @@
   }
 
   .industrial-grid {
-    @apply grid gap-6 md:grid-cols-2 lg:grid-cols-4;
-  }
-
-  .apple-shadow-box {
-    padding: 1.5rem;
-    border-radius: var(--radius);
-    background-color: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    @apply grid gap-4 md:grid-cols-2 lg:grid-cols-4;
   }
 }

@@ -80,12 +80,12 @@ components:
     backgroundColor: "{colors.card-white}"
     textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
-    padding: "24px"
+    padding: "16px"
   kpi-tile:
     backgroundColor: "{colors.card-white}"
     textColor: "{colors.ink}"
     rounded: "{rounded.lg}"
-    padding: "24px"
+    padding: "16px"
   kpi-tile-active:
     backgroundColor: "{colors.card-white}"
     size: "0.985"
@@ -231,7 +231,9 @@ column capped at 1600px, on a 4px spacing scale. Tight groups sit at 8–16px;
 sections separate at 24–32px.
 
 KPI tiles run in a responsive grid — four across on wide screens, two at tablet,
-one on phones — at a 24px gutter. Cards carry 24px of internal padding. Tables
+one on phones — at a 16px gutter. Cards carry 16px of internal padding, the same
+step the rest of the layout uses: there is one card in this system and one
+spacing step for it. Tables
 scroll inside their own container so the page body never scrolls sideways.
 
 **The Container-Sized Figure Rule.** A headline figure is sized by the width of
@@ -246,8 +248,9 @@ its own `overflow-x: auto` container.
 
 ## Elevation & Depth
 
-**This system has no shadows.** Surfaces are flat at every state, including
-hover. Depth is carried entirely by a 1px border in Rule against the Paper
+**Surfaces in this system have no shadows.** Cards, tiles, tables and panels are
+flat at every state, including hover. The single exception is the floating
+overlay — see the Overlay Exception below. Depth is carried entirely by a 1px border in Rule against the Paper
 canvas, and by the ink sidebar sitting behind the content plane.
 
 Interactive surfaces signal through border colour and a press scale, not by
@@ -257,10 +260,17 @@ off the page.
 
 ### Named Rules
 
-**The Flat Surface Rule.** No `box-shadow` on any surface, in any state. If an
-element needs to separate from its neighbour, it gets a border or more space.
-A shadow added to signal interactivity is a sign the border and press states
-were not doing their job.
+**The Flat Surface Rule.** No `box-shadow` on any surface that sits in the page
+plane — cards, tiles, tables, panels — in any state. If an element needs to
+separate from its neighbour, it gets a border or more space. A shadow added to
+signal interactivity is a sign the border and press states were not doing their
+job.
+
+**The Overlay Exception.** Something that genuinely floats above the plane and
+is dismissed — a chart tooltip, a popover, a dialog — carries exactly one
+elevation: `0 4px 16px -4px rgb(15 23 42 / 0.18)`. This is the only shadow in
+the system, and it exists to say "this is temporary and above everything", not
+to add depth.
 
 ## Shapes
 
@@ -292,7 +302,7 @@ colour rather than a stroke.
 - **Background:** Card White on Paper; Night Card on Night Canvas.
 - **Shadow Strategy:** None, in any state. See Elevation & Depth.
 - **Border:** 1px Rule.
-- **Internal Padding:** 24px.
+- **Internal Padding:** 16px.
 
 ### KPI Tiles
 The signature component. An icon well in Blue Tint, an uppercase label that
@@ -358,7 +368,8 @@ repeated action reads as latency, not polish.
 - **Do** gate every hover style behind `@media (hover: hover)`.
 
 ### Don't:
-- **Don't** add a `box-shadow` to any surface, in any state.
+- **Don't** add a `box-shadow` to any surface in the page plane, in any state.
+  Only a floating, dismissible overlay gets the one elevation value.
 - **Don't** introduce a second saturated accent into the chrome, or use a series
   colour on an interface element.
 - **Don't** encode a categorical difference as two steps of one hue. Petrol and

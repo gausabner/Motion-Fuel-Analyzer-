@@ -210,7 +210,7 @@ export function DashboardCharts({
     return (
         <div className="space-y-8">
             {/* Main Trend Chart */}
-            <Card className="apple-shadow-box border-0" ref={trendRef}>
+            <Card className="monumental-card" ref={trendRef}>
                 <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4 px-0 pb-6 border-b border-border">
                     <div>
                         <CardTitle className="text-lg font-bold tracking-tight">Consumption trend</CardTitle>
@@ -409,7 +409,7 @@ export function DashboardCharts({
             </div>
 
             {/* Top Fleet Units */}
-            <Card className="apple-shadow-box border-0" ref={fleetRef}>
+            <Card className="monumental-card" ref={fleetRef}>
                 <CardHeader className="px-0 pt-0 pb-6 border-b border-border mb-6 flex flex-row items-center justify-between">
                     <CardTitle className="text-sm font-bold uppercase tracking-wide">Top Fleet Utilization</CardTitle>
                     <ChartExportButton targetRef={fleetRef} fileName="top_fleet_utilization" />
