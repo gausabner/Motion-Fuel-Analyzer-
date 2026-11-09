@@ -20,8 +20,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.variable} font-sans antialiased bg-background text-foreground`}>
+    // The font variable belongs on <html>, not <body>. Tailwind resolves
+    // --font-sans on :root, so a --font-outfit declared one level down on
+    // <body> is out of scope there — the variable fell through and every
+    // screen in the app rendered in the system sans fallback instead of
+    // Outfit, with the webfont registered but never requested.
+    <html lang="en" className={outfit.variable} suppressHydrationWarning>
+      <body className="font-sans antialiased bg-background text-foreground">
         <Providers>
           {children}
         </Providers>

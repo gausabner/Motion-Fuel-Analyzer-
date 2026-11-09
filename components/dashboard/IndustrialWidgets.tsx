@@ -16,7 +16,7 @@ interface IndustrialKPIProps {
 export function IndustrialKPI({ label, value, subValue, trend, icon: Icon, accent = false }: IndustrialKPIProps) {
     return (
         <div className={cn(
-            "monumental-card flex flex-col justify-between h-full min-h-[160px] overflow-hidden [transition:border-color_180ms_ease,box-shadow_180ms_ease,transform_160ms_var(--ease-out-soft)] [@media(hover:hover){&:hover}]:border-primary/35 [@media(hover:hover){&:hover}]:shadow-md",
+            "monumental-card flex flex-col justify-between h-full min-h-[160px] overflow-hidden [transition:border-color_180ms_ease,box-shadow_180ms_ease,transform_160ms_var(--ease-out-soft)] [@media(hover:hover){&:hover}]:border-primary/35",
             accent ? "bg-accent border-accent" : "bg-card"
         )}>
             <div className="flex justify-between items-start">

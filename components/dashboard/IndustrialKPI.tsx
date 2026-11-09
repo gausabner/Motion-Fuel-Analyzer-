@@ -58,7 +58,6 @@ export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, accen
                     // These open a drill-down modal, so the press has to be felt
                     // before the dialog has mounted anything.
                     "active:scale-[0.985] motion-reduce:active:scale-100",
-                    "[@media(hover:hover){&:hover}]:shadow-md",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 ],
                 className
