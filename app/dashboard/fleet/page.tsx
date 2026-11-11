@@ -22,6 +22,7 @@ import { getVehicleAttribution } from "@/lib/vehicle-attribution";
 import { UnitAttributionCard } from "@/components/dashboard/UnitAttributionCard";
 import { getSessionUser, isAdmin } from "@/lib/auth";
 import { getFleetEfficiency } from "@/lib/fuel-insights";
+import { getRuleSettings } from "@/lib/rule-settings";
 import { FleetEfficiency } from "@/components/fuel/FleetEfficiency";
 import { Plate } from "@/components/fuel/VehiclePanel";
 import { toLocalYmd } from "@/lib/date-format";
@@ -59,11 +60,13 @@ export default async function FleetPage({
     ]);
 
     // Efficiency follows the date range only; the other filters narrow it to the units still in the table.
-    const eff = await getFleetEfficiency(params.from ? toLocalYmd(params.from) : undefined, params.to ? toLocalYmd(params.to) : undefined);
+    const rules = await getRuleSettings();
+    const eff = await getFleetEfficiency(params.from ? toLocalYmd(params.from) : undefined, params.to ? toLocalYmd(params.to) : undefined, rules);
     const inView = new Set(fleet.map(f => f.id));
     const effUnits = eff.units.filter(u => inView.has(u.unit));
     const effByUnit = new Map(effUnits.map(u => [u.unit, u]));
-    const maxRatio = 3;
+    const outlierAt = rules.classOutlierMultiple;
+    const maxRatio = Math.max(3, outlierAt * 1.5);
 
     const totalFuel = fleet.reduce((sum, v) => sum + v.petrolVolume + v.dieselVolume, 0);
     const avgFill = fleet.length > 0 ? totalFuel / fleet.length : 0;
@@ -156,7 +159,7 @@ export default async function FleetPage({
                 <IndustrialKPI label="Average per unit" icon={TrendingUp} value={fmtLitres(avgFill)} subValue="Litres issued divided by units fuelled" />
             </div>
 
-            <FleetEfficiency units={effUnits} medians={eff.medians} />
+            <FleetEfficiency units={effUnits} medians={eff.medians} multiple={outlierAt} unitsPerKm={rules.odometerUnitsPerKm} flagged={rules.classOutlierEnabled} />
 
             <Card className="monumental-card bg-card p-0 overflow-hidden">
                 <CardHeader className="p-4 border-b border-border">
@@ -220,7 +223,7 @@ export default async function FleetPage({
                                                 {e?.ratio != null ? (
                                                     <span className="flex items-center gap-2" title={`${e.ratio.toFixed(2)} times the ${e.fuel.toLowerCase()} median of ${e.classMedian?.toFixed(1)} L/100 km`}>
                                                         <span className="relative block h-1.5 w-24 rounded-full bg-bar">
-                                                            <span className={`absolute inset-y-0 left-0 rounded-full ${e.ratio >= 2 ? "bg-crit" : "bg-brand"}`} style={{ width: `${Math.min(100, (e.ratio / maxRatio) * 100)}%` }} />
+                                                            <span className={`absolute inset-y-0 left-0 rounded-full ${rules.classOutlierEnabled && e.ratio > outlierAt ? "bg-crit" : "bg-brand"}`} style={{ width: `${Math.min(100, (e.ratio / maxRatio) * 100)}%` }} />
                                                             <span className="absolute -inset-y-1 w-0.5 rounded bg-primary" style={{ left: `${100 / maxRatio}%` }} />
                                                         </span>
                                                         <span className="mono text-xs text-muted-foreground">{e.ratio.toFixed(1)}×</span>

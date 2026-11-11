@@ -100,3 +100,8 @@ export function fmtDept(name: string | null | undefined): string {
         .map((w, i) => (i > 0 && small.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
         .join(" ");
 }
+
+/** How a multiple of the median is written on screen: "twice", "three times", "2.5 times". */
+export function multipleLabel(m: number): string {
+    return m === 2 ? "twice" : m === 3 ? "three times" : `${Number.isInteger(m) ? m : m.toFixed(1)} times`;
+}

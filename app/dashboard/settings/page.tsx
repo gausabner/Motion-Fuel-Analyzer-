@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -11,34 +11,12 @@ import { Seg } from "@/components/ui/Seg";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { MotionLogo } from "@/components/brand/Logo";
 import { NAV_LAYOUT_COOKIE } from "@/lib/nav";
+import { Row, Section } from "@/components/settings/parts";
+import { RulesSection } from "@/components/settings/RulesSection";
+import { PricesSection } from "@/components/settings/PricesSection";
 
 type SystemSettings = { currencyCode: string; currencySymbol: string; petrolPrice: number; dieselPrice: number };
 const DEFAULTS: SystemSettings = { currencyCode: "NAD", currencySymbol: "N$", petrolPrice: 0, dieselPrice: 0 };
-
-/** One setting: what it is and what it changes on the left, the control on the right. */
-function Row({ label, hint, htmlFor, children }: { label: string; hint: string; htmlFor?: string; children: ReactNode }) {
-    return (
-        <div className="grid gap-x-8 gap-y-2 border-b border-grid py-4 last:border-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,300px)] sm:items-center">
-            <div>
-                {htmlFor
-                    ? <label htmlFor={htmlFor} className="text-sm font-medium">{label}</label>
-                    : <div className="text-sm font-medium">{label}</div>}
-                <p className="mt-0.5 max-w-[52ch] text-[13px] leading-normal text-muted-foreground">{hint}</p>
-            </div>
-            <div className="sm:justify-self-end sm:w-full">{children}</div>
-        </div>
-    );
-}
-
-function Section({ title, sub, children }: { title: string; sub: string; children: ReactNode }) {
-    return (
-        <section className="monumental-card">
-            <div className="card-h"><h2>{title}</h2></div>
-            <p className="mt-1 text-[13px] text-muted-foreground">{sub}</p>
-            <div className="mt-2">{children}</div>
-        </section>
-    );
-}
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -66,10 +44,8 @@ export default function SettingsPage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const dirty = (Object.keys(DEFAULTS) as (keyof SystemSettings)[]).some(k => settings[k] !== saved[k]);
-    const invalid = !settings.currencyCode.trim() || !settings.currencySymbol.trim()
-        || !Number.isFinite(settings.petrolPrice) || !Number.isFinite(settings.dieselPrice)
-        || settings.petrolPrice < 0 || settings.dieselPrice < 0;
+    const dirty = settings.currencyCode !== saved.currencyCode || settings.currencySymbol !== saved.currencySymbol;
+    const invalid = !settings.currencyCode.trim() || !settings.currencySymbol.trim();
 
     const save = async () => {
         setSaving(true);
@@ -77,14 +53,14 @@ export default function SettingsPage() {
             const res = await fetch("/api/settings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(settings),
+                body: JSON.stringify({ currencyCode: settings.currencyCode, currencySymbol: settings.currencySymbol }),
             });
             if (!res.ok) {
                 toast.error(res.status === 403 ? "Only an administrator can change these settings." : "The settings were not saved. Check the values and try again.");
                 return;
             }
             setSaved(settings);
-            toast("Settings saved");
+            toast("Currency saved", { description: "Every page, export and PDF now uses it." });
             router.refresh();
         } catch {
             toast.error("The settings were not saved. Check your connection and try again.");
@@ -108,11 +84,10 @@ export default function SettingsPage() {
         </div>
     );
 
-    const num = (v: string) => (v === "" ? NaN : Number(v));
 
     return (
-        <div className="flex max-w-[860px] flex-col gap-3.5">
-            <PageHeader title="Settings" scope={["Currency and reference prices apply to everyone", "Appearance applies to this browser"]} />
+        <div className="flex max-w-[920px] flex-col gap-3.5">
+            <PageHeader title="Settings" scope={["Currency, prices and rules apply to everyone", "Appearance applies to this browser"]} />
 
             <Section title="Currency" sub="How money is written on every page, export and PDF.">
                 <Row label="Currency symbol" hint="Shown in front of every amount, for example N$ 1,250." htmlFor="currency-symbol">
@@ -123,27 +98,16 @@ export default function SettingsPage() {
                     <Input id="currency-code" value={settings.currencyCode} maxLength={8} autoComplete="off" className="mono uppercase"
                         onChange={e => setSettings({ ...settings, currencyCode: e.target.value.toUpperCase() })} />
                 </Row>
-            </Section>
-
-            <Section title="Reference prices" sub="The price per litre the dashboard compares the average price actually paid against.">
-                <Row label="Petrol" hint={`${settings.currencyCode || "Currency"} per litre.`} htmlFor="petrol-price">
-                    <Input id="petrol-price" type="number" inputMode="decimal" min={0} step="0.01" className="mono"
-                        value={Number.isFinite(settings.petrolPrice) ? settings.petrolPrice : ""}
-                        aria-invalid={!Number.isFinite(settings.petrolPrice) || settings.petrolPrice < 0}
-                        onChange={e => setSettings({ ...settings, petrolPrice: num(e.target.value) })} />
-                </Row>
-                <Row label="Diesel" hint={`${settings.currencyCode || "Currency"} per litre.`} htmlFor="diesel-price">
-                    <Input id="diesel-price" type="number" inputMode="decimal" min={0} step="0.01" className="mono"
-                        value={Number.isFinite(settings.dieselPrice) ? settings.dieselPrice : ""}
-                        aria-invalid={!Number.isFinite(settings.dieselPrice) || settings.dieselPrice < 0}
-                        onChange={e => setSettings({ ...settings, dieselPrice: num(e.target.value) })} />
-                </Row>
                 <div className="mt-4 flex flex-wrap items-center justify-end gap-2.5">
                     {dirty && <span className="mr-auto text-[13px] text-muted-foreground">You have changes that are not saved yet.</span>}
                     <Button variant="outline" disabled={!dirty || saving} onClick={() => setSettings(saved)}>Discard</Button>
-                    <Button disabled={!dirty || invalid || saving} onClick={save}>{saving ? "Saving" : "Save changes"}</Button>
+                    <Button disabled={!dirty || invalid || saving} onClick={save}>{saving ? "Saving" : "Save currency"}</Button>
                 </div>
             </Section>
+
+            <PricesSection currencySymbol={saved.currencySymbol} currencyCode={saved.currencyCode} />
+
+            <RulesSection />
 
             <Section title="Appearance" sub="Kept in this browser only. Nobody else's view changes.">
                 <Row label="Theme" hint="Follow the device, or hold the interface in light or dark.">
@@ -172,8 +136,6 @@ export default function SettingsPage() {
                     <MotionLogo className="h-auto w-[240px] max-w-full text-foreground" />
                     <dl className="grid grid-cols-[auto_auto] gap-x-6 gap-y-1 text-[13px]">
                         <dt className="text-muted-foreground">Version</dt><dd className="mono">0.1.0</dd>
-                        <dt className="text-muted-foreground">Reference prices</dt>
-                        <dd className="mono">{saved.currencySymbol}{saved.petrolPrice.toFixed(2)} · {saved.currencySymbol}{saved.dieselPrice.toFixed(2)}</dd>
                     </dl>
                 </div>
             </Section>

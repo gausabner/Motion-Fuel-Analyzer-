@@ -3,6 +3,7 @@
 import { ChartCard, DotStrip, type StripClass } from "./charts";
 import { useVehiclePanel } from "./VehiclePanel";
 import type { UnitEfficiency } from "@/lib/fuel-insights";
+import { multipleLabel } from "@/lib/format";
 
 /**
  * Consumption by fuel class: one dot per vehicle, a black tick at the class
@@ -10,7 +11,12 @@ import type { UnitEfficiency } from "@/lib/fuel-insights";
  * Only units with enough odometer evidence are plotted; the rest are counted
  * in the caption rather than guessed at.
  */
-export function FleetEfficiency({ units, medians }: { units: UnitEfficiency[]; medians: Record<string, number> }) {
+export function FleetEfficiency({ units, medians, multiple = 2, unitsPerKm = 10, flagged = true }: {
+    units: UnitEfficiency[]; medians: Record<string, number>;
+    /** The outlier threshold from Settings → Exception rules. */
+    multiple?: number; unitsPerKm?: number; flagged?: boolean;
+}) {
+    const times = multipleLabel(multiple);
     const { open } = useVehiclePanel();
     const measured = units.filter(u => u.l100 != null);
     const unmeasured = units.length - measured.length;
@@ -22,12 +28,12 @@ export function FleetEfficiency({ units, medians }: { units: UnitEfficiency[]; m
             median: medians[name],
             values: measured
                 .filter(u => u.fuel === name)
-                .map(u => ({ unit: u.unit, v: u.l100 as number, outlier: (u.ratio ?? 0) >= 2 }))
+                .map(u => ({ unit: u.unit, v: u.l100 as number, outlier: flagged && (u.ratio ?? 0) > multiple }))
                 .sort((a, b) => b.v - a.v),
         }))
         .filter(c => c.values.length > 0);
 
-    const outliers = measured.filter(u => (u.ratio ?? 0) >= 2).sort((a, b) => (b.ratio ?? 0) - (a.ratio ?? 0));
+    const outliers = measured.filter(u => flagged && (u.ratio ?? 0) > multiple).sort((a, b) => (b.ratio ?? 0) - (a.ratio ?? 0));
     // Scale to the 95th percentile so a single broken odometer cannot flatten every other dot against the axis.
     const sorted = measured.map(u => u.l100 as number).sort((a, b) => a - b);
     const p95 = sorted.length ? sorted[Math.floor((sorted.length - 1) * 0.95)] : 0;
@@ -52,7 +58,7 @@ export function FleetEfficiency({ units, medians }: { units: UnitEfficiency[]; m
                 <>
                     <span><i className="sw" style={{ background: "var(--brand)", opacity: 0.42 }} />One vehicle</span>
                     <span><i className="sw" style={{ background: "var(--primary)" }} />Class median</span>
-                    <span><i className="sw dia" />More than twice the median</span>
+                    {flagged && <span><i className="sw dia" />More than {times} the median</span>}
                 </>
             }
             table={{
@@ -64,10 +70,10 @@ export function FleetEfficiency({ units, medians }: { units: UnitEfficiency[]; m
         >
             <p className="bigline">
                 {outliers.length === 0
-                    ? "No unit is burning more than twice the median for its fuel type."
-                    : `${outliers.length} ${outliers.length === 1 ? "unit burns" : "units burn"} more than twice the median for ${outliers.length === 1 ? "its" : "their"} fuel type.`}
+                    ? (flagged ? `No unit is burning more than ${times} the median for its fuel type.` : "Consumption for each unit, set against the median for its fuel type.")
+                    : `${outliers.length} ${outliers.length === 1 ? "unit burns" : "units burn"} more than ${times} the median for ${outliers.length === 1 ? "its" : "their"} fuel type.`}
                 <small>
-                    Worked out from consecutive odometer readings, assuming the odometer is recorded in tenths of a kilometre. A very high figure
+                    Worked out from consecutive odometer readings, {unitsPerKm === 10 ? "read as tenths of a kilometre" : unitsPerKm === 1 ? "read as whole kilometres" : `read at ${unitsPerKm} units per kilometre`} (set under Settings, Exception rules). A very high figure
                     is as likely to be a mistyped reading as heavy use, so open the vehicle before drawing a conclusion.
                 </small>
             </p>

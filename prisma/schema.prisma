@@ -159,3 +159,37 @@ model ExceptionReview {
   reviewedBy String?
   reviewedAt DateTime @default(now())
 }
+
+/// Thresholds for the exception rules. One row ("global"); defaults match the
+/// values the rules shipped with, so an untouched install behaves as before.
+model ExceptionRuleSettings {
+  id                     String   @id @default("global")
+  repeatFillEnabled      Boolean  @default(true)
+  repeatFillMaxKm        Float    @default(15)
+  overCapacityEnabled    Boolean  @default(true)
+  overCapacityFactor     Float    @default(1.5)
+  overCapacityMinLitres  Float    @default(20)
+  noDistanceEnabled      Boolean  @default(true)
+  odometerBackEnabled    Boolean  @default(true)
+  odometerMissingEnabled Boolean  @default(true)
+  odometerMissingMinFills Int     @default(3)
+  classOutlierEnabled    Boolean  @default(true)
+  classOutlierMultiple   Float    @default(2)
+  odometerUnitsPerKm     Float    @default(10)
+  updatedAt              DateTime @updatedAt
+  updatedBy              String?
+}
+
+/// Reference price per litre, by fuel, from a date onwards. The price in
+/// effect on a day is the latest row whose effectiveFrom is on or before it.
+model ReferencePrice {
+  id            String   @id @default(cuid())
+  fuel          String
+  price         Float
+  effectiveFrom String
+  createdAt     DateTime @default(now())
+  createdBy     String?
+
+  @@unique([fuel, effectiveFrom])
+  @@index([fuel, effectiveFrom])
+}

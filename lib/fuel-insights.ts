@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { toLocalYmd } from "@/lib/date-format";
 import { fmtDept, fmtLitres } from "@/lib/format";
+import { getRuleSettings, type RuleSettings } from "@/lib/rule-settings";
 
 /**
  * Exceptions, per-vehicle efficiency and the vehicle panel.
@@ -19,11 +20,12 @@ import { fmtDept, fmtLitres } from "@/lib/format";
  */
 
 /**
- * The HR580 odometer column carries one implied decimal: a reading of 1257020
- * is 125,702.0 km. Checked against the fleet: at this scale the medians come
- * out at 9.7 L/100 km for petrol and 12.3 for diesel.
+ * Odometer scale and every rule threshold come from Settings → Exception rules
+ * (lib/rule-settings.ts). The default scale is 10 units per km: the HR580
+ * odometer column carries one implied decimal, so 1257020 is 125,702.0 km, and
+ * at that scale the medians come out at 9.7 L/100 km for petrol and 12.3 for
+ * diesel.
  */
-export const ODOMETER_UNITS_PER_KM = 10;
 
 /** A leg shorter or longer than this is a typo or a missed fill, not a trip. */
 const MIN_LEG_KM = 5;
@@ -141,8 +143,9 @@ export type UnitEfficiency = {
 };
 
 /** One row per unit active in the range, with L/100 km where the odometer supports it. */
-export async function getFleetEfficiency(fromDay?: string, toDay?: string): Promise<{ units: UnitEfficiency[]; medians: Record<string, number> }> {
+export async function getFleetEfficiency(fromDay?: string, toDay?: string, rules?: RuleSettings): Promise<{ units: UnitEfficiency[]; medians: Record<string, number> }> {
     const { byUnit } = await loadFills();
+    const cfg = rules ?? await getRuleSettings();
     const units: UnitEfficiency[] = [];
     for (const [unit, list] of byUnit) {
         let litres = 0, km = 0, legLitres = 0, legs = 0, prev: number | null = null;
@@ -152,7 +155,7 @@ export async function getFleetEfficiency(fromDay?: string, toDay?: string): Prom
             const inRange = (!fromDay || f.day >= fromDay) && (!toDay || f.day <= toDay);
             if (f.rd != null) {
                 if (prev != null && inRange) {
-                    const leg = (f.rd - prev) / ODOMETER_UNITS_PER_KM;
+                    const leg = (f.rd - prev) / cfg.odometerUnitsPerKm;
                     if (leg >= MIN_LEG_KM && leg <= MAX_LEG_KM) { km += leg; legLitres += f.qty; legs++; }
                 }
                 prev = f.rd;
@@ -185,6 +188,7 @@ export async function getFleetEfficiency(fromDay?: string, toDay?: string): Prom
 /** Every exception whose day falls in [fromDay, toDay], highest severity and volume first. */
 export async function getExceptions(fromDay?: string, toDay?: string): Promise<FuelException[]> {
     const { byUnit } = await loadFills();
+    const cfg = await getRuleSettings();
     const inRange = (d: string) => (!fromDay || d >= fromDay) && (!toDay || d <= toDay);
     const out: FuelException[] = [];
     const push = (e: Omit<FuelException, "status">) => out.push({ ...e, status: "Open" });
@@ -198,10 +202,10 @@ export async function getExceptions(fromDay?: string, toDay?: string): Promise<F
             const here = inRange(f.day);
 
             // Repeat fill: a second issue the same day with almost no distance between.
-            if (prevAny && prevAny.day === f.day) {
+            if (cfg.repeatFillEnabled && prevAny && prevAny.day === f.day) {
                 if (f.rd != null && prevAny.rd != null) {
-                    const km = (f.rd - prevAny.rd) / ODOMETER_UNITS_PER_KM;
-                    if (km >= 0 && km < 15 && here) {
+                    const km = (f.rd - prevAny.rd) / cfg.odometerUnitsPerKm;
+                    if (km >= 0 && km < cfg.repeatFillMaxKm && here) {
                         push({ key: `repeat-fill:${unit}:${f.day}:${f.ref || f.seq}`, rule: "repeat-fill", sev: "hi", unit,
                             what: `Two fills the same day, ${km < 1 ? "under 1" : Math.round(km)} km driven between them`,
                             day: f.day, whenLabel: dayLabel(f.day), department: f.dept, risk: f.qty });
@@ -214,7 +218,7 @@ export async function getExceptions(fromDay?: string, toDay?: string): Promise<F
             }
 
             // Larger than this unit has ever taken: the capacity rule, on the unit's own record.
-            if (seen >= 8 && f.qty > maxFill * 1.5 && f.qty - maxFill >= 20 && here) {
+            if (cfg.overCapacityEnabled && seen >= 8 && f.qty > maxFill * cfg.overCapacityFactor && f.qty - maxFill >= cfg.overCapacityMinLitres && here) {
                 push({ key: `over-capacity:${unit}:${f.day}:${f.ref || f.seq}`, rule: "over-capacity", sev: "hi", unit,
                     what: `${fmtLitres(f.qty)} issued; its largest fill before this was ${fmtLitres(maxFill)}`,
                     day: f.day, whenLabel: dayLabel(f.day), department: f.dept, risk: f.qty - maxFill });
@@ -222,11 +226,11 @@ export async function getExceptions(fromDay?: string, toDay?: string): Promise<F
 
             if (f.rd != null) {
                 if (prev) {
-                    if (f.rd < prev.rd! && here) {
+                    if (cfg.odometerBackEnabled && f.rd < prev.rd! && here) {
                         push({ key: `odometer-back:${unit}:${f.day}:${f.ref || f.seq}`, rule: "odometer-back", sev: "lo", unit,
                             what: "Odometer lower than the previous fill",
                             day: f.day, whenLabel: dayLabel(f.day), department: f.dept, risk: null });
-                    } else if (f.rd === prev.rd && f.day !== prev.day && here) {
+                    } else if (cfg.noDistanceEnabled && f.rd === prev.rd && f.day !== prev.day && here) {
                         push({ key: `no-distance:${unit}:${f.day}:${f.ref || f.seq}`, rule: "no-distance", sev: "md", unit,
                             what: `${fmtLitres(f.qty)} issued with no distance since the fill on ${dayLabel(prev.day)}`,
                             day: f.day, whenLabel: dayLabel(f.day), department: f.dept, risk: f.qty });
@@ -241,7 +245,7 @@ export async function getExceptions(fromDay?: string, toDay?: string): Promise<F
             seen++; prevAny = f;
         }
 
-        if (missing >= 3) {
+        if (cfg.odometerMissingEnabled && missing >= cfg.odometerMissingMinFills) {
             const day = toDay ?? list[list.length - 1].day;
             push({ key: `odometer-missing:${unit}:${fromDay ?? "all"}:${toDay ?? "all"}`, rule: "odometer-missing", sev: "lo", unit,
                 what: `Odometer not captured on ${missing} fills`,
@@ -250,9 +254,9 @@ export async function getExceptions(fromDay?: string, toDay?: string): Promise<F
     }
 
     // Consumption far above the unit's fuel class, over the period as a whole.
-    const { units } = await getFleetEfficiency(fromDay, toDay);
+    const { units } = cfg.classOutlierEnabled ? await getFleetEfficiency(fromDay, toDay, cfg) : { units: [] };
     for (const u of units) {
-        if (u.ratio != null && u.ratio > 2 && u.classMedian) {
+        if (u.ratio != null && u.ratio > cfg.classOutlierMultiple && u.classMedian) {
             const day = toDay ?? toLocalYmd(new Date());
             push({ key: `class-outlier:${u.unit}:${fromDay ?? "all"}:${toDay ?? "all"}`, rule: "class-outlier", sev: "md", unit: u.unit,
                 what: `${u.l100!.toFixed(1)} L/100 km; the ${u.fuel.toLowerCase()} median is ${u.classMedian.toFixed(1)}`,

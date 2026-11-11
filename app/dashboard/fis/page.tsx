@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { scopeRange } from "@/lib/periods";
+import { getReferenceComparison } from "@/lib/reference-prices";
 import { fmtLitres, fmtMoney } from "@/lib/format";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { IndustrialKPI } from "@/components/dashboard/IndustrialKPI";
@@ -88,6 +90,11 @@ export default async function FISPage({
     };
     const data = await getFisData(filters);
     // Attribution only matters when the view is scoped to a unit.
+    // What the same litres would have cost at the reference price in force on each day.
+    const ref = await getReferenceComparison(filters);
+    const refDelta = ref.actualCost - ref.referenceCost;
+    const refPct = ref.referenceCost > 0 ? (refDelta / ref.referenceCost) * 100 : 0;
+
     const [attribution, sessionUser] = await Promise.all([
         getVehicleAttribution(sp.vehicleId || "", filters),
         getSessionUser(),
@@ -136,6 +143,15 @@ export default async function FISPage({
                         <small>
                             That is {fmtLitres(data.kpi.volume / data.kpi.count)} per issue on average, at {s}{(data.kpi.cost / Math.max(1, data.kpi.volume)).toFixed(2)} a litre.
                             Issues are consumption; receipts into the tanks are kept on their own page and never added to these figures.
+                            {ref.coveredLitres > 0 && (
+                                <>
+                                    {" "}At the <Link href="/dashboard/settings#reference-prices" className="lnk">reference prices</Link> in force on each day,
+                                    {" "}{fmtLitres(ref.coveredLitres)} would have cost {fmtMoney(ref.referenceCost, { currency: s, decimals: 0 })};
+                                    {" "}it cost {fmtMoney(Math.abs(refDelta), { currency: s, decimals: 0 })} {refDelta >= 0 ? "more" : "less"}
+                                    {" "}({refDelta >= 0 ? "+" : "−"}{Math.abs(refPct).toFixed(1)}%).
+                                    {ref.uncoveredLitres > 0.5 && ` ${fmtLitres(ref.uncoveredLitres)} had no reference price to compare with.`}
+                                </>
+                            )}
                         </small>
                     )}
                 </p>
@@ -143,7 +159,8 @@ export default async function FISPage({
 
             <div className="grid gap-3.5 grid-cols-2 lg:grid-cols-4 stagger-tiles">
                 <IndustrialKPI label="Fuel issued" value={fmtLitres(data.kpi.volume)} icon={ArrowDownToLine} subValue={`${fmtLitres(data.kpi.volume / Math.max(1, data.kpi.vehicles))} per unit`} />
-                <IndustrialKPI label="Cost of issues" value={fmtMoney(data.kpi.cost, { currency: s, decimals: 0 })} icon={Coins} subValue={`${s}${(data.kpi.cost / Math.max(1, data.kpi.volume)).toFixed(2)} per litre`} />
+                <IndustrialKPI label="Cost of issues" value={fmtMoney(data.kpi.cost, { currency: s, decimals: 0 })} icon={Coins}
+                    subValue={ref.coveredLitres > 0 ? `${refDelta >= 0 ? "+" : "−"}${Math.abs(refPct).toFixed(1)}% against reference prices` : `${s}${(data.kpi.cost / Math.max(1, data.kpi.volume)).toFixed(2)} per litre`} />
                 <IndustrialKPI label="Issues" value={data.kpi.count.toLocaleString("en-GB")} icon={Flame} subValue={`${fmtLitres(data.kpi.volume / Math.max(1, data.kpi.count))} per issue`} />
                 <IndustrialKPI label="Units fuelled" value={data.kpi.vehicles.toLocaleString("en-GB")} icon={Truck} subValue={`${(data.kpi.count / Math.max(1, data.kpi.vehicles)).toFixed(1)} issues per unit`} />
             </div>
