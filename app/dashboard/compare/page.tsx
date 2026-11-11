@@ -89,6 +89,11 @@ export default async function ComparePage({
     const petrolStat = fuelStat("petrol");
     const dieselStat = fuelStat("diesel");
 
+    // Issues with no fuel type recorded sit in neither panel; name the remainder so the split still adds up.
+    const splitTotals = fuelResult.totals;
+    const otherA = splitTotals.aVolume - petrolStat.aVolume - dieselStat.aVolume;
+    const otherB = splitTotals.bVolume - petrolStat.bVolume - dieselStat.bVolume;
+
     const currency = settings?.currencySymbol || "N$";
     const aLabel = `${fmtDate(aFrom)} – ${fmtDate(aTo)}`;
     const bLabel = `${fmtDate(bFrom)} – ${fmtDate(bTo)}`;
@@ -185,6 +190,12 @@ export default async function ComparePage({
                 currency={currency}
                 csvUrl={fuelCsvUrl}
             />
+            {(otherA > 0.5 || otherB > 0.5) && (
+                <p className="text-xs text-muted-foreground">
+                    Petrol and diesel do not add up to the period totals above because some issues carry no fuel type:
+                    {" "}{fmtLitres(otherA)} in period A and {fmtLitres(otherB)} in period B.
+                </p>
+            )}
 
             {result.rows.length > 0 && (
                 <ChartCard

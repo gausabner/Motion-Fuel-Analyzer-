@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Users, FileWarning, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { IndustrialKPI } from "@/components/dashboard/IndustrialKPI";
+import { scopeRange } from "@/lib/periods";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 
 export const dynamic = 'force-dynamic';
@@ -50,6 +51,8 @@ export default async function DepartmentsPage({
     // A row keyed by a bare vote code has no cost centre behind it yet.
     const isCode = (id: string) => /^\d+$/.test(id) || id === "Unassigned";
     const name = (id: string) => (isCode(id) ? `Unassigned · ${id}` : fmtDept(id));
+    const unnamedCount = departments.filter(d => isCode(d.id)).length;
+    const namedCount = departments.length - unnamedCount;
     const top = byVolume.slice(0, 8);
     const topCost = departments.slice(0, 8);
 
@@ -101,7 +104,7 @@ export default async function DepartmentsPage({
         <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Cost centres"
-                scope="Fuel issued and what it cost, by department and division. Fuel issues only."
+                scope={[scopeRange(params.from, params.to), fmtLitres(totalLitres), "Fuel issues only"]}
             >
                 <TableCsvButton filename="departmental_breakdown.csv" serverUrl={departmentsExportUrl} />
             </PageHeader>
@@ -109,7 +112,7 @@ export default async function DepartmentsPage({
             <FuelLogFilters costCentres={costCentres} />
 
             <div className="grid gap-3.5 md:grid-cols-3 stagger-tiles">
-                <IndustrialKPI label="Departments" icon={Building2} value={`${departments.length}`} subValue="With fuel issued in this selection" />
+                <IndustrialKPI label="Departments" icon={Building2} value={`${namedCount}`} subValue={unnamedCount > 0 ? `Plus ${unnamedCount} vote code${unnamedCount === 1 ? "" : "s"} with no department yet` : "With fuel issued in this selection"} />
 
                 <IndustrialKPI label="Total spend" icon={Users} value={fmtMoneyCompact(totalSpend, cur)} subValue="Value of fuel issued in this selection" />
 

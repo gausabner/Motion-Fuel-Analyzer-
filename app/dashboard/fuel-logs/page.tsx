@@ -1,3 +1,6 @@
+import { scopeRange } from "@/lib/periods";
+import { fmtMoney } from "@/lib/format";
+import { Plate } from "@/components/fuel/VehiclePanel";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { prisma } from "@/lib/prisma";
 import {
@@ -92,64 +95,54 @@ export default async function FuelLogsPage({
         <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Fuel logs"
-                scope="Every row as it was uploaded, all transaction types."
+                scope={[scopeRange(params.from, params.to), `${total.toLocaleString("en-GB")} rows`, "Every row as uploaded"]}
             />
 
             <FuelLogFilters costCentres={costCentres} />
 
-            <Card className="monumental-card shadow-none border-border p-0">
-                <CardHeader className="border-b border-border bg-card px-6 py-4">
-                    <CardTitle className="text-sm font-semibold ">Recent Transactions</CardTitle>
-                </CardHeader>
+            <Card className="monumental-card">
                 <CardContent className="p-0">
-                    <div>
+                    <div className="overflow-x-auto">
                         <table className="w-full caption-bottom text-sm">
-                            <TableHeader className="sticky top-0 z-10 bg-muted/40 ">
-                                <TableRow className="hover:bg-transparent border-border">
-                                    <TableHead className="text-foreground">Date</TableHead>
-                                    <TableHead className="text-foreground">Time</TableHead>
-                                    <TableHead className="text-foreground">Tank</TableHead>
-                                    <TableHead className="text-foreground">Pump</TableHead>
-                                    <TableHead className="text-foreground">Fuel Type</TableHead>
-                                    <TableHead className="text-foreground">Fleet Unit</TableHead>
-                                    <TableHead className="text-foreground">Issue Vote</TableHead>
-                                    <TableHead className="text-foreground text-right">Quantity (L)</TableHead>
-                                    <TableHead className="text-foreground text-right">Cost</TableHead>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Sequence</TableHead>
+                                    <TableHead>Tank</TableHead>
+                                    <TableHead>Pump</TableHead>
+                                    <TableHead>Fuel</TableHead>
+                                    <TableHead>Unit</TableHead>
+                                    <TableHead>Vote code</TableHead>
+                                    <TableHead className="text-right">Litres</TableHead>
+                                    <TableHead className="text-right">Cost</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {transactions.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={9} className="text-center py-12 text-muted-foreground font-medium">
-                                            No transactions found. Upload an Excel file to import data.
+                                            No rows match these filters. Clear a filter, or upload a report.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     transactions.map((tx: any) => (
-                                        <TableRow key={tx.id} className="hover:bg-warn-soft border-border transition-colors">
-                                            <TableCell className="font-semibold text-foreground/80 text-xs">
+                                        <TableRow key={tx.id}>
+                                            <TableCell className="mono whitespace-nowrap">
                                                 {format(new Date(tx.transDate), 'dd MMM yyyy')}
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground text-xs font-mono">{tx.issueTime || '—'}</TableCell>
-                                            <TableCell className="text-xs">{tx.storeNo}</TableCell>
-                                            <TableCell className="text-xs">{tx.pumpNo || '—'}</TableCell>
+                                            <TableCell className="mono text-muted-foreground">{tx.issueTime || '—'}</TableCell>
+                                            <TableCell className="mono">{tx.storeNo}</TableCell>
+                                            <TableCell className="mono">{tx.pumpNo || '—'}</TableCell>
                                             <TableCell>
-                                                <Badge
-                                                    variant="outline"
-                                                    className={tx.fuelType?.toLowerCase().includes('petrol')
-                                                        ? 'border-black text-foreground font-semibold bg-card text-xs  rounded-[10px]'
-                                                        : 'border-warn/30 text-foreground font-semibold bg-warn-soft text-xs  rounded-[10px]'}
-                                                >
-                                                    {tx.fuelType}
-                                                </Badge>
+                                                {tx.fuelType === "Unknown" ? <span className="text-muted-foreground">Not recorded</span> : tx.fuelType}
                                             </TableCell>
-                                            <TableCell className="font-semibold text-foreground text-xs">{tx.vehicleId || 'N/A'}</TableCell>
-                                            <TableCell className="text-muted-foreground text-xs font-mono">{tx.transVoteNo || '—'}</TableCell>
-                                            <TableCell className="text-right font-mono font-semibold text-xs">
-                                                {tx.transQty.toFixed(2)}
+                                            <TableCell>{tx.vehicleId ? <Plate unit={tx.vehicleId} /> : <span className="text-muted-foreground">—</span>}</TableCell>
+                                            <TableCell className="mono text-muted-foreground">{tx.transVoteNo || '—'}</TableCell>
+                                            <TableCell className="mono text-right">
+                                                {tx.transQty.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </TableCell>
-                                            <TableCell className="text-right font-mono font-semibold text-xs">
-                                                {currencySymbol}{tx.transAmt?.toFixed(2) || '0.00'}
+                                            <TableCell className="mono text-right">
+                                                {fmtMoney(tx.transAmt ?? 0, { currency: currencySymbol })}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -158,7 +151,7 @@ export default async function FuelLogsPage({
                         </table>
                     </div>
                 </CardContent>
-                <div className="border-t border-border bg-card">
+                <div className="mt-2">
                     <TablePagination
                         totalItems={total}
                         itemsPerPage={PAGE_SIZE}

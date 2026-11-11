@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { scopeRange } from "@/lib/periods";
+import { fmtLitres, fmtMoney } from "@/lib/format";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { IndustrialKPI } from "@/components/dashboard/IndustrialKPI";
 import { DashboardCharts } from "@/components/dashboard/Charts";
@@ -112,7 +114,7 @@ export default async function FISPage({
         <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Fuel issues"
-                scope="Fuel issued from the tanks to vehicles and plant. This is consumption."
+                scope={[scopeRange(sp.from, sp.to), "Fuel issued to vehicles and plant", `${data.kpi.count.toLocaleString("en-GB")} issues`]}
             >
                 <TableCsvButton filename="fis.csv" serverUrl={exportUrl} />
             </PageHeader>
@@ -125,32 +127,25 @@ export default async function FISPage({
                 exportUrl={`/api/reports/export?report=vehicle-attribution&vehicleId=${encodeURIComponent(sp.vehicleId || "")}`}
             />
 
-            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-                <IndustrialKPI
-                    label="Fuel Issued"
-                    value={`${data.kpi.volume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L`}
-                    icon={ArrowDownToLine}
-                    subValue="Total volume issued to fleet"
-                    accent
-                />
-                <IndustrialKPI
-                    label="Issue Cost"
-                    value={`${s}${data.kpi.cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-                    icon={Coins}
-                    subValue="Value of issued fuel"
-                />
-                <IndustrialKPI
-                    label="Issue Transactions"
-                    value={data.kpi.count.toLocaleString()}
-                    icon={Flame}
-                    subValue="FIS records in range"
-                />
-                <IndustrialKPI
-                    label="Vehicles Fuelled"
-                    value={data.kpi.vehicles.toLocaleString()}
-                    icon={Truck}
-                    subValue="Distinct fleet units"
-                />
+            <section className="monumental-card" aria-label="Summary">
+                <p className="bigline">
+                    {data.kpi.count === 0
+                        ? "No fuel was issued in this selection."
+                        : `${fmtLitres(data.kpi.volume)} was issued to ${data.kpi.vehicles.toLocaleString("en-GB")} units, costing ${fmtMoney(data.kpi.cost, { currency: s, decimals: 0 })}.`}
+                    {data.kpi.count > 0 && (
+                        <small>
+                            That is {fmtLitres(data.kpi.volume / data.kpi.count)} per issue on average, at {s}{(data.kpi.cost / Math.max(1, data.kpi.volume)).toFixed(2)} a litre.
+                            Issues are consumption; receipts into the tanks are kept on their own page and never added to these figures.
+                        </small>
+                    )}
+                </p>
+            </section>
+
+            <div className="grid gap-3.5 grid-cols-2 lg:grid-cols-4 stagger-tiles">
+                <IndustrialKPI label="Fuel issued" value={fmtLitres(data.kpi.volume)} icon={ArrowDownToLine} subValue={`${fmtLitres(data.kpi.volume / Math.max(1, data.kpi.vehicles))} per unit`} />
+                <IndustrialKPI label="Cost of issues" value={fmtMoney(data.kpi.cost, { currency: s, decimals: 0 })} icon={Coins} subValue={`${s}${(data.kpi.cost / Math.max(1, data.kpi.volume)).toFixed(2)} per litre`} />
+                <IndustrialKPI label="Issues" value={data.kpi.count.toLocaleString("en-GB")} icon={Flame} subValue={`${fmtLitres(data.kpi.volume / Math.max(1, data.kpi.count))} per issue`} />
+                <IndustrialKPI label="Units fuelled" value={data.kpi.vehicles.toLocaleString("en-GB")} icon={Truck} subValue={`${(data.kpi.count / Math.max(1, data.kpi.vehicles)).toFixed(1)} issues per unit`} />
             </div>
 
             <DashboardCharts

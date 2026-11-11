@@ -18,27 +18,31 @@ type Summary = {
     dieselCost: number;
     petrolCount: number;
     dieselCount: number;
+    otherVolume?: number;
+    otherCost?: number;
+    otherCount?: number;
 };
 
 export function ConsumptionSummary({ data, currencySymbol = "N$" }: { data: Summary; currencySymbol?: string }) {
-    const total = data.petrolVolume + data.dieselVolume;
+    const other = { volume: data.otherVolume ?? 0, cost: data.otherCost ?? 0, count: data.otherCount ?? 0 };
+    const total = data.petrolVolume + data.dieselVolume + other.volume;
     return (
         <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-                <div className="p-4 bg-muted/40 border border-border rounded-[12px]">
+                <div className="rounded-tile bg-surface-2 p-4">
                     <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-2">
-                        <Fuel className="h-4 w-4" /> Total Petrol Consumption
+                        <Fuel className="h-4 w-4" /> Petrol issued
                     </div>
-                    <p className="text-3xl font-semibold tabular-nums">{fmtLitres(data.petrolVolume)}</p>
+                    <p className="text-2xl font-semibold tracking-[-0.025em] tabular-nums">{fmtLitres(data.petrolVolume)}</p>
                     <p className="text-xs text-muted-foreground mt-1 font-medium">
                         {fmtMoney(data.petrolCost, { currency: currencySymbol })} · {fmtCount(data.petrolCount)} transactions
                     </p>
                 </div>
-                <div className="p-4 bg-muted/40 border border-border rounded-[12px]">
+                <div className="rounded-tile bg-surface-2 p-4">
                     <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-2">
-                        <Droplets className="h-4 w-4" /> Total Diesel Consumption
+                        <Droplets className="h-4 w-4" /> Diesel issued
                     </div>
-                    <p className="text-3xl font-semibold tabular-nums">{fmtLitres(data.dieselVolume)}</p>
+                    <p className="text-2xl font-semibold tracking-[-0.025em] tabular-nums">{fmtLitres(data.dieselVolume)}</p>
                     <p className="text-xs text-muted-foreground mt-1 font-medium">
                         {fmtMoney(data.dieselCost, { currency: currencySymbol })} · {fmtCount(data.dieselCount)} transactions
                     </p>
@@ -49,7 +53,7 @@ export function ConsumptionSummary({ data, currencySymbol = "N$" }: { data: Summ
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Fuel Type</TableHead>
+                            <TableHead>Fuel type</TableHead>
                             <TableHead className="text-right">Volume (L)</TableHead>
                             <TableHead className="text-right">Cost</TableHead>
                             <TableHead className="text-right">Transactions</TableHead>
@@ -58,25 +62,34 @@ export function ConsumptionSummary({ data, currencySymbol = "N$" }: { data: Summ
                     </TableHeader>
                     <TableBody>
                         <TableRow>
-                            <TableCell className="text-xs font-semibold">PETROL</TableCell>
-                            <TableCell className="text-xs text-right font-mono tabular-nums">{fmtLitres(data.petrolVolume)}</TableCell>
-                            <TableCell className="text-xs text-right font-mono tabular-nums">{fmtMoney(data.petrolCost, { currency: currencySymbol })}</TableCell>
-                            <TableCell className="text-xs text-right font-mono tabular-nums">{fmtCount(data.petrolCount)}</TableCell>
-                            <TableCell className="text-xs text-right font-mono">{total > 0 ? fmtPercent((data.petrolVolume / total) * 100) : fmtPercent(0)}</TableCell>
+                            <TableCell >Petrol</TableCell>
+                            <TableCell className="mono text-right">{fmtLitres(data.petrolVolume)}</TableCell>
+                            <TableCell className="mono text-right">{fmtMoney(data.petrolCost, { currency: currencySymbol })}</TableCell>
+                            <TableCell className="mono text-right">{fmtCount(data.petrolCount)}</TableCell>
+                            <TableCell className="mono text-right">{total > 0 ? fmtPercent((data.petrolVolume / total) * 100) : fmtPercent(0)}</TableCell>
                         </TableRow>
                         <TableRow>
-                            <TableCell className="text-xs font-semibold">DIESEL</TableCell>
-                            <TableCell className="text-xs text-right font-mono tabular-nums">{fmtLitres(data.dieselVolume)}</TableCell>
-                            <TableCell className="text-xs text-right font-mono tabular-nums">{fmtMoney(data.dieselCost, { currency: currencySymbol })}</TableCell>
-                            <TableCell className="text-xs text-right font-mono tabular-nums">{fmtCount(data.dieselCount)}</TableCell>
-                            <TableCell className="text-xs text-right font-mono">{total > 0 ? fmtPercent((data.dieselVolume / total) * 100) : fmtPercent(0)}</TableCell>
+                            <TableCell >Diesel</TableCell>
+                            <TableCell className="mono text-right">{fmtLitres(data.dieselVolume)}</TableCell>
+                            <TableCell className="mono text-right">{fmtMoney(data.dieselCost, { currency: currencySymbol })}</TableCell>
+                            <TableCell className="mono text-right">{fmtCount(data.dieselCount)}</TableCell>
+                            <TableCell className="mono text-right">{total > 0 ? fmtPercent((data.dieselVolume / total) * 100) : fmtPercent(0)}</TableCell>
                         </TableRow>
-                        <TableRow className="bg-muted/30">
-                            <TableCell className="text-xs font-semibold">TOTAL</TableCell>
-                            <TableCell className="text-xs text-right font-mono font-semibold tabular-nums">{fmtLitres(total)}</TableCell>
-                            <TableCell className="text-xs text-right font-mono font-semibold tabular-nums">{fmtMoney(data.petrolCost + data.dieselCost, { currency: currencySymbol })}</TableCell>
-                            <TableCell className="text-xs text-right font-mono font-semibold tabular-nums">{fmtCount(data.petrolCount + data.dieselCount)}</TableCell>
-                            <TableCell className="text-xs text-right font-mono font-semibold">100%</TableCell>
+                        {other.count > 0 && (
+                            <TableRow>
+                                <TableCell title="The report did not say which fuel these issues were">Fuel type not recorded</TableCell>
+                                <TableCell className="mono text-right">{fmtLitres(other.volume)}</TableCell>
+                                <TableCell className="mono text-right">{fmtMoney(other.cost, { currency: currencySymbol })}</TableCell>
+                                <TableCell className="mono text-right">{fmtCount(other.count)}</TableCell>
+                                <TableCell className="mono text-right">{total > 0 ? fmtPercent((other.volume / total) * 100) : fmtPercent(0)}</TableCell>
+                            </TableRow>
+                        )}
+                        <TableRow className="bg-surface-2">
+                            <TableCell >Total</TableCell>
+                            <TableCell className="mono text-right font-semibold">{fmtLitres(total)}</TableCell>
+                            <TableCell className="mono text-right font-semibold">{fmtMoney(data.petrolCost + data.dieselCost + other.cost, { currency: currencySymbol })}</TableCell>
+                            <TableCell className="mono text-right font-semibold">{fmtCount(data.petrolCount + data.dieselCount + other.count)}</TableCell>
+                            <TableCell className="mono text-right font-semibold">100%</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>

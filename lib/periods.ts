@@ -1,6 +1,8 @@
 import { toLocalYmd } from "@/lib/date-format";
 import { getLatestMonth } from "@/lib/fuel-insights";
+import { rangeLabel } from "@/lib/overview";
 
+const monthLabel = (d: Date) => d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 const iso = (d: Date) => encodeURIComponent(d.toISOString());
 
 /**
@@ -17,8 +19,8 @@ export async function resolvePeriod(path: string, params: { from?: string; to?: 
     const fromDay = params.from ? toLocalYmd(params.from) : toLocalYmd(thisFrom);
     const toDay = params.to ? toLocalYmd(params.to) : toLocalYmd(thisTo);
     const defs = [
-        { key: "last", label: "Last month", f: lastFrom, t: lastTo },
-        { key: "this", label: "This month", f: thisFrom, t: thisTo },
+        { key: "last", label: monthLabel(lastFrom), f: lastFrom, t: lastTo },
+        { key: "this", label: monthLabel(thisFrom), f: thisFrom, t: thisTo },
         { key: "ytd", label: "Year to date", f: ytdFrom, t: thisTo },
     ];
     return {
@@ -27,4 +29,13 @@ export async function resolvePeriod(path: string, params: { from?: string; to?: 
         periods: defs.map(d => ({ key: d.key, label: d.label, href: `${path}?from=${iso(d.f)}&to=${iso(d.t)}` })),
         period: defs.find(d => toLocalYmd(d.f) === fromDay && toLocalYmd(d.t) === toDay)?.key ?? "custom",
     };
+}
+
+/** The date range a filtered page is showing, in words, for its header. */
+export function scopeRange(from?: string, to?: string): string {
+    const day = (v: string) => new Date(v).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    if (from && to) return rangeLabel(toLocalYmd(from), toLocalYmd(to));
+    if (from) return `From ${day(from)}`;
+    if (to) return `Up to ${day(to)}`;
+    return "All dates on record";
 }

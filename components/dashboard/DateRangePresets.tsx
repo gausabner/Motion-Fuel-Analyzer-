@@ -2,19 +2,23 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useNavBadges } from "@/components/dashboard/NavBadges";
 
 type Preset = "this-month" | "last-month" | "ytd";
 
-function presetRange(preset: Preset): { from: Date; to: Date } {
-    const now = new Date();
-    if (preset === "this-month") {
-        return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: new Date(now.getFullYear(), now.getMonth() + 1, 0) };
-    }
-    if (preset === "last-month") {
-        return { from: new Date(now.getFullYear(), now.getMonth() - 1, 1), to: new Date(now.getFullYear(), now.getMonth(), 0) };
-    }
-    return { from: new Date(now.getFullYear(), 0, 1), to: now };
+/**
+ * Presets hang off the latest month that has data, not today's date: on a
+ * system fed by monthly uploads, the calendar month is usually still empty.
+ * This matches lib/periods.ts, so a preset means the same dates on every page.
+ */
+function presetRange(preset: Preset, anchor: Date): { from: Date; to: Date } {
+    const y = anchor.getFullYear(), m = anchor.getMonth();
+    if (preset === "this-month") return { from: new Date(y, m, 1), to: new Date(y, m + 1, 0) };
+    if (preset === "last-month") return { from: new Date(y, m - 1, 1), to: new Date(y, m, 0) };
+    return { from: new Date(y, 0, 1), to: new Date(y, m + 1, 0) };
 }
+
+const monthLabel = (d: Date) => d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 
 function sameDay(a: Date, b: Date) {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -29,6 +33,13 @@ export function DateRangePresets({ className }: { className?: string }) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
+    const { badges } = useNavBadges();
+    const anchor = (() => {
+        if (!badges.anchor) return new Date();
+        const [y, m, d] = badges.anchor.split("-").map(Number);
+        return new Date(y, m - 1, d);
+    })();
+
     const from = searchParams.get("from");
     const to = searchParams.get("to");
 
@@ -36,14 +47,14 @@ export function DateRangePresets({ className }: { className?: string }) {
         if (!from || !to) return null;
         const f = new Date(from), t = new Date(to);
         for (const p of ["this-month", "last-month", "ytd"] as Preset[]) {
-            const r = presetRange(p);
+            const r = presetRange(p, anchor);
             if (sameDay(f, r.from) && sameDay(t, r.to)) return p;
         }
         return null;
     })();
 
     const apply = (preset: Preset) => {
-        const { from, to } = presetRange(preset);
+        const { from, to } = presetRange(preset, anchor);
         const params = new URLSearchParams(searchParams.toString());
         params.set("from", from.toISOString());
         params.set("to", to.toISOString());
@@ -51,13 +62,13 @@ export function DateRangePresets({ className }: { className?: string }) {
     };
 
     const chips: { key: Preset; label: string }[] = [
-        { key: "this-month", label: "This month" },
-        { key: "last-month", label: "Last month" },
+        { key: "this-month", label: monthLabel(presetRange("this-month", anchor).from) },
+        { key: "last-month", label: monthLabel(presetRange("last-month", anchor).from) },
         { key: "ytd", label: "Year to date" },
     ];
 
     return (
-        <div className={cn("flex flex-wrap gap-2", className)}>
+        <div className={cn("flex flex-wrap gap-2", className)} role="group" aria-label="Period">
             {chips.map(({ key, label }) => (
                 <button
                     key={key}

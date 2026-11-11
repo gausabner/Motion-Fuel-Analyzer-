@@ -130,7 +130,8 @@ export default async function ReportsPage({
             rows: [
                 ["Petrol", summary.petrolVolume.toFixed(2), summary.petrolCost.toFixed(2), summary.petrolCount],
                 ["Diesel", summary.dieselVolume.toFixed(2), summary.dieselCost.toFixed(2), summary.dieselCount],
-                ["Total", (summary.petrolVolume + summary.dieselVolume).toFixed(2), (summary.petrolCost + summary.dieselCost).toFixed(2), summary.petrolCount + summary.dieselCount],
+                ...(summary.otherCount > 0 ? [["Fuel type not recorded", summary.otherVolume.toFixed(2), summary.otherCost.toFixed(2), summary.otherCount]] : []),
+                ["Total", (summary.petrolVolume + summary.dieselVolume + summary.otherVolume).toFixed(2), (summary.petrolCost + summary.dieselCost + summary.otherCost).toFixed(2), summary.petrolCount + summary.dieselCount + summary.otherCount],
             ],
         },
         {

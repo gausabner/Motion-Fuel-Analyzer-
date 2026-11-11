@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { scopeRange } from "@/lib/periods";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { FuelLogFilters } from "@/components/dashboard/FuelLogFilters";
 import { IndustrialKPI } from "@/components/dashboard/IndustrialKPI";
@@ -65,7 +66,7 @@ export default async function FisVsFrePage({
         <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Issues vs receipts"
-                scope={[`${fmtLitres(received)} received`, `${fmtLitres(issued)} issued`, `${deliveries} deliver${deliveries === 1 ? "y" : "ies"}`]}
+                scope={[scopeRange(sp.from, sp.to), `${fmtLitres(received)} received`, `${fmtLitres(issued)} issued`, `${deliveries} deliver${deliveries === 1 ? "y" : "ies"}`]}
             />
 
             <FuelLogFilters costCentres={costCentres} hideVehicle hideCostCentres />
@@ -117,9 +118,9 @@ export default async function FisVsFrePage({
 
             <div className="grid gap-3.5 grid-cols-2 lg:grid-cols-4 stagger-tiles">
                 <IndustrialKPI
-                    label="Fuel spend"
+                    label="Cost of fuel received"
                     value={money(cost.receivedCost)}
-                    subValue="Cost of fuel received"
+                    subValue="What the deliveries cost to buy"
                     icon={Wallet}
                 />
                 <IndustrialKPI

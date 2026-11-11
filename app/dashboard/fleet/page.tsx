@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Truck, TrendingUp, AlertTriangle } from "lucide-react";
 import { IndustrialKPI } from "@/components/dashboard/IndustrialKPI";
+import { scopeRange } from "@/lib/periods";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { getFleetPerformance, isUnattributedUnit, unitLabel } from "@/lib/analytics";
 import { TablePagination } from "@/components/dashboard/TablePagination";
@@ -34,124 +35,8 @@ const DEFAULT_PAGE_SIZE = 20;
 
 import { FuelLogFilters } from "@/components/dashboard/FuelLogFilters";
 
-// ... imports ...
-import { DashboardCharts } from "@/components/dashboard/Charts";
 
-// ... getFleetData implementation ...
 
-async function getFleetChartData(vehicleId?: string, fuelType?: string, department?: string, division?: string, from?: string, to?: string) {
-    let queryCondition = "t.transType = 'FIS'";
-    const params: any[] = [];
-
-    if (vehicleId) {
-        queryCondition += ` AND t.vehicleId LIKE ?`;
-        params.push(`%${vehicleId}%`);
-    }
-
-    if (fuelType && fuelType !== 'all') {
-        const typePattern = fuelType === 'Petrol' ? '%Petrol%' : (fuelType === 'Diesel' ? '%Diesel%' : fuelType);
-        queryCondition += ` AND t.fuelType LIKE ?`;
-        params.push(`%${typePattern}%`);
-    }
-
-    if (department) {
-        queryCondition += ` AND c.department LIKE ?`;
-        params.push(`%${department}%`);
-    }
-
-    if (division) {
-        queryCondition += ` AND c.division LIKE ?`;
-        params.push(`%${division}%`);
-    }
-
-    if (from) {
-        queryCondition += ` AND t.transDate >= ?`;
-        params.push(from);
-    }
-    if (to) {
-        queryCondition += ` AND t.transDate <= ?`;
-        const toDate = new Date(to);
-        toDate.setHours(23, 59, 59, 999);
-        params.push(toDate.toISOString());
-    }
-
-    const rawDaily = await (prisma as any).$queryRawUnsafe(`
-        SELECT t.transDate, t.fuelType, SUM(t.transQty) as totalQty, SUM(t.transAmt) as totalAmt
-        FROM FuelTransaction t
-        LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
-        WHERE ${queryCondition}
-        GROUP BY t.transDate, t.fuelType
-        ORDER BY t.transDate ASC
-    `, ...params) as any[];
-
-    return rawDaily.map((d: any) => ({
-        date: d.transDate,
-        fuelType: d.fuelType,
-        totalVolume: d.totalQty || 0,
-        totalCost: d.totalAmt || 0
-    }));
-}
-
-async function getDepartmentStats(vehicleId?: string, fuelType?: string, department?: string, division?: string, from?: string, to?: string) {
-    let queryCondition = "t.transType = 'FIS'";
-    const params: any[] = [];
-
-    if (vehicleId) {
-        queryCondition += ` AND t.vehicleId LIKE ?`;
-        params.push(`%${vehicleId}%`);
-    }
-
-    if (fuelType && fuelType !== 'all') {
-        const typePattern = fuelType === 'Petrol' ? '%Petrol%' : (fuelType === 'Diesel' ? '%Diesel%' : fuelType);
-        queryCondition += ` AND t.fuelType LIKE ?`;
-        params.push(`%${typePattern}%`);
-    }
-
-    if (department) {
-        queryCondition += ` AND c.department LIKE ?`;
-        params.push(`%${department}%`);
-    }
-
-    if (division) {
-        queryCondition += ` AND c.division LIKE ?`;
-        params.push(`%${division}%`);
-    }
-
-    if (from) {
-        queryCondition += ` AND t.transDate >= ?`;
-        params.push(from);
-    }
-    if (to) {
-        queryCondition += ` AND t.transDate <= ?`;
-        const toDate = new Date(to);
-        toDate.setHours(23, 59, 59, 999);
-        params.push(toDate.toISOString());
-    }
-
-    const deptStats = await (prisma as any).$queryRawUnsafe(`
-        SELECT 
-            c.department, 
-            SUM(t.transQty) as totalQty,
-            SUM(CASE WHEN t.fuelType LIKE '%Petrol%' THEN t.transQty ELSE 0 END) as petrolVolume,
-            SUM(CASE WHEN t.fuelType LIKE '%Diesel%' OR t.fuelType NOT LIKE '%Petrol%' THEN t.transQty ELSE 0 END) as dieselVolume
-        FROM FuelTransaction t
-        LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
-        WHERE ${queryCondition}
-        AND c.department IS NOT NULL
-        GROUP BY c.department
-        ORDER BY totalQty DESC
-        LIMIT 10
-    `, ...params) as any[];
-
-    return deptStats.map((d: any, index: number) => ({
-        name: `#${index + 1} ${d.department}`,
-        value: d.totalQty,
-        petrol: d.petrolVolume,
-        diesel: d.dieselVolume
-    }));
-}
-
-// ... FleetPage component ...
 export default async function FleetPage({
     searchParams
 }: {
@@ -172,8 +57,6 @@ export default async function FleetPage({
         getVehicleAttribution(params.vehicleId || "", filters),
         getSessionUser(),
     ]);
-    const dailyData = await getFleetChartData(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to);
-    const topVotesForChart = await getDepartmentStats(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to);
 
     // Efficiency follows the date range only; the other filters narrow it to the units still in the table.
     const eff = await getFleetEfficiency(params.from ? toLocalYmd(params.from) : undefined, params.to ? toLocalYmd(params.to) : undefined);
@@ -218,7 +101,6 @@ export default async function FleetPage({
     const q1 = quantile(sortedLitres, 0.25);
     const q3 = quantile(sortedLitres, 0.75);
     const highUsageLitres = q3 + 1.5 * (q3 - q1);
-    const topFleetForChart = rankable.slice(0, 10).map(f => ({ name: f.id, value: f.petrolVolume + f.dieselVolume }));
 
     const highConsumer = rankable[0]?.id ?? "N/A";
 
@@ -252,7 +134,7 @@ export default async function FleetPage({
         <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Fleet"
-                scope={[`${fleet.length.toLocaleString("en-GB")} units`, fmtLitres(totalFuel), "Fuel issues only"]}
+                scope={[scopeRange(params.from, params.to), `${rankable.length.toLocaleString("en-GB")} units`, fmtLitres(totalFuel), "Fuel issues only"]}
             >
                 <TableCsvButton filename="fleet_performance.csv" serverUrl={fleetExportUrl} />
             </PageHeader>
@@ -267,7 +149,7 @@ export default async function FleetPage({
 
             {/* KPI Cards */}
             <div className="grid gap-3.5 md:grid-cols-3 stagger-tiles">
-                <IndustrialKPI label="Units fuelled" icon={Truck} value={`${fleet.length} units`} subValue="With at least one issue in this selection" />
+                <IndustrialKPI label="Units fuelled" icon={Truck} value={`${rankable.length}`} subValue={rankable.length < fleet.length ? "Plus fuel issued with no unit recorded" : "With at least one issue in this selection"} />
 
                 <IndustrialKPI label="Heaviest user" icon={AlertTriangle} value={highConsumer} subValue="Most litres in this selection" />
 
@@ -275,13 +157,6 @@ export default async function FleetPage({
             </div>
 
             <FleetEfficiency units={effUnits} medians={eff.medians} />
-
-            <DashboardCharts
-                    dailyData={dailyData}
-                    topFleet={topFleetForChart}
-                    topVotes={topVotesForChart}
-                    currencySymbol={cur}
-                />
 
             <Card className="monumental-card bg-card p-0 overflow-hidden">
                 <CardHeader className="p-4 border-b border-border">
@@ -339,7 +214,7 @@ export default async function FleetPage({
                                                 {unit.transactionCount}
                                             </TableCell>
                                             <TableCell className="mono text-right">
-                                                {e?.l100 != null ? e.l100.toFixed(1) : <span className="text-faint" title="Not enough odometer readings to work this out">—</span>}
+                                                {e?.l100 != null ? e.l100.toFixed(1) : <span className="text-muted-foreground" title="Not enough odometer readings to work this out">—</span>}
                                             </TableCell>
                                             <TableCell>
                                                 {e?.ratio != null ? (
@@ -350,7 +225,7 @@ export default async function FleetPage({
                                                         </span>
                                                         <span className="mono text-xs text-muted-foreground">{e.ratio.toFixed(1)}×</span>
                                                     </span>
-                                                ) : <span className="text-faint">—</span>}
+                                                ) : <span className="text-muted-foreground">—</span>}
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 {isUnattributedUnit(unit.id) ? (

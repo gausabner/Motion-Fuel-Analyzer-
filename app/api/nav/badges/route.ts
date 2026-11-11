@@ -11,5 +11,7 @@ export async function GET() {
         month ? getExceptions(month.fromDay, month.toDay) : Promise.resolve([]),
         getUnassigned(),
     ]);
-    return NextResponse.json({ exceptions: summariseExceptions(exceptions).open, registry: unassigned.codes });
+    // `anchor` is the first day of the latest month with data: every period preset hangs off it,
+    // so "the latest month" means the same month on every page.
+    return NextResponse.json({ exceptions: summariseExceptions(exceptions).open, registry: unassigned.codes, anchor: month?.fromDay ?? null });
 }

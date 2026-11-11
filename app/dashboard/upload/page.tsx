@@ -32,7 +32,7 @@ export default function IngestionPage() {
                     </CardHeader>
                     <CardContent className="pt-6">
                         <p className="text-sm text-muted-foreground mb-6 max-w-lg">
-                            Upload your proprietary fuel log spreadsheets here. The system will automatically map headers to the "Hudson" schema and ingest valid transactions.
+                            Upload the fuel system's report exports here. Column headings are matched automatically and rows already loaded are skipped.
                         </p>
 
                         <div className="flex items-center gap-4">

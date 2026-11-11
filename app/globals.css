@@ -120,9 +120,9 @@
   --bar: #D5E0F1;
   --chip: #FFFFFF;
 
-  --ok: #15803D;
+  --ok: #166534;
   --ok-soft: #E3F4E8;
-  --warn: #B45309;
+  --warn: #92400E;
   --warn-soft: #FCF0DC;
   --crit: #B91C1C;
   --crit-soft: #FBE4E4;
@@ -452,7 +452,7 @@
   }
   .drawer.on { transform: none; visibility: visible; transition: transform 340ms var(--ease-spring), visibility 0s; }
   .dr-sec { display: flex; flex-direction: column; gap: 8px; }
-  .dr-sec h3 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted-foreground); }
+  .dr-sec h3 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted-foreground); }
   .cmp { position: relative; height: 14px; border-radius: 999px; background: var(--surface-2); margin: 18px 0 4px; }
   .cmp i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--brand); transition: width 600ms var(--ease-out-soft); }
   .cmp i.over { background: var(--crit); }

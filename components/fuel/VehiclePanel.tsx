@@ -165,7 +165,7 @@ export function VehiclePanelProvider({ children }: { children: ReactNode }) {
                                             </div>
                                             {e.status === "Open" && (
                                                 <div className="flex flex-wrap gap-2">
-                                                    <button type="button" className="tab !px-3 !py-1.5 !text-xs" aria-pressed="true" onClick={() => act(e, "Explained")}>Mark explained</button>
+                                                    <button type="button" className="tab !border-primary !bg-primary !px-3 !py-1.5 !text-xs !text-primary-foreground" onClick={() => act(e, "Explained")}>Mark explained</button>
                                                     <button type="button" className="tab !px-3 !py-1.5 !text-xs" onClick={() => act(e, "Escalated")}>Escalate to manager</button>
                                                 </div>
                                             )}

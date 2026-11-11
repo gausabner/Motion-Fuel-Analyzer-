@@ -176,7 +176,8 @@ export async function GET(request: Request) {
                 [
                     ["Petrol", s.petrolVolume.toFixed(2), s.petrolCost.toFixed(2), s.petrolCount],
                     ["Diesel", s.dieselVolume.toFixed(2), s.dieselCost.toFixed(2), s.dieselCount],
-                    ["Total", (s.petrolVolume + s.dieselVolume).toFixed(2), (s.petrolCost + s.dieselCost).toFixed(2), s.petrolCount + s.dieselCount],
+                    ...(s.otherCount > 0 ? [["Fuel type not recorded", s.otherVolume.toFixed(2), s.otherCost.toFixed(2), s.otherCount]] : []),
+                    ["Total", (s.petrolVolume + s.dieselVolume + s.otherVolume).toFixed(2), (s.petrolCost + s.dieselCost + s.otherCost).toFixed(2), s.petrolCount + s.dieselCount + s.otherCount],
                 ]);
         }
     }

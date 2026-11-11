@@ -345,6 +345,9 @@ export async function getConsumptionSummary(opts: TxFilterOpts = {}) {
 
     let petrolVolume = 0, dieselVolume = 0, petrolCost = 0, dieselCost = 0;
     let petrolCount = 0, dieselCount = 0;
+    // Issues whose fuel type the report did not carry. They are real litres, so
+    // they are counted and named instead of being dropped from the total.
+    let otherVolume = 0, otherCost = 0, otherCount = 0;
     for (const d of data) {
         const t = String(d.fuelType).toLowerCase();
         if (t.includes('petrol')) {
@@ -355,9 +358,13 @@ export async function getConsumptionSummary(opts: TxFilterOpts = {}) {
             dieselVolume += (d.qty || 0);
             dieselCost += (d.amt || 0);
             dieselCount += Number(d.cnt || 0);
+        } else {
+            otherVolume += (d.qty || 0);
+            otherCost += (d.amt || 0);
+            otherCount += Number(d.cnt || 0);
         }
     }
-    return { petrolVolume, dieselVolume, petrolCost, dieselCost, petrolCount, dieselCount };
+    return { petrolVolume, dieselVolume, petrolCost, dieselCost, petrolCount, dieselCount, otherVolume, otherCost, otherCount };
 }
 
 export async function getRangeStats(from: string, to: string) {

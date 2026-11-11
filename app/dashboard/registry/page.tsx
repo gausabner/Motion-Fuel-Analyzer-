@@ -69,7 +69,7 @@ export default function RegistryPage() {
             setUnassigned(u.votes || []);
             refreshBadges();
         } catch {
-            toast.error("Failed to load registry data");
+            toast.error("The registry could not be loaded. Reload the page to try again.");
         } finally {
             setLoading(false);
         }
@@ -100,7 +100,7 @@ export default function RegistryPage() {
             setBulkForm({ department: "", division: "" });
             await loadAll();
         } catch {
-            toast.error("Network error");
+            toast.error("That change was not saved. Check your connection and try again.");
         } finally {
             setBusy(false);
         }
@@ -119,28 +119,32 @@ export default function RegistryPage() {
                 onOk();
                 await loadAll();
             } else {
-                toast.error(data.error || "Request failed");
+                toast.error(data.error || "That change was not saved. Try again.");
             }
         } catch {
-            toast.error("Network error");
+            toast.error("That change was not saved. Check your connection and try again.");
         } finally {
             setBusy(false);
         }
     };
 
-    const remove = async (url: string, label: string) => {
+    /** Remove a registry entry. `restore` re-creates it, and is offered as Undo for five seconds. */
+    const remove = async (url: string, label: string, restore?: { url: string; body: Record<string, unknown> }) => {
         setBusy(true);
         try {
             const res = await fetch(url, { method: "DELETE" });
             const data = await res.json();
             if (res.ok) {
-                toast.success(`${label} removed`);
+                toast(`${label} removed`, restore ? {
+                    duration: 5000,
+                    action: { label: "Undo", onClick: () => post(restore.url, restore.body, () => toast(`${label} restored`)) },
+                } : undefined);
                 await loadAll();
             } else {
-                toast.error(data.error || "Delete failed");
+                toast.error(data.error || "That entry could not be removed. Try again.");
             }
         } catch {
-            toast.error("Network error");
+            toast.error("That change was not saved. Check your connection and try again.");
         } finally {
             setBusy(false);
         }
@@ -179,8 +183,8 @@ export default function RegistryPage() {
                         Fuel on an unmapped code still counts in every total; it simply cannot be charged to a department until the code is assigned.
                     </small>
                 </p>
-                <div className="mt-4 flex items-center gap-3">
-                    <div className="meter flex-1" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(mappedPct)} aria-label="Share of vote codes mapped">
+                <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <div className="meter min-w-[140px] flex-1" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(mappedPct)} aria-label="Share of vote codes mapped">
                         <i style={{ "--p": `${mappedPct}%` } as React.CSSProperties} />
                     </div>
                     <span className="mono text-xs text-muted-foreground">{mappedPct.toFixed(1)}% of codes mapped</span>
@@ -214,7 +218,7 @@ export default function RegistryPage() {
                 <TabsContent value="costcentres">
                     <Card className="monumental-card">
                         <CardHeader>
-                            <CardTitle>Issue Vote Numbers</CardTitle>
+                            <CardTitle>Vote numbers</CardTitle>
                             <CardDescription>Each vote number belongs to a division within a department. Transactions are matched by vote number.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -243,7 +247,7 @@ export default function RegistryPage() {
                                     />
                                 </div>
                                 <div className="space-y-1 min-w-[180px]">
-                                    <label htmlFor="vote-number-213" className="text-xs font-semibold text-muted-foreground">Vote Number</label>
+                                    <label htmlFor="vote-number-213" className="text-xs font-semibold text-muted-foreground">Vote number</label>
                                     <Input
                                         id="vote-number-213"
                                         placeholder="e.g. 4520151100655"
@@ -260,7 +264,7 @@ export default function RegistryPage() {
                                     })}
                                     className="font-semibold h-10"
                                 >
-                                    <Plus className="h-4 w-4 mr-1" /> Add Vote
+                                    <Plus className="h-4 w-4 mr-1" /> Add vote
                                 </Button>
                             </div>
 
@@ -268,7 +272,7 @@ export default function RegistryPage() {
                                 <Table>
                                     <TableHeader className="sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead>Vote No</TableHead>
+                                            <TableHead>Vote number</TableHead>
                                             <TableHead>Division</TableHead>
                                             <TableHead>Department</TableHead>
                                             <TableHead className="w-12"></TableHead>
@@ -284,7 +288,7 @@ export default function RegistryPage() {
                                                     <Button
                                                         variant="ghost" size="sm" disabled={busy}
                                                         aria-label={`Remove vote ${cc.voteNo}`}
-                                                        onClick={() => remove(`/api/registry/cost-centres?voteNo=${encodeURIComponent(cc.voteNo)}`, `Vote ${cc.voteNo}`)}
+                                                        onClick={() => remove(`/api/registry/cost-centres?voteNo=${encodeURIComponent(cc.voteNo)}`, `Vote ${cc.voteNo}`, { url: "/api/registry/cost-centres", body: { voteNo: cc.voteNo, department: cc.department, division: cc.division } })}
                                                         className="h-8 w-8 p-0 text-muted-foreground hover:text-crit"
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />
@@ -309,7 +313,7 @@ export default function RegistryPage() {
                         <CardContent className="space-y-4">
                             <div className="flex items-end gap-3 p-4 bg-surface-2 rounded-tile">
                                 <div className="space-y-1 flex-1">
-                                    <label htmlFor="department-name-277" className="text-xs font-semibold text-muted-foreground">Department Name</label>
+                                    <label htmlFor="department-name-277" className="text-xs font-semibold text-muted-foreground">Department name</label>
                                     <Input
                                         id="department-name-277"
                                         placeholder="e.g. DEPARTMENT OF ELECTRICITY"
@@ -326,7 +330,7 @@ export default function RegistryPage() {
                                     })}
                                     className="font-semibold h-10"
                                 >
-                                    <Plus className="h-4 w-4 mr-1" /> Add Department
+                                    <Plus className="h-4 w-4 mr-1" /> Add department
                                 </Button>
                             </div>
 
@@ -335,7 +339,7 @@ export default function RegistryPage() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Department</TableHead>
-                                            <TableHead className="text-right">Vote Numbers</TableHead>
+                                            <TableHead className="text-right">Vote numbers</TableHead>
                                             <TableHead className="w-12"></TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -348,7 +352,7 @@ export default function RegistryPage() {
                                                     <Button
                                                         variant="ghost" size="sm" disabled={busy}
                                                         aria-label={`Remove ${d.name}`}
-                                                        onClick={() => remove(`/api/registry/departments?name=${encodeURIComponent(d.name)}`, d.name)}
+                                                        onClick={() => remove(`/api/registry/departments?name=${encodeURIComponent(d.name)}`, d.name, { url: "/api/registry/departments", body: { name: d.name } })}
                                                         className="h-8 w-8 p-0 text-muted-foreground hover:text-crit"
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />
@@ -426,7 +430,7 @@ export default function RegistryPage() {
                                 <Table>
                                     <TableHeader className="sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead>Unit No</TableHead>
+                                            <TableHead>Unit number</TableHead>
                                             <TableHead>Description</TableHead>
                                             <TableHead className="w-12"></TableHead>
                                         </TableRow>
@@ -440,7 +444,7 @@ export default function RegistryPage() {
                                                     <Button
                                                         variant="ghost" size="sm" disabled={busy}
                                                         aria-label={`Remove unit ${u.unitNo}`}
-                                                        onClick={() => remove(`/api/registry/fleet-units?unitNo=${encodeURIComponent(u.unitNo)}`, `Unit ${u.unitNo}`)}
+                                                        onClick={() => remove(`/api/registry/fleet-units?unitNo=${encodeURIComponent(u.unitNo)}`, `Unit ${u.unitNo}`, { url: "/api/registry/fleet-units", body: { unitNo: u.unitNo, description: u.description ?? "" } })}
                                                         className="h-8 w-8 p-0 text-muted-foreground hover:text-crit"
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />

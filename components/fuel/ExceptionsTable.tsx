@@ -58,7 +58,7 @@ export function ExceptionsTable({ rows }: { rows: FuelException[] }) {
                                         <th key={h} className="whitespace-nowrap bg-surface-2 px-2.5 py-2 text-left text-[11.5px] font-medium text-muted-foreground first:rounded-l-[10px]">{h}</th>
                                     ))}
                                     <th className="whitespace-nowrap bg-surface-2 px-2.5 py-2 text-right text-[11.5px] font-medium text-muted-foreground">Litres in question</th>
-                                    <th className="rounded-r-[10px] bg-surface-2 px-2.5 py-2"><span className="sr-only">Actions</span></th>
+                                    <th className="relative rounded-r-[10px] bg-surface-2 px-2.5 py-2"><span className="sr-only">Actions</span></th>
                                 </tr>
                             </thead>
                             <tbody>

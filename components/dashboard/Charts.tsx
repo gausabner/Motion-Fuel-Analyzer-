@@ -156,7 +156,8 @@ export function DashboardCharts({
                         height={36}
                         iconType="square"
                         iconSize={9}
-                        wrapperStyle={{ fontSize: '12px', fontWeight: 600, color: chart.axis }}
+                        wrapperStyle={{ fontSize: '12px', fontWeight: 500 }}
+                        formatter={(value: string) => <span style={{ color: chart.axis }}>{value}</span>}
                     />
                 </>
             )
@@ -363,13 +364,13 @@ export function DashboardCharts({
                                         aria-label={`Energy mix: petrol ${fmtLitres(petrolVal)} at ${fmtShare(petrolVal, mixTotal)}, diesel ${fmtLitres(dieselVal)} at ${fmtShare(dieselVal, mixTotal)}`}
                                     >
                                         <div
-                                            className="flex items-center justify-center text-xs font-semibold text-primary-foreground"
+                                            className="flex items-center justify-center text-xs font-semibold text-[#0B1324]"
                                             style={{ width: `${pct(petrolVal)}%`, background: chart.petrol }}
                                         >
                                             {pct(petrolVal) >= 12 && fmtShare(petrolVal, mixTotal)}
                                         </div>
                                         <div
-                                            className="flex items-center justify-center text-xs font-semibold text-primary-foreground"
+                                            className="flex items-center justify-center text-xs font-semibold text-white"
                                             style={{ width: `${pct(dieselVal)}%`, background: chart.diesel }}
                                         >
                                             {pct(dieselVal) >= 12 && fmtShare(dieselVal, mixTotal)}
