@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { MotionLogo } from "@/components/brand/Logo";
 import { NAV_LAYOUT_COOKIE } from "@/lib/nav";
 import { Row, Section } from "@/components/settings/parts";
+import { OrganisationSection } from "@/components/settings/OrganisationSection";
 import { RulesSection } from "@/components/settings/RulesSection";
 import { PricesSection } from "@/components/settings/PricesSection";
 
@@ -87,7 +88,9 @@ export default function SettingsPage() {
 
     return (
         <div className="flex max-w-[920px] flex-col gap-3.5">
-            <PageHeader title="Settings" scope={["Currency, prices and rules apply to everyone", "Appearance applies to this browser"]} />
+            <PageHeader title="Settings" scope={["Organisation, currency, prices and rules apply to everyone", "Appearance applies to this browser"]} />
+
+            <OrganisationSection />
 
             <Section title="Currency" sub="How money is written on every page, export and PDF.">
                 <Row label="Currency symbol" hint="Shown in front of every amount, for example N$ 1,250." htmlFor="currency-symbol">

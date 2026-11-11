@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { drawFooters, drawLetterhead, drawSignatory, type PdfOrganisation } from "@/lib/pdf-brand";
 import type { CompareRow } from "@/lib/analytics";
 
 type Totals = {
@@ -14,7 +15,7 @@ type Totals = {
 type FuelStat = { aVolume: number; aCost: number; bVolume: number; bCost: number };
 
 export function ComparePdfButton({
-    dimensionLabel, aLabel, bLabel, activeFilters, currency, rows, totals, petrol, diesel,
+    dimensionLabel, aLabel, bLabel, activeFilters, currency, rows, totals, petrol, diesel, organisation,
 }: {
     dimensionLabel: string;
     aLabel: string;
@@ -25,6 +26,7 @@ export function ComparePdfButton({
     totals: Totals;
     petrol?: FuelStat;
     diesel?: FuelStat;
+    organisation?: PdfOrganisation;
 }) {
     const [generating, setGenerating] = useState(false);
 
@@ -37,22 +39,10 @@ export function ComparePdfButton({
             const doc = new jsPDF({ unit: "pt", format: "a4" });
             const pageWidth = doc.internal.pageSize.getWidth();
 
-            // Header — Municipal Blue theme (ink + blue accent)
-            doc.setFillColor(11, 19, 36);          // ink #0B1324
-            doc.rect(0, 0, pageWidth, 92, "F");
-            doc.setFillColor(29, 78, 216);          // municipal blue #1D4ED8
-            doc.rect(0, 92, pageWidth, 5, "F");
-            doc.setTextColor(255, 255, 255);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(19);
-            doc.text("Period comparison report", 40, 40);
-            doc.setFontSize(10);
-            doc.setTextColor(184, 196, 216);        // menu ink-on-dark #B8C4D8
-            doc.text(`${dimensionLabel}  ·  Period A: ${aLabel}   vs   Period B: ${bLabel}`, 40, 60);
-            doc.setTextColor(148, 163, 184);
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(8);
-            doc.text(`${activeFilters ? "Filters: " + activeFilters + "   ·   " : ""}Generated ${new Date().toLocaleString()}  ·  FIS consumption only`, 40, 78);
+            const headerEnd = drawLetterhead(doc, organisation, "Period comparison", [
+                `By ${dimensionLabel.toLowerCase()} · Period A: ${aLabel} · Period B: ${bLabel}`,
+                `${activeFilters ? "Filters: " + activeFilters + " · " : ""}Fuel issues only · Generated ${new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`,
+            ]);
 
             // Summary line
             const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -62,11 +52,11 @@ export function ComparePdfButton({
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.text(
-                `Total: ${fmt(totals.aVolume)} L  →  ${fmt(totals.bVolume)} L    Change: ${deltaStr}`,
-                40, 122,
+                `Total: ${fmt(totals.aVolume)} L to ${fmt(totals.bVolume)} L. Change: ${deltaStr}`,
+                40, headerEnd,
             );
 
-            let cursorY = 136;
+            let cursorY = headerEnd + 14;
 
             // Petrol vs diesel section (volume + cost) — always included when provided.
             if (petrol && diesel) {
@@ -82,7 +72,7 @@ export function ComparePdfButton({
                     ];
                 };
                 doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(11, 19, 36);
-                doc.text("Petrol vs diesel — consumption & cost", 40, cursorY);
+                doc.text("Petrol and diesel: consumption and cost", 40, cursorY);
                 autoTable(doc, {
                     startY: cursorY + 8,
                     head: [["Fuel", "A · Volume (L)", "A · Cost", "B · Volume (L)", "B · Cost", "Δ Volume (L)", "Δ Cost"]],
@@ -155,19 +145,14 @@ export function ComparePdfButton({
                 },
             });
 
-            const pageCount = doc.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(7);
-                doc.setTextColor(150, 150, 150);
-                doc.text(`Motion Fuel Analyzer — page ${i} of ${pageCount}`, pageWidth - 40, doc.internal.pageSize.getHeight() - 20, { align: "right" });
-            }
+            drawSignatory(doc, organisation, (doc as any).lastAutoTable?.finalY ?? headerEnd);
+            drawFooters(doc, organisation);
 
             doc.save(`period_comparison_${new Date().toISOString().split("T")[0]}.pdf`);
-            toast.success("Comparison PDF downloaded");
+            toast("Comparison PDF downloaded");
         } catch (e) {
             console.error("PDF generation failed:", e);
-            toast.error("PDF generation failed");
+            toast.error("The PDF could not be created. Try again.");
         } finally {
             setGenerating(false);
         }

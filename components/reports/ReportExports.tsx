@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { drawFooters, drawLetterhead, drawSignatory, type PdfOrganisation } from "@/lib/pdf-brand";
 
 export type ReportSection = {
     title: string;
@@ -60,10 +61,11 @@ export function TableCsvButton({ filename, headers, rows, serverUrl }: {
 }
 
 /** Generates the complete styled PDF fuel report from all sections. */
-export function FullReportPdfButton({ title, subtitle, sections }: {
+export function FullReportPdfButton({ title, subtitle, sections, organisation }: {
     title: string;
     subtitle: string;
     sections: ReportSection[];
+    organisation?: PdfOrganisation;
 }) {
     const [generating, setGenerating] = useState(false);
 
@@ -76,30 +78,14 @@ export function FullReportPdfButton({ title, subtitle, sections }: {
             const doc = new jsPDF({ unit: "pt", format: "a4" });
             const pageWidth = doc.internal.pageSize.getWidth();
 
-            // Cover header — Municipal Blue theme (ink + blue accent)
-            doc.setFillColor(11, 19, 36);          // ink #0B1324
-            doc.rect(0, 0, pageWidth, 90, "F");
-            doc.setFillColor(29, 78, 216);          // municipal blue #1D4ED8
-            doc.rect(0, 90, pageWidth, 5, "F");
-            doc.setTextColor(255, 255, 255);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(20);
-            doc.text(title, 40, 42);
-            doc.setFontSize(10);
-            doc.setTextColor(184, 196, 216);        // menu ink-on-dark #B8C4D8
-            doc.text(subtitle, 40, 62);
-            doc.setTextColor(148, 163, 184);        // slate-400
-            doc.setFont("helvetica", "normal");
-            doc.text(`Generated ${new Date().toLocaleString()}`, 40, 78);
-
-            let y = 120;
+            let y = drawLetterhead(doc, organisation, title, [subtitle, `Generated ${new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`]);
             for (const section of sections) {
                 if (section.rows.length === 0) continue;
 
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(12);
                 doc.setTextColor(11, 19, 36);        // ink
-                doc.text(section.title.toUpperCase(), 40, y);
+                doc.text(section.title, 40, y);
                 if (section.note) {
                     doc.setFont("helvetica", "normal");
                     doc.setFontSize(8);
@@ -125,25 +111,14 @@ export function FullReportPdfButton({ title, subtitle, sections }: {
                 }
             }
 
-            // Page numbers
-            const pageCount = doc.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(7);
-                doc.setTextColor(150, 150, 150);
-                doc.text(
-                    `Motion Fuel Analyzer — page ${i} of ${pageCount}`,
-                    pageWidth - 40,
-                    doc.internal.pageSize.getHeight() - 20,
-                    { align: "right" }
-                );
-            }
+            drawSignatory(doc, organisation, y - 30);
+            drawFooters(doc, organisation);
 
             doc.save(`fuel_report_${new Date().toISOString().split("T")[0]}.pdf`);
-            toast.success("PDF report downloaded");
+            toast("PDF report downloaded");
         } catch (e) {
             console.error("PDF generation failed:", e);
-            toast.error("PDF generation failed");
+            toast.error("The PDF could not be created. Try again.");
         } finally {
             setGenerating(false);
         }
@@ -156,7 +131,7 @@ export function FullReportPdfButton({ title, subtitle, sections }: {
             className="h-11 px-6 font-semibold"
         >
             <FileText className="h-4 w-4 mr-2" />
-            {generating ? "Generating…" : "Export PDF report"}
+            {generating ? "Creating PDF" : "Export PDF report"}
         </Button>
     );
 }

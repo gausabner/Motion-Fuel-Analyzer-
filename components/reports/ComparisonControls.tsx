@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useNavBadges } from "@/components/dashboard/NavBadges";
+import { financialYearEnd, financialYearStart } from "@/lib/financial-year";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,16 +52,19 @@ export function ComparisonControls({ costCentres }: { costCentres: CostCentre[] 
         ? Array.from(new Set(costCentres.filter(c => c.department === department).map(c => c.division).filter(Boolean)))
         : Array.from(new Set(costCentres.map(c => c.division).filter(Boolean)));
 
+    const fyStart = useNavBadges().badges.fyStart ?? 1;
+
     // Quick year presets: shift both periods by calendar or financial year.
     const applyYearPreset = (mode: "cy" | "fy") => {
         if (mode === "cy") {
             setPeriodA({ from: new Date(y - 1, 0, 1), to: new Date(y - 1, 11, 31) });
             setPeriodB({ from: new Date(y, 0, 1), to: new Date(y, 11, 31) });
         } else {
-            // Financial year Apr–Mar. "This FY" started Apr of (current year if month>=Apr else prev year).
-            const fyStartYear = now.getMonth() >= 3 ? y : y - 1;
-            setPeriodA({ from: new Date(fyStartYear - 1, 3, 1), to: new Date(fyStartYear, 2, 31) });
-            setPeriodB({ from: new Date(fyStartYear, 3, 1), to: new Date(fyStartYear + 1, 2, 31) });
+            // This financial year against the one before, using the start month set under Settings, Organisation.
+            const start = financialYearStart(now, fyStart);
+            const prev = new Date(start.getFullYear() - 1, start.getMonth(), 1);
+            setPeriodA({ from: prev, to: financialYearEnd(prev) });
+            setPeriodB({ from: start, to: financialYearEnd(start) });
         }
     };
 
@@ -114,7 +119,7 @@ export function ComparisonControls({ costCentres }: { costCentres: CostCentre[] 
 
                 <div className="flex items-center gap-1.5 pb-0.5">
                     <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => applyYearPreset("cy")}>Calendar years</Button>
-                    <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => applyYearPreset("fy")}>Financial years</Button>
+                    {fyStart !== 1 && <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => applyYearPreset("fy")}>Financial years</Button>}
                 </div>
             </div>
 

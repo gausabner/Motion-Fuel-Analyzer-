@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getPeriodComparison, type CompareDimension } from "@/lib/analytics";
+import { getOrganisation } from "@/lib/organisation";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { ComparisonControls } from "@/components/reports/ComparisonControls";
 import { ChartCard, PairedBars } from "@/components/fuel/charts";
@@ -95,6 +96,7 @@ export default async function ComparePage({
     const otherB = splitTotals.bVolume - petrolStat.bVolume - dieselStat.bVolume;
 
     const currency = settings?.currencySymbol || "N$";
+    const organisation = await getOrganisation();
     const aLabel = `${fmtDate(aFrom)} – ${fmtDate(aTo)}`;
     const bLabel = `${fmtDate(bFrom)} – ${fmtDate(bTo)}`;
     const t = result.totals;
@@ -135,6 +137,7 @@ export default async function ComparePage({
                     totals={result.totals}
                     petrol={petrolStat}
                     diesel={dieselStat}
+                    organisation={organisation}
                 />
             </PageHeader>
 

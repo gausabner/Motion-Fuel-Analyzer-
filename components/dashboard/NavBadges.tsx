@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
-type Badges = { exceptions: number; registry: number; anchor?: string | null };
+type Badges = { exceptions: number; registry: number; anchor?: string | null; fyStart?: number };
 const Ctx = createContext<{ badges: Badges; refresh: () => void }>({ badges: { exceptions: 0, registry: 0 }, refresh: () => {} });
 
 /** Counts beside menu items. Refreshed after any action that changes them. */

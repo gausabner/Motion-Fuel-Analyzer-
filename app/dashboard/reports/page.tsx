@@ -19,6 +19,7 @@ import {
 } from "@/lib/analytics";
 import { prisma } from "@/lib/prisma";
 import { FuelLogFilters } from "@/components/dashboard/FuelLogFilters";
+import { getOrganisation } from "@/lib/organisation";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { toLocalYmd } from "@/lib/date-format";
 import { getVehicleAttribution } from "@/lib/vehicle-attribution";
@@ -83,6 +84,7 @@ export default async function ReportsPage({
     ]);
 
     const currencySymbol = settings?.currencySymbol || "N$";
+    const organisation = await getOrganisation();
 
     const isPetrol = (t: any) => String(t).toLowerCase().includes('petrol');
     const isDiesel = (t: any) => String(t).toLowerCase().includes('diesel');
@@ -217,7 +219,8 @@ export default async function ReportsPage({
                 scope={`${scopeLabel} · every table exports to CSV, the full report to PDF`}
             >
                 <FullReportPdfButton
-                    title="MOTION FUEL ANALYZER — FUEL REPORT"
+                    title="Fuel report"
+                    organisation={organisation}
                     subtitle={`Reporting period: ${rangeLabel}${activeFilters.length ? ` · ${activeFilters.join(' · ')}` : ''}`}
                     sections={pdfSections}
                 />

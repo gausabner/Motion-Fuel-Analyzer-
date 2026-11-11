@@ -93,6 +93,15 @@ model SystemSettings {
   currencySymbol String   @default("N$")
   petrolPrice    Float    @default(0)
   dieselPrice    Float    @default(0)
+  /// Organisation details, printed on PDF reports.
+  orgName        String?
+  /// PNG or JPEG as a data URL (kept small; validated on save).
+  orgLogo        String?
+  signatoryName  String?
+  signatoryTitle String?
+  reportFooter   String?
+  /// 1 = January. Drives "year to date" and the financial-year presets.
+  financialYearStartMonth Int @default(1)
   updatedAt      DateTime @updatedAt
 }
 

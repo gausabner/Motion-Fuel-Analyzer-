@@ -1,6 +1,8 @@
 import { toLocalYmd } from "@/lib/date-format";
 import { getLatestMonth } from "@/lib/fuel-insights";
 import { rangeLabel } from "@/lib/overview";
+import { getOrganisation } from "@/lib/organisation";
+import { financialYearStart, yearToDateLabel } from "@/lib/financial-year";
 
 const monthLabel = (d: Date) => d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 const iso = (d: Date) => encodeURIComponent(d.toISOString());
@@ -15,13 +17,15 @@ export async function resolvePeriod(path: string, params: { from?: string; to?: 
     const anchor = latest?.from ?? new Date();
     const thisFrom = new Date(anchor.getFullYear(), anchor.getMonth(), 1), thisTo = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
     const lastFrom = new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1), lastTo = new Date(anchor.getFullYear(), anchor.getMonth(), 0);
-    const ytdFrom = new Date(anchor.getFullYear(), 0, 1);
+    // "Year to date" runs from the start of the organisation's financial year, not always 1 January.
+    const { financialYearStartMonth } = await getOrganisation();
+    const ytdFrom = financialYearStart(anchor, financialYearStartMonth);
     const fromDay = params.from ? toLocalYmd(params.from) : toLocalYmd(thisFrom);
     const toDay = params.to ? toLocalYmd(params.to) : toLocalYmd(thisTo);
     const defs = [
         { key: "last", label: monthLabel(lastFrom), f: lastFrom, t: lastTo },
         { key: "this", label: monthLabel(thisFrom), f: thisFrom, t: thisTo },
-        { key: "ytd", label: "Year to date", f: ytdFrom, t: thisTo },
+        { key: "ytd", label: yearToDateLabel(financialYearStartMonth), f: ytdFrom, t: thisTo },
     ];
     return {
         fromDay, toDay,
