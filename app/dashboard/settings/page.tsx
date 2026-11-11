@@ -13,6 +13,7 @@ import { MotionLogo } from "@/components/brand/Logo";
 import { NAV_LAYOUT_COOKIE } from "@/lib/nav";
 import { Row, Section } from "@/components/settings/parts";
 import { OrganisationSection } from "@/components/settings/OrganisationSection";
+import { TanksSection } from "@/components/settings/TanksSection";
 import { RulesSection } from "@/components/settings/RulesSection";
 import { PricesSection } from "@/components/settings/PricesSection";
 
@@ -88,7 +89,7 @@ export default function SettingsPage() {
 
     return (
         <div className="flex max-w-[920px] flex-col gap-3.5">
-            <PageHeader title="Settings" scope={["Organisation, currency, prices and rules apply to everyone", "Appearance applies to this browser"]} />
+            <PageHeader title="Settings" scope={["Organisation, prices, rules and tanks apply to everyone", "Appearance applies to this browser"]} />
 
             <OrganisationSection />
 
@@ -111,6 +112,8 @@ export default function SettingsPage() {
             <PricesSection currencySymbol={saved.currencySymbol} currencyCode={saved.currencyCode} />
 
             <RulesSection />
+
+            <TanksSection />
 
             <Section title="Appearance" sub="Kept in this browser only. Nobody else's view changes.">
                 <Row label="Theme" hint="Follow the device, or hold the interface in light or dark.">

@@ -23,6 +23,25 @@ model User {
 model TankDefinition {
   tankNo   String @id
   fuelType String
+  /// What people call the tank, e.g. "Main depot diesel".
+  name           String?
+  capacityLitres Float?
+  /// Stock at or below this is flagged for reorder.
+  reorderLitres  Float?
+}
+
+/// A physical dip reading: litres in a tank at the end of a day. The level on
+/// any later day is the latest dip plus receipts less issues since.
+model TankDip {
+  id        String   @id @default(cuid())
+  tankNo    String
+  day       String
+  litres    Float
+  createdAt DateTime @default(now())
+  createdBy String?
+
+  @@unique([tankNo, day])
+  @@index([tankNo, day])
 }
 
 model CostCentre {

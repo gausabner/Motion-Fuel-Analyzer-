@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { toLocalYmd } from "@/lib/date-format";
 import { fmtDept, fmtLitres, fmtMoneyCompact } from "@/lib/format";
+import { getTankLevels, type TankLevel } from "@/lib/tanks";
 import { getExceptions, getFleetEfficiency, getUnassigned, summariseExceptions, type FuelException, type ExceptionSummary } from "@/lib/fuel-insights";
 
 /**
@@ -12,7 +13,12 @@ import { getExceptions, getFleetEfficiency, getUnassigned, summariseExceptions, 
 
 export type BriefPart = string | { b: string } | { unit: string };
 
-export type TankBook = { store: string; fuel: string; received: number; issued: number };
+export type TankBook = {
+    store: string; fuel: string; received: number; issued: number;
+    name: string | null;
+    /** The level from a dip reading, when the register can state one; otherwise why it cannot. */
+    level: Pick<TankLevel, "status" | "litres" | "fill" | "daysOfCover" | "belowReorder" | "gapLitres" | "capacityLitres"> & { dipDay: string | null };
+};
 
 export type Overview = {
     range: { fromDay: string; toDay: string; label: string; prevLabel: string };
@@ -134,12 +140,21 @@ export async function getOverview(fromDay: string, toDay: string, currency: stri
     const unassignedLitres = depts.get("__unassigned") ?? 0;
     if (unassignedLitres > 0) departments.push({ label: "Not assigned to a cost centre", litres: unassignedLitres, unassigned: true } as any);
 
+    // Levels are stated as of the last day of the period on screen.
+    const levels = await getTankLevels(toDay);
     const tankFuel = new Map(tankDefs.map(t => [t.tankNo, t.fuelType]));
     const tankMap = new Map<string, TankBook>();
     for (const r of tankRows) {
         const fuel = tankFuel.get(r.store);
         if (!fuel) continue;
-        const t = tankMap.get(r.store) ?? { store: r.store, fuel, received: 0, issued: 0 };
+        const lv = levels.tanks.find(x => x.tankNo === r.store);
+        const t = tankMap.get(r.store) ?? {
+            store: r.store, fuel, received: 0, issued: 0, name: lv?.name ?? null,
+            level: {
+                status: lv?.status ?? "no-capacity", litres: lv?.litres ?? null, fill: lv?.fill ?? null, daysOfCover: lv?.daysOfCover ?? null,
+                belowReorder: lv?.belowReorder ?? false, gapLitres: lv?.gapLitres ?? null, capacityLitres: lv?.capacityLitres ?? null, dipDay: lv?.dip?.day ?? null,
+            },
+        };
         if (r.type === "FRE") t.received += Number(r.litres || 0); else t.issued += Number(r.litres || 0);
         tankMap.set(r.store, t);
     }

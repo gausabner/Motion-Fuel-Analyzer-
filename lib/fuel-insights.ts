@@ -74,6 +74,9 @@ const dayLabel = (ymd: string) => {
 
 let cache: { stamp: string; fills: Fill[]; byUnit: Map<string, Fill[]> } | null = null;
 
+/** Drop the cached fills after a change the row count cannot reveal, such as reclassifying a fuel type. */
+export function invalidateFillCache(): void { cache = null; }
+
 /** All issued fills, oldest first per unit. Cached until the table changes. */
 export async function loadFills(): Promise<{ fills: Fill[]; byUnit: Map<string, Fill[]> }> {
     const meta = (await (prisma as any).$queryRawUnsafe(
