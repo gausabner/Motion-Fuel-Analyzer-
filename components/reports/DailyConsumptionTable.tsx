@@ -13,14 +13,14 @@ import { Badge } from "@/components/ui/badge";
 
 export function DailyConsumptionTable({ data }: { data: any[] }) {
     return (
-        <div className="rounded-sm border border-border bg-white">
+        <div className="bg-card">
             <Table>
-                <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Date</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Fuel Type</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Total Volume</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Total Cost</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Fuel Type</TableHead>
+                        <TableHead className="text-right">Total Volume</TableHead>
+                        <TableHead className="text-right">Total Cost</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -30,7 +30,7 @@ export function DailyConsumptionTable({ data }: { data: any[] }) {
                                 {format(new Date(row.date), 'dd MMM yyyy')}
                             </TableCell>
                             <TableCell>
-                                <Badge variant="outline" className={row.fuelType.includes('Petrol') ? 'border-blue-500 text-blue-700' : 'border-amber-500 text-amber-700'}>
+                                <Badge variant="outline" className={row.fuelType.includes('Petrol') ? 'border-[#60A5FA] text-[#3B82F6]' : 'border-[#1D4ED8] text-[#1D4ED8]'}>
                                     {row.fuelType}
                                 </Badge>
                             </TableCell>

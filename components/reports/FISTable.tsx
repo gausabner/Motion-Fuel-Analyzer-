@@ -12,16 +12,16 @@ import { format } from "date-fns";
 
 export function FISTable({ data }: { data: any[] }) {
     return (
-        <div className="rounded-sm border border-border">
+        <div className="">
             <Table>
-                <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Date</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Vote No</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Vehicle</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Tank</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Volume (L)</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Cost</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Vote No</TableHead>
+                        <TableHead>Vehicle</TableHead>
+                        <TableHead>Tank</TableHead>
+                        <TableHead className="text-right">Volume (L)</TableHead>
+                        <TableHead className="text-right">Cost</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -31,7 +31,7 @@ export function FISTable({ data }: { data: any[] }) {
                                 {format(new Date(tx.transDate), 'dd MMM yyyy')}
                             </TableCell>
                             <TableCell className="text-xs">{tx.transVoteNo || '—'}</TableCell>
-                            <TableCell className="font-bold text-xs">{tx.vehicleId}</TableCell>
+                            <TableCell className="font-semibold text-xs">{tx.vehicleId}</TableCell>
                             <TableCell className="text-xs">{tx.storeNo}</TableCell>
                             <TableCell className="text-xs text-right font-mono">{tx.transQty.toFixed(2)}</TableCell>
                             <TableCell className="text-xs text-right font-mono">{tx.transAmt?.toFixed(2)}</TableCell>

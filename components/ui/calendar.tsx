@@ -26,18 +26,18 @@ function Calendar({
                 nav: "space-x-1 flex items-center",
                 button_previous: cn(
                     buttonVariants({ variant: "ghost" }),
-                    "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-muted transition-all duration-300 absolute left-4 top-4 z-20"
+                    "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-muted [transition:opacity_150ms_ease,background-color_150ms_ease] absolute left-4 top-4 z-20"
                 ),
                 button_next: cn(
                     buttonVariants({ variant: "ghost" }),
-                    "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-muted transition-all duration-300 absolute right-4 top-4 z-20"
+                    "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-muted [transition:opacity_150ms_ease,background-color_150ms_ease] absolute right-4 top-4 z-20"
                 ),
                 month_grid: "w-full border-collapse space-y-1",
                 weekdays: "flex justify-between mb-2",
-                weekday: "text-muted-foreground w-10 font-bold text-[0.7rem] uppercase tracking-tighter text-center",
+                weekday: "text-muted-foreground w-10 font-bold text-xs uppercase tracking-tighter text-center",
                 week: "flex w-full mt-2 lg:gap-1",
                 day: cn(
-                    "h-9 w-9 p-0 font-normal aria-selected:opacity-100 flex items-center justify-center rounded-full text-sm cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1.0)] hover:scale-110 active:scale-95 z-10 relative"
+                    "h-9 w-9 p-0 font-normal aria-selected:opacity-100 flex items-center justify-center rounded-full text-sm cursor-pointer [transition:transform_150ms_var(--ease-out-soft),background-color_150ms_ease,color_150ms_ease] [@media(hover:hover){&:hover}]:scale-110 active:scale-95 motion-reduce:active:scale-100 z-10 relative"
                 ),
                 day_button: "h-full w-full flex items-center justify-center",
                 selected: "bg-accent text-accent-foreground shadow-md scale-105 font-bold z-20",

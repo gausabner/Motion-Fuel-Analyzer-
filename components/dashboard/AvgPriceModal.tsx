@@ -1,5 +1,6 @@
 "use client";
 
+import { Coins } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -18,6 +19,7 @@ import {
     Cell,
 } from "recharts";
 import { format } from "date-fns";
+import { useChartTheme, AXIS, tooltipStyles } from "@/lib/chart-theme";
 
 interface AvgPriceData {
     date: string;
@@ -32,17 +34,20 @@ interface AvgPriceModalProps {
 }
 
 export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgPriceModalProps) {
+    const chart = useChartTheme();
+    const tip = tooltipStyles(chart);
+
 
     // Custom Tooltip
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             return (
-                <div className="bg-popover border border-border p-3 rounded-lg shadow-xl text-xs">
-                    <p className="font-bold text-foreground mb-1">{format(new Date(data.date), "MMM dd, yyyy")}</p>
+                <div className="bg-popover border border-border p-3 rounded-lg text-xs">
+                    <p className="font-semibold text-foreground mb-1">{format(new Date(data.date), "MMM dd, yyyy")}</p>
                     <p className="text-muted-foreground flex items-center justify-between gap-4">
                         <span>Avg Price:</span>
-                        <span className="font-mono text-foreground font-bold">{currencySymbol}{data.value.toFixed(2)} /L</span>
+                        <span className="font-mono text-foreground font-semibold">{currencySymbol}{data.value.toFixed(2)} /L</span>
                     </p>
                 </div>
             );
@@ -57,14 +62,14 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="!w-[70vw] !max-w-[70vw] rounded-3xl p-6 bg-white/95 backdrop-blur-xl border-white/20">
+            <DialogContent className="!w-[70vw] !max-w-[70vw] rounded-card p-4 bg-card/95 border-white/20">
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className={`p-2 rounded-xl bg-black/5`}>
-                            <span className="font-bold text-xl px-1">$</span>
+                        <div className={`p-2 rounded-xl bg-accent`}>
+                            <Coins className="h-5 w-5 text-foreground" />
                         </div>
                         <div>
-                            <DialogTitle className="text-2xl font-bold text-foreground">
+                            <DialogTitle className="text-2xl font-semibold text-foreground">
                                 Daily Price Analysis
                             </DialogTitle>
                             <DialogDescription className="text-muted-foreground">
@@ -76,8 +81,8 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
                     {/* Main Chart Area */}
-                    <div className="col-span-1 lg:col-span-3 h-[200px] w-full border border-zinc-100 rounded-xl p-3 bg-zinc-50/50 flex flex-col">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">
+                    <div className="col-span-1 lg:col-span-3 h-[200px] w-full border border-border rounded-xl p-3 bg-muted/40 flex flex-col">
+                        <h3 className="text-xs font-semibold text-muted-foreground mb-2">
                             Price Scatter Distribution
                         </h3>
                         <div className="flex-1 w-full min-h-0">
@@ -86,7 +91,7 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
                                     <XAxis
                                         dataKey="date"
                                         name="Date"
-                                        tick={{ fontSize: 9, fill: '#71717A' }}
+                                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                                         tickFormatter={(val) => format(new Date(val), "MMM dd")}
                                         axisLine={false}
                                         tickLine={false}
@@ -98,7 +103,7 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
                                         dataKey="value"
                                         name="Price"
                                         unit=""
-                                        tick={{ fontSize: 9, fill: '#71717A' }}
+                                        tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
                                         tickFormatter={(val) => val.toFixed(2)}
                                         axisLine={false}
                                         tickLine={false}
@@ -106,11 +111,11 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
                                         domain={['dataMin - 1', 'dataMax + 1']}
                                     />
                                     <Tooltip
-                                        cursor={{ strokeDasharray: '3 3' }}
+                                        cursor={tip.cursor}
                                         content={<CustomTooltip />}
                                         wrapperStyle={{ outline: 'none' }}
                                     />
-                                    <Scatter name="Daily Price" data={data} fill="#000000">
+                                    <Scatter name="Daily Price" data={data} fill={chart.petrol}>
                                         {data.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
@@ -126,21 +131,21 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
 
                     {/* Stats Side Panel */}
                     <div className="flex flex-col gap-3">
-                        <div className="p-3 rounded-xl border border-zinc-100 bg-white shadow-sm min-w-0">
-                            <p className="text-[9px] font-bold uppercase text-zinc-400 truncate">Highest Recorded</p>
-                            <p className="text-lg font-black text-foreground mt-1 truncate" title={`${currencySymbol}${maxPrice.toFixed(2)}`}>
+                        <div className="p-3 rounded-xl border border-border bg-card min-w-0">
+                            <p className="text-xs font-semibold text-muted-foreground truncate">Highest Recorded</p>
+                            <p className="text-lg font-semibold text-foreground mt-1 truncate" title={`${currencySymbol}${maxPrice.toFixed(2)}`}>
                                 {currencySymbol}{maxPrice.toFixed(2)}
                             </p>
                         </div>
-                        <div className="p-3 rounded-xl border border-zinc-100 bg-white shadow-sm min-w-0">
-                            <p className="text-[9px] font-bold uppercase text-zinc-400 truncate">Lowest Recorded</p>
-                            <p className="text-lg font-black text-foreground mt-1 truncate" title={`${currencySymbol}${minPrice.toFixed(2)}`}>
+                        <div className="p-3 rounded-xl border border-border bg-card min-w-0">
+                            <p className="text-xs font-semibold text-muted-foreground truncate">Lowest Recorded</p>
+                            <p className="text-lg font-semibold text-foreground mt-1 truncate" title={`${currencySymbol}${minPrice.toFixed(2)}`}>
                                 {currencySymbol}{minPrice.toFixed(2)}
                             </p>
                         </div>
-                        <div className="p-3 rounded-xl border border-zinc-100 bg-white shadow-sm min-w-0">
-                            <p className="text-[9px] font-bold uppercase text-zinc-400 truncate">Period Average</p>
-                            <p className="text-lg font-black text-foreground mt-1 truncate" title={`${currencySymbol}${avgTotal.toFixed(2)}`}>
+                        <div className="p-3 rounded-xl border border-border bg-card min-w-0">
+                            <p className="text-xs font-semibold text-muted-foreground truncate">Period Average</p>
+                            <p className="text-lg font-semibold text-foreground mt-1 truncate" title={`${currencySymbol}${avgTotal.toFixed(2)}`}>
                                 {currencySymbol}{avgTotal.toFixed(2)}
                             </p>
                         </div>
