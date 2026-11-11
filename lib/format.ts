@@ -84,3 +84,19 @@ export function fmtCount(value: number | null | undefined): string {
     if (value === null || value === undefined || !Number.isFinite(value)) return "—";
     return Math.round(value).toLocaleString();
 }
+
+/**
+ * A department name as people say it. The source data shouts
+ * ("DEPARTMENT OF INFRASTRUCTURE WATER & TECHNICAL SERVICES"); the prefix is
+ * the same on every row, so it is dropped and the rest set in title case.
+ */
+export function fmtDept(name: string | null | undefined): string {
+    if (!name) return "No cost centre";
+    const small = new Set(["and", "of", "the", "for", "&"]);
+    return name
+        .replace(/^\s*department\s+of\s+/i, "")
+        .toLowerCase()
+        .split(/\s+/)
+        .map((w, i) => (i > 0 && small.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+        .join(" ");
+}

@@ -1,61 +1,78 @@
 @import "tailwindcss";
 
+/*
+ * Motion Fuel Analyzer — design tokens, v3.1 redesign.
+ *
+ * The palette is the Municipal Blue brand spent differently: about 80%
+ * surfaces, 15% pale data, 5% ink and blue. Ink is the emphasis colour
+ * (menu, primary button, the one selected mark in a chart); blue is for
+ * links, focus, diesel and liquid; sky is petrol; slate is receipts.
+ * Red, amber and green appear only as status.
+ */
 @theme {
-  --font-sans: var(--font-outfit);
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Brand and data roles */
+  --color-ink: var(--ink);
+  --color-brand: var(--brand);
+  --color-sky: var(--sky);
+  --color-slate-brand: var(--slate);
+  --color-faint: var(--faint);
+  --color-surface-2: var(--surface-2);
+  --color-grid: var(--grid);
+  --color-bar: var(--bar);
+  --color-chip: var(--chip);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-crit: var(--crit);
+  --color-crit-soft: var(--crit-soft);
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-card: 22px;
+  --radius-tile: 18px;
 
-  /* Custom Legacy Vars Mapping */
-  --color-brand-primary: var(--primary);
+  /* Legacy names still referenced by a few pages */
+  --color-brand-primary: var(--brand);
   --color-brand-light: var(--accent);
   --color-brand-dark: var(--foreground);
 
-  /* Motion. Three curves cover the app: things arriving or leaving, things
-     moving on screen, and colour. Nothing uses ease-in — it withholds movement
-     in exactly the frames the eye is fixed on, which reads as lag. */
-  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Motion: one curve for arrivals, one spring for things that slide under
+     the finger. Nothing uses ease-in. */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
   --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
 
-  /* Chart series, by entity and never by rank, so a filter that drops a series
-     cannot repaint the survivors. Dark is a selected set of steps for the dark
-     surface, not the same hex dimmed. */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-grid: var(--chart-grid);
   --color-chart-axis: var(--chart-axis);
 
-  /* App shell (sidebar) */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted: var(--sidebar-muted);
@@ -63,223 +80,411 @@
   --color-sidebar-border: var(--sidebar-border);
 }
 
-/*
-  The default theme is built with HSL values to easily adjust opacity if needed, 
-  but here we use hex/color literals for the "Monumental" lookup.
-*/
 :root {
-  /* "Municipal Blue" Light — see UI_Redesign_Plan.pdf §03 */
-  --background: #F8FAFC;
-  /* Slate 50 page canvas — cards float on it in white */
+  --ink: #0B1324;
+  --brand: #1D4ED8;
+  --sky: #60A5FA;
+  --slate: #64748B;
+
+  --background: #EEF2F8;
+  --wash-a: #D6E4FB;
+  --wash-b: #F7F9FC;
   --foreground: #0F172A;
-  /* Ink */
 
   --card: #FFFFFF;
   --card-foreground: #0F172A;
-
   --popover: #FFFFFF;
   --popover-foreground: #0F172A;
+  --surface-2: #F4F7FB;
 
-  --primary: #2563EB;
-  /* Action Blue — the only saturated colour in the UI */
+  /* Emphasis is ink, not blue: the primary button and the selected mark. */
+  --primary: #0B1324;
   --primary-foreground: #FFFFFF;
 
-  --secondary: #F1F5F9;
+  --secondary: #F4F7FB;
   --secondary-foreground: #0F172A;
+  --muted: #F4F7FB;
+  --muted-foreground: #5B6B82;
+  --faint: #94A3B8;
 
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-
-  --accent: #DBEAFE;
-  /* Blue tint — selected/active surfaces */
+  --accent: #E3ECFD;
   --accent-foreground: #1D4ED8;
 
-  --destructive: #DC2626;
+  --destructive: #B91C1C;
   --destructive-foreground: #FFFFFF;
 
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #2563EB;
+  --border: #E2E8F1;
+  --input: #D6DEEA;
+  --ring: #1D4ED8;
+  --grid: #EBEFF5;
+  --bar: #D5E0F1;
+  --chip: #FFFFFF;
 
-  --radius: 0.75rem;
+  --ok: #15803D;
+  --ok-soft: #E3F4E8;
+  --warn: #B45309;
+  --warn-soft: #FCF0DC;
+  --crit: #B91C1C;
+  --crit-soft: #FBE4E4;
 
-  /* Charts — Petrol, Diesel, Received. Two hues rather than two steps of one,
-     because these are different fuels, not more and less of one thing. */
-  --chart-1: #2A78D6;
-  --chart-2: #EB6834;
-  --chart-3: #1BAF7A;
-  --chart-grid: #E2E8F0;
-  --chart-axis: #64748B;
+  --radius: 0.875rem;
+  --overlay-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.45);
+
+  /* Charts: colour means fuel type or status, nothing else. */
+  --chart-1: #60A5FA;   /* petrol — sky */
+  --chart-2: #1D4ED8;   /* diesel — municipal blue */
+  --chart-3: #64748B;   /* receipts — slate */
+  --chart-grid: #EBEFF5;
+  --chart-axis: #5B6B82;
   --chart-cursor: #94A3B8;
   --chart-surface: #FFFFFF;
 
-  /* App shell — ink sidebar in both modes */
-  --sidebar: #0F172A;
-  --sidebar-foreground: #E2E8F0;
-  --sidebar-muted: #94A3B8;
-  --sidebar-hover: #1E293B;
-  --sidebar-border: #1E293B;
+  --sidebar: #0B1324;
+  --sidebar-foreground: #C9D4E5;
+  --sidebar-muted: #6F82A0;
+  --sidebar-hover: rgb(255 255 255 / 0.07);
+  --sidebar-border: rgb(255 255 255 / 0.08);
 }
 
 .dark {
-  /* "Municipal Blue" Dark — ink-based, not gray-based */
-  --background: #0B1220;
-  --foreground: #F8FAFC;
+  color-scheme: dark;
+  --ink: #060A14;
+  --brand: #3B82F6;
+  --sky: #93C5FD;
+  --slate: #94A3B8;
 
-  --card: #111C33;
-  --card-foreground: #F8FAFC;
+  --background: #090E18;
+  --wash-a: #11224A;
+  --wash-b: #0B111D;
+  --foreground: #E6ECF5;
 
-  --popover: #0F172A;
-  --popover-foreground: #F8FAFC;
+  --card: #111827;
+  --card-foreground: #E6ECF5;
+  --popover: #111827;
+  --popover-foreground: #E6ECF5;
+  --surface-2: #0E1522;
 
-  --primary: #2563EB;
-  /* Same action blue in both modes */
-  --primary-foreground: #FFFFFF;
+  --primary: #E6ECF5;
+  --primary-foreground: #0B1324;
 
-  --secondary: #1E293B;
-  --secondary-foreground: #F8FAFC;
+  --secondary: #0E1522;
+  --secondary-foreground: #E6ECF5;
+  --muted: #0E1522;
+  --muted-foreground: #9AAAC0;
+  --faint: #64748B;
 
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
-
-  --accent: #172554;
-  /* Deep blue tint for selected/active surfaces */
+  --accent: #14254A;
   --accent-foreground: #93C5FD;
 
-  --destructive: #DC2626;
-  --destructive-foreground: #FFFFFF;
+  --destructive: #F87171;
+  --destructive-foreground: #0B1324;
 
-  --border: #1E293B;
-  --input: #1E293B;
+  --border: #1F2A3C;
+  --input: #2A3750;
   --ring: #3B82F6;
+  --grid: #1A2434;
+  --bar: #22304A;
+  --chip: #1A2434;
 
-  /* Stepped for the dark surface and validated against it; all three clear 3:1. */
-  --chart-1: #3987E5;
-  --chart-2: #D95926;
-  --chart-3: #199E70;
-  --chart-grid: #1E293B;
-  --chart-axis: #94A3B8;
-  --chart-cursor: #475569;
-  --chart-surface: #111C33;
+  --ok: #4ADE80;
+  --ok-soft: #10301C;
+  --warn: #FBBF24;
+  --warn-soft: #33260C;
+  --crit: #F87171;
+  --crit-soft: #3A1416;
 
-  --sidebar: #0F172A;
-  --sidebar-foreground: #E2E8F0;
-  --sidebar-muted: #94A3B8;
-  --sidebar-hover: #1E293B;
-  --sidebar-border: #1E293B;
+  --overlay-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.7);
+
+  --chart-1: #93C5FD;
+  --chart-2: #3B82F6;
+  --chart-3: #94A3B8;
+  --chart-grid: #1A2434;
+  --chart-axis: #9AAAC0;
+  --chart-cursor: #64748B;
+  --chart-surface: #111827;
+
+  --sidebar: #060A14;
+  --sidebar-foreground: #C9D4E5;
+  --sidebar-muted: #6F82A0;
 }
 
 @layer base {
+  /* The root stays at the browser default so the reader's own font-size
+     preference is honoured. Density comes from spacing, never the root em. */
+  html { font-size: 100%; }
 
-  /*
-   * The root stays at the browser default. It was pinned to 68%, which bought
-   * density by shrinking the root em — and the root em is also the unit the
-   * user's own font-size preference arrives in, so scaling it down overrode
-   * that preference for everyone, including the people who had raised it.
-   *
-   * The cost was measured, not theoretical: body text landed at 10.88px, 160
-   * elements on the Fleet page rendered at 9.52px or below, and the largest
-   * heading on the page reached only 20.4px. It also inverted the type scale,
-   * because the px-pinned labels scattered through the components did not
-   * shrink with it: text-xs resolved to 8.16px while text-[10px] stayed at
-   * 10px, so the class named "extra small" rendered larger than the one
-   * written as a hard minimum.
-   *
-   * Density now comes from spacing — padding, gaps and the sidebar width —
-   * which is where density belongs, because tightening those does not touch
-   * what the reader can actually resolve.
-   */
-  html {
-    font-size: 100%;
-  }
-
-  * {
-    @apply border-border outline-ring/50;
-  }
+  * { @apply border-border outline-ring/50; }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    @apply text-foreground antialiased;
+    font-family: var(--font-sans);
+    /* The wash belongs to the canvas only: two soft blooms of the brand blue
+       over a near-white ground. Cards and data stay flat on top of it. */
+    background:
+      radial-gradient(900px 440px at 88% -12%, var(--wash-a), transparent 62%),
+      radial-gradient(720px 520px at -4% 112%, var(--wash-a), transparent 56%),
+      var(--wash-b);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 
-  /*
-   * Browser surfaces. Selection, the caret, scrollbars and the focus ring ship
-   * with defaults that belong to no design system, and they are visible on
-   * every screen of the app. Theming them is the cheapest signal that this was
-   * built rather than assembled.
-   */
+  h1, h2, h3, h4 { text-wrap: balance; letter-spacing: -0.015em; }
+
   ::selection {
-    background: color-mix(in srgb, var(--primary) 22%, transparent);
+    background: color-mix(in srgb, var(--brand) 22%, transparent);
     color: var(--foreground);
   }
 
   :root {
-    caret-color: var(--primary);
-    scrollbar-color: var(--border) transparent;
+    caret-color: var(--brand);
+    scrollbar-color: var(--bar) transparent;
     scrollbar-width: thin;
   }
-
   ::-webkit-scrollbar { width: 11px; height: 11px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 99px;
-    border: 3px solid var(--background);
-  }
-  ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+  ::-webkit-scrollbar-thumb { background: var(--bar); border-radius: 99px; border: 3px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--faint); background-clip: content-box; }
   ::-webkit-scrollbar-corner { background: transparent; }
 
-  /* One focus ring for the whole app, drawn outside the element so it never
-     shifts layout. */
   :where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-    border-radius: var(--radius-sm);
   }
 
-  /* Figures are read down a column, so the digits have to share a width. */
   table, .tabular, [data-slot="table"] { font-variant-numeric: tabular-nums; }
 }
 
-/*
- * Route entrance and the one staggered group on the page.
- *
- * Both are CSS so they run on the compositor rather than through a
- * requestAnimationFrame loop that competes with data fetching — which is
- * precisely when these play.
- */
-@keyframes route-enter {
-  from { opacity: 0; transform: translate3d(0, 6px, 0); }
-  to   { opacity: 1; transform: none; }
+/* ------------------------------------------------------------------ */
+/* Components                                                          */
+/* ------------------------------------------------------------------ */
+@layer components {
+  /* The one card. Flat: a hairline on the washed canvas, no shadow. */
+  .monumental-card, .glass-panel {
+    @apply bg-card text-card-foreground border border-border;
+    border-radius: var(--radius-card);
+    padding: 18px;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .industrial-grid { @apply grid gap-3 sm:grid-cols-2 xl:grid-cols-4; }
+
+  /* Anything read off a pump slip: plates, vote codes, timestamps, figures in tables. */
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* Plate chip — a unit number that looks like something bolted to a vehicle. */
+  .plate {
+    @apply inline-block whitespace-nowrap border border-border bg-card text-foreground;
+    font: 500 12px var(--font-mono);
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+    transition: border-color 150ms ease, transform 150ms var(--ease-spring);
+  }
+  button.plate, a.plate { cursor: pointer; }
+  button.plate:active, a.plate:active { transform: scale(0.96); }
+  @media (hover: hover) { button.plate:hover, a.plate:hover { border-color: var(--brand); } }
+
+  /* Severity — shape plus colour, so it survives colour-blindness and a mono
+     printout: diamonds for problems, dots for routine. */
+  .sev {
+    @apply inline-flex items-center whitespace-nowrap font-medium;
+    gap: 6px; font-size: 12px; padding: 3px 9px 3px 7px; border-radius: 999px;
+  }
+  .sev::before { content: ""; width: 7px; height: 7px; transform: rotate(45deg); background: currentColor; border-radius: 1px; flex: none; }
+  .sev.hi { background: var(--crit-soft); color: var(--crit); }
+  .sev.md { background: var(--warn-soft); color: var(--warn); }
+  .sev.lo { background: var(--surface-2); color: var(--muted-foreground); border: 1px solid var(--border); }
+  .sev.ok { background: var(--ok-soft); color: var(--ok); }
+  .sev.lo::before, .sev.ok::before { border-radius: 50%; transform: none; width: 6px; height: 6px; }
+
+  /* Delta pill — every number says whether its change is good or bad. */
+  .delta { font: 500 11.5px var(--font-mono); padding: 2px 7px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+  .delta.bad { background: var(--crit-soft); color: var(--crit); }
+  .delta.good { background: var(--ok-soft); color: var(--ok); }
+  .delta.warn { background: var(--warn-soft); color: var(--warn); }
+  .delta.flat { background: var(--surface-2); color: var(--muted-foreground); border: 1px solid var(--border); }
+
+  /* Sliding segmented control. The indicator is positioned by Seg.tsx. */
+  .seg {
+    position: relative; display: inline-flex; padding: 4px; border-radius: 999px;
+    background: var(--ink); gap: 2px; max-width: 100%; overflow-x: auto; scrollbar-width: none;
+  }
+  .seg::-webkit-scrollbar { display: none; }
+  .seg > button, .seg > a {
+    position: relative; z-index: 1; border: 0; background: none; color: #B8C4D8;
+    font-weight: 500; font-size: 13px; padding: 9px 16px; border-radius: 999px; cursor: pointer;
+    transition: color 200ms ease, transform 150ms var(--ease-spring); white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 7px; text-decoration: none;
+  }
+  .seg > button:active, .seg > a:active { transform: scale(0.96); }
+  .seg > button svg, .seg > a svg { width: 14px; height: 14px; }
+  .seg > [aria-pressed="true"], .seg > [aria-current="page"] { color: #0B1324; }
+  .seg > .ind {
+    position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; border-radius: 999px; background: #fff;
+    transition: transform 320ms var(--ease-spring), width 320ms var(--ease-spring);
+  }
+  .seg > .ind[data-ready="false"] { transition: none; }
+  .seg.light { background: var(--surface-2); border: 1px solid var(--border); padding: 3px; }
+  .seg.light > .ind { top: 3px; bottom: 3px; background: var(--card); box-shadow: 0 1px 2px rgb(15 23 42 / 0.14); }
+  .seg.light > button, .seg.light > a { color: var(--muted-foreground); padding: 5px 11px; font-size: 12px; }
+  .seg.light > [aria-pressed="true"], .seg.light > [aria-current="page"] { color: var(--foreground); }
+
+  /* Pill tab — sub-navigation and filters. */
+  .tab {
+    @apply inline-flex items-center whitespace-nowrap border border-border bg-card text-foreground;
+    font-weight: 500; font-size: 13px; padding: 8px 15px; border-radius: 999px; cursor: pointer; gap: 7px;
+    transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, transform 150ms var(--ease-spring);
+    text-decoration: none;
+  }
+  .tab:active { transform: scale(0.97); }
+  .tab[aria-pressed="true"], .tab[aria-current="page"], .tab[data-state="active"] {
+    background: var(--primary); color: var(--primary-foreground); border-color: var(--primary);
+  }
+  @media (hover: hover) { .tab:not([aria-pressed="true"]):not([aria-current="page"]):not([data-state="active"]):hover { background: var(--surface-2); } }
+  .tab .ct { font-family: var(--font-mono); font-size: 11px; opacity: 0.7; }
+  .nav-badge { font: 11px var(--font-mono); background: var(--crit-soft); color: var(--crit); border-radius: 999px; padding: 0 7px; }
+
+  /* Round icon button and the ink icon disc on KPI tiles. */
+  .ibtn {
+    @apply grid place-items-center border border-border bg-card text-foreground;
+    width: 36px; height: 36px; border-radius: 50%; cursor: pointer; flex: none;
+    transition: transform 150ms var(--ease-spring), background-color 150ms ease;
+  }
+  .ibtn:active { transform: scale(0.94); }
+  @media (hover: hover) { .ibtn:hover { background: var(--surface-2); } }
+  .ibtn svg { width: 16px; height: 16px; }
+  .disc { width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: var(--primary-foreground); display: grid; place-items: center; flex: none; }
+  .disc svg { width: 14px; height: 14px; }
+  .disc.soft { background: var(--accent); color: var(--brand); }
+
+  /* KPI tile */
+  .kpi {
+    @apply bg-card border border-border flex flex-col text-left;
+    border-radius: var(--radius-tile); padding: 15px 16px 12px; gap: 6px; min-width: 0; container-type: inline-size;
+  }
+  button.kpi { cursor: pointer; transition: border-color 180ms ease, transform 160ms var(--ease-out-soft); }
+  button.kpi:active { transform: scale(0.985); }
+  @media (hover: hover) { button.kpi:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--border)); } }
+  .kpi-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted-foreground); font-weight: 500; }
+  .kpi-v { font-size: 24px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.1; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+  @container (min-width: 230px) { .kpi-v { font-size: 28px; } }
+  .kpi-v small { font-size: 13px; font-weight: 500; color: var(--muted-foreground); letter-spacing: 0; }
+  .kpi-f { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+  .ctx { font-size: 11.5px; color: var(--muted-foreground); }
+  .splitbar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; margin-top: 6px; }
+  .splitbar i { display: block; height: 100%; }
+
+  /* Card header row and legend */
+  .card-h { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; }
+  .card-h h2, .card-h h3, .card-h h4 { font-size: 16px; font-weight: 600; }
+  .card-h .r { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  .sub { font-size: 12px; color: var(--muted-foreground); }
+  .legend { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted-foreground); }
+  .legend > span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+  .sw.dash { width: 16px; height: 0; border-top: 2px dashed var(--slate); border-radius: 0; }
+  .sw.dia { background: var(--crit); transform: rotate(45deg); width: 8px; height: 8px; border-radius: 1px; }
+
+  /* The sentence that opens a page: words before charts. */
+  .bigline { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; max-width: 60ch; }
+  .bigline small { font-size: 13.5px; font-weight: 400; color: var(--muted-foreground); letter-spacing: 0; display: block; margin-top: 6px; line-height: 1.5; }
+  .lnk { color: var(--brand); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--sky); cursor: pointer; }
+
+  .meter { height: 12px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
+  /* The fill is full-width and slid into place, so a change animates on the compositor instead of re-laying-out the row. */
+  .meter i { display: block; width: 100%; height: 100%; background: var(--brand); border-radius: 999px; transform: translateX(calc(var(--p, 0%) - 100%)); transition: transform 700ms var(--ease-out-soft); }
+
+  /* SVG chart parts */
+  /* Axis labels are text, so they take the muted ink (4.9:1 on the card), not the decorative faint grey (2.6:1). */
+  .ax { fill: var(--muted-foreground); font-size: 11px; }
+  .ax-m { fill: var(--muted-foreground); font-size: 11px; font-family: var(--font-mono); }
+  .ax-f { fill: var(--foreground); font-size: 12px; }
+  .gridl { stroke: var(--grid); stroke-width: 1; }
+  .bar-rest { fill: var(--bar); }
+  .bar-hot { fill: var(--primary); }
+  .chip-bg { fill: var(--chip); stroke: var(--border); }
+  .chip-t { fill: var(--foreground); font-size: 11px; font-weight: 600; font-family: var(--font-mono); }
+  .chip-bg.hot { fill: var(--primary); stroke: var(--primary); }
+  .chip-t.hot { fill: var(--primary-foreground); }
+  .budget { stroke: var(--slate); stroke-width: 1.5; stroke-dasharray: 4 4; }
+  .bar-g { cursor: pointer; outline: none; }
+  .bar-g .b { transform-box: fill-box; transform-origin: 50% 100%; transition: fill 150ms ease; }
+  .bar-g .b.dn { transform-origin: 50% 0; }
+  @media (hover: hover) { .bar-g:hover .b.bar-rest { fill: var(--sky); } }
+  .bar-g:focus-visible .b.bar-rest { fill: var(--sky); }
+  .bar-g:focus-visible .b { stroke: var(--brand); stroke-width: 2; }
+  .grow .b { animation: grow 700ms var(--ease-spring) both; }
+  .grow .fu { animation: fadeup 500ms var(--ease-out-soft) both; }
+  .hb { transform-box: fill-box; transform-origin: 0 50%; animation: growx 700ms var(--ease-out-soft) both; }
+
+  .chart-tip {
+    position: absolute; pointer-events: none; background: var(--ink); color: #fff; border-radius: 12px;
+    padding: 9px 11px; font-size: 12px; line-height: 1.4; box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.4);
+    opacity: 0; transform: translateY(4px); transition: opacity 150ms ease, transform 150ms var(--ease-out-soft);
+    z-index: 5; min-width: 156px;
+  }
+  .chart-tip.on { opacity: 1; transform: none; }
+  .chart-tip b { display: block; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .chart-tip .k { color: #9FB0C9; }
+
+  /* Liquid — the one ambient motion in the app, because the product is fuel. */
+  .tk { width: 88px; height: 110px; flex: none; }
+  .wv { animation: wave 3.4s linear infinite; }
+  .wv.w2 { animation-duration: 5.6s; animation-direction: reverse; }
+  .lvl { transition: transform 900ms var(--ease-out-soft); }
+  .rise { animation: rise 1200ms var(--ease-out-soft) both; }
+
+  /* Skeleton in the chart's own shape. */
+  .skel { display: flex; align-items: flex-end; gap: 10px; height: 120px; padding: 0 6px; }
+  .skel i { flex: 1; border-radius: 999px 999px 6px 6px; background: linear-gradient(90deg, var(--bar) 25%, var(--surface-2) 50%, var(--bar) 75%); background-size: 200% 100%; animation: shim 1.4s linear infinite; }
+  .skel-line { border-radius: 8px; background: linear-gradient(90deg, var(--bar) 25%, var(--surface-2) 50%, var(--bar) 75%); background-size: 200% 100%; animation: shim 1.4s linear infinite; }
+
+  /* Drawer: the vehicle panel. Slower in than out. */
+  .scrim { position: fixed; inset: 0; background: rgb(6 10 20 / 0.42); opacity: 0; pointer-events: none; transition: opacity 220ms ease; z-index: 60; }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 10px; right: 10px; bottom: 10px; width: min(430px, calc(100% - 20px));
+    background: var(--card); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--overlay-shadow);
+    z-index: 61; transform: translateX(calc(100% + 24px)); transition: transform 260ms var(--ease-out-soft), visibility 0s 260ms;
+    display: flex; flex-direction: column; overflow: hidden; visibility: hidden;
+  }
+  .drawer.on { transform: none; visibility: visible; transition: transform 340ms var(--ease-spring), visibility 0s; }
+  .dr-sec { display: flex; flex-direction: column; gap: 8px; }
+  .dr-sec h3 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted-foreground); }
+  .cmp { position: relative; height: 14px; border-radius: 999px; background: var(--surface-2); margin: 18px 0 4px; }
+  .cmp i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--brand); transition: width 600ms var(--ease-out-soft); }
+  .cmp i.over { background: var(--crit); }
+  .cmp u { position: absolute; top: -5px; bottom: -5px; width: 3px; border-radius: 2px; background: var(--primary); text-decoration: none; }
+  .cmp u::after { content: attr(data-l); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font: 11px var(--font-mono); color: var(--muted-foreground); white-space: nowrap; padding-bottom: 2px; }
+  .fill-row { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 10px; align-items: start; font-size: 13px; padding-bottom: 12px; position: relative; }
+  .fill-row::before { content: ""; position: absolute; left: 6px; top: 14px; bottom: 0; width: 2px; background: var(--grid); }
+  .fill-row:last-child::before { display: none; }
+  .fill-row .pt { width: 10px; height: 10px; border-radius: 50%; background: var(--bar); margin: 5px 2px 0; }
+  .fill-row.flag .pt { background: var(--crit); border-radius: 1px; transform: rotate(45deg); }
 }
 
-.route-enter {
-  animation: route-enter 180ms var(--ease-out-soft) both;
-}
+@keyframes grow { from { transform: scaleY(0.02); } to { transform: scaleY(1); } }
+@keyframes growx { from { transform: scaleX(0.02); } to { transform: scaleX(1); } }
+@keyframes fadeup { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes wave { to { transform: translateX(60px); } }
+@keyframes rise { from { transform: translateY(46px); } to { transform: none; } }
+@keyframes shim { to { background-position: -200% 0; } }
 
-/*
- * The KPI row is the only thing in the app that animates as a group, because
- * it is the only thing that IS a group: one row of figures that the reader
- * takes in together. 50ms apart, capped at four, so the last tile is on screen
- * within 330ms of the first.
- */
-@keyframes tile-rise {
-  from { opacity: 0; transform: translate3d(0, 8px, 0); }
-  to   { opacity: 1; transform: none; }
-}
+/* Route entrance: CSS, so it runs on the compositor while the next page's
+   data is still loading. Starts visible enough to read if a frame is dropped. */
+@keyframes route-enter { from { opacity: 0.4; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: none; } }
+.route-enter { animation: route-enter 320ms var(--ease-out-soft) both; }
 
-.stagger-tiles > * {
-  animation: tile-rise 260ms var(--ease-out-soft) both;
-}
-.stagger-tiles > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-tiles > *:nth-child(2) { animation-delay: 50ms; }
-.stagger-tiles > *:nth-child(3) { animation-delay: 100ms; }
-.stagger-tiles > *:nth-child(n+4) { animation-delay: 150ms; }
+/* The KPI row is the only staggered group: one row of figures read together. */
+@keyframes tile-rise { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: none; } }
+.stagger-tiles > * { animation: tile-rise 260ms var(--ease-out-soft) both; }
+.stagger-tiles > *:nth-child(2) { animation-delay: 35ms; }
+.stagger-tiles > *:nth-child(3) { animation-delay: 70ms; }
+.stagger-tiles > *:nth-child(n+4) { animation-delay: 105ms; }
 
-/*
- * Reduced motion: fewer and gentler, not none. Movement goes; opacity and
- * colour stay, because those are what confirm an action happened.
- */
+/* Reduced motion: movement goes; opacity and colour stay. Liquid stops. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -287,49 +492,12 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  /* Entrances resolve immediately rather than being removed, so the page is
-     never left mid-animation at opacity 0. */
-  .route-enter, .stagger-tiles > * {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
+  .route-enter, .stagger-tiles > *, .rise, .grow .b, .grow .fu, .hb {
+    animation: none !important; opacity: 1 !important; transform: none !important;
   }
-
-  /* Keep the two that carry meaning rather than motion. */
-  :where(button, [role="button"], a, [data-slot="card"]) {
+  .wv { animation: none !important; }
+  :where(button, [role="button"], a) {
     transition-property: background-color, border-color, color, opacity !important;
     transition-duration: 120ms !important;
-  }
-}
-
-/* Brand motion: the arrow mark drifts up-right, echoing the logo */
-@keyframes logo-drift {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.85;
-  }
-  50% {
-    transform: translate(5px, -5px) scale(1.04);
-    opacity: 1;
-  }
-}
-
-@layer utilities {
-  .animate-logo-drift {
-    animation: logo-drift 1.4s ease-in-out infinite;
-  }
-
-  /* The app's one card. Padding and gutter match the 16px step the rest of
-     the layout uses — density lives here, not in the root font size. */
-  .monumental-card {
-    @apply bg-card text-card-foreground shadow-none rounded-lg p-4 border border-border;
-  }
-
-  .glass-panel {
-    @apply bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-xl;
-  }
-
-  .industrial-grid {
-    @apply grid gap-4 md:grid-cols-2 lg:grid-cols-4;
   }
 }

@@ -10,6 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Truck, TrendingUp, AlertTriangle } from "lucide-react";
+import { IndustrialKPI } from "@/components/dashboard/IndustrialKPI";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { getFleetPerformance, isUnattributedUnit, unitLabel } from "@/lib/analytics";
 import { TablePagination } from "@/components/dashboard/TablePagination";
@@ -19,6 +20,10 @@ import { TableCsvButton } from "@/components/reports/ReportExports";
 import { getVehicleAttribution } from "@/lib/vehicle-attribution";
 import { UnitAttributionCard } from "@/components/dashboard/UnitAttributionCard";
 import { getSessionUser, isAdmin } from "@/lib/auth";
+import { getFleetEfficiency } from "@/lib/fuel-insights";
+import { FleetEfficiency } from "@/components/fuel/FleetEfficiency";
+import { Plate } from "@/components/fuel/VehiclePanel";
+import { toLocalYmd } from "@/lib/date-format";
 
 
 export const dynamic = 'force-dynamic';
@@ -170,6 +175,13 @@ export default async function FleetPage({
     const dailyData = await getFleetChartData(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to);
     const topVotesForChart = await getDepartmentStats(params.vehicleId, params.fuelType, params.department, params.division, params.from, params.to);
 
+    // Efficiency follows the date range only; the other filters narrow it to the units still in the table.
+    const eff = await getFleetEfficiency(params.from ? toLocalYmd(params.from) : undefined, params.to ? toLocalYmd(params.to) : undefined);
+    const inView = new Set(fleet.map(f => f.id));
+    const effUnits = eff.units.filter(u => inView.has(u.unit));
+    const effByUnit = new Map(effUnits.map(u => [u.unit, u]));
+    const maxRatio = 3;
+
     const totalFuel = fleet.reduce((sum, v) => sum + v.petrolVolume + v.dieselVolume, 0);
     const avgFill = fleet.length > 0 ? totalFuel / fleet.length : 0;
 
@@ -237,10 +249,10 @@ export default async function FleetPage({
     });
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Fleet"
-                scope="Unit-by-unit fuel efficiency and consumption analysis · FIS transactions only"
+                scope={[`${fleet.length.toLocaleString("en-GB")} units`, fmtLitres(totalFuel), "Fuel issues only"]}
             >
                 <TableCsvButton filename="fleet_performance.csv" serverUrl={fleetExportUrl} />
             </PageHeader>
@@ -254,72 +266,46 @@ export default async function FleetPage({
             />
 
             {/* KPI Cards */}
-            <div className="grid gap-4 md:grid-cols-3 stagger-tiles">
-                <Card className="monumental-card">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Active Units</CardTitle>
-                        <Truck className="h-4 w-4 text-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{fleet.length} Units</div>
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Tracking individual performance</p>
-                    </CardContent>
-                </Card>
+            <div className="grid gap-3.5 md:grid-cols-3 stagger-tiles">
+                <IndustrialKPI label="Units fuelled" icon={Truck} value={`${fleet.length} units`} subValue="With at least one issue in this selection" />
 
-                <Card className="monumental-card border-l-4 border-l-yellow-400">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Top Consumption</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{highConsumer}</div>
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Highest fuel usage unit</p>
-                    </CardContent>
-                </Card>
+                <IndustrialKPI label="Heaviest user" icon={AlertTriangle} value={highConsumer} subValue="Most litres in this selection" />
 
-                <Card className="monumental-card">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Avg. Unit Burn</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{fmtLitres(avgFill)}</div>
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Average per vehicle this period</p>
-                    </CardContent>
-                </Card>
+                <IndustrialKPI label="Average per unit" icon={TrendingUp} value={fmtLitres(avgFill)} subValue="Litres issued divided by units fuelled" />
             </div>
 
-            {/* Charts Section */}
-            <section className="bg-card/30 backdrop-blur-sm rounded-3xl p-1 border border-white/20 shadow-sm">
-                <DashboardCharts
+            <FleetEfficiency units={effUnits} medians={eff.medians} />
+
+            <DashboardCharts
                     dailyData={dailyData}
                     topFleet={topFleetForChart}
                     topVotes={topVotesForChart}
                     currencySymbol={cur}
                 />
-            </section>
 
             <Card className="monumental-card bg-card p-0 overflow-hidden">
                 <CardHeader className="p-4 border-b border-border">
-                    <CardTitle className="text-lg font-extrabold uppercase tracking-tight">Fleet Performance Table</CardTitle>
+                    <CardTitle className="text-base font-semibold">Every unit</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-black hover:bg-black">
-                                    <TableHead className="font-bold text-white uppercase tracking-wider text-xs h-12 rounded-none">Vehicle ID</TableHead>
-                                    <TableHead className="font-bold text-white uppercase tracking-wider text-xs h-12">Petrol (L)</TableHead>
-                                    <TableHead className="font-bold text-white uppercase tracking-wider text-xs h-12">Diesel (L)</TableHead>
-                                    <TableHead className="font-bold text-white uppercase tracking-wider text-xs h-12 text-right">Total Cost</TableHead>
-                                    <TableHead className="font-semibold text-white uppercase tracking-wider text-xs h-12 text-center">Fills</TableHead>
-                                    <TableHead className="font-semibold text-white uppercase tracking-wider text-xs h-12 text-center">Status</TableHead>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead>Vehicle</TableHead>
+                                    <TableHead >Petrol (L)</TableHead>
+                                    <TableHead >Diesel (L)</TableHead>
+                                    <TableHead className="text-right">Total Cost</TableHead>
+                                    <TableHead className="text-center">Fills</TableHead>
+                                    <TableHead className="text-right">L/100 km</TableHead>
+                                    <TableHead>Against class median</TableHead>
+                                    <TableHead className="text-center">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {fleet.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground font-medium">
+                                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground font-medium">
                                             No fleet data available. Upload Excel logs to see analysis.
                                         </TableCell>
                                     </TableRow>
@@ -327,9 +313,10 @@ export default async function FleetPage({
                                     pageRows.map((unit) => {
                                     const unitLitres = unit.petrolVolume + unit.dieselVolume;
                                     const highUsage = highUsageLitres > 0 && unitLitres > highUsageLitres;
+                                    const e = effByUnit.get(unit.id);
                                     return (
-                                        <TableRow key={unit.id} className="hover:bg-muted/40 transition-colors border-b border-border last:border-0 text-xs md:text-sm">
-                                            <TableCell className="font-bold text-foreground py-4">
+                                        <TableRow key={unit.id} >
+                                            <TableCell>
                                                 {isUnattributedUnit(unit.id) ? (
                                                     <span
                                                         className="text-muted-foreground italic"
@@ -337,19 +324,33 @@ export default async function FleetPage({
                                                     >
                                                         {unitLabel(unit.id)}
                                                     </span>
-                                                ) : unit.id}
+                                                ) : <Plate unit={unit.id} />}
                                             </TableCell>
-                                            <TableCell className="font-mono font-medium text-muted-foreground">
+                                            <TableCell className="mono text-muted-foreground">
                                                 {unit.petrolVolume > 0 ? fmtLitres(unit.petrolVolume) : '—'}
                                             </TableCell>
-                                            <TableCell className="font-mono font-medium text-muted-foreground">
+                                            <TableCell className="mono text-muted-foreground">
                                                 {unit.dieselVolume > 0 ? fmtLitres(unit.dieselVolume) : '—'}
                                             </TableCell>
-                                            <TableCell className="text-right font-bold text-foreground">
+                                            <TableCell className="mono text-right">
                                                 {fmtMoney(unit.totalCost, { currency: cur })}
                                             </TableCell>
                                             <TableCell className="text-center font-medium text-muted-foreground">
                                                 {unit.transactionCount}
+                                            </TableCell>
+                                            <TableCell className="mono text-right">
+                                                {e?.l100 != null ? e.l100.toFixed(1) : <span className="text-faint" title="Not enough odometer readings to work this out">—</span>}
+                                            </TableCell>
+                                            <TableCell>
+                                                {e?.ratio != null ? (
+                                                    <span className="flex items-center gap-2" title={`${e.ratio.toFixed(2)} times the ${e.fuel.toLowerCase()} median of ${e.classMedian?.toFixed(1)} L/100 km`}>
+                                                        <span className="relative block h-1.5 w-24 rounded-full bg-bar">
+                                                            <span className={`absolute inset-y-0 left-0 rounded-full ${e.ratio >= 2 ? "bg-crit" : "bg-brand"}`} style={{ width: `${Math.min(100, (e.ratio / maxRatio) * 100)}%` }} />
+                                                            <span className="absolute -inset-y-1 w-0.5 rounded bg-primary" style={{ left: `${100 / maxRatio}%` }} />
+                                                        </span>
+                                                        <span className="mono text-xs text-muted-foreground">{e.ratio.toFixed(1)}×</span>
+                                                    </span>
+                                                ) : <span className="text-faint">—</span>}
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 {isUnattributedUnit(unit.id) ? (
@@ -358,8 +359,8 @@ export default async function FleetPage({
                                                     <Badge
                                                         title={`${fmtLitres(unitLitres)} this period. Flagged above ${fmtLitres(highUsageLitres)}, the fleet's upper quartile (${fmtLitres(q3)}) plus 1.5x the interquartile range.`}
                                                         className={highUsage
-                                                            ? 'bg-yellow-400 text-foreground hover:bg-yellow-500 rounded-none border-0'
-                                                            : 'bg-muted text-muted-foreground hover:bg-zinc-200 rounded-none border-0'}
+                                                            ? 'bg-warn-soft text-foreground hover:bg-warn-soft  border-0'
+                                                            : 'bg-muted text-muted-foreground hover:bg-surface-2  border-0'}
                                                     >
                                                         {highUsage ? 'High usage' : 'Normal'}
                                                     </Badge>

@@ -29,11 +29,11 @@ interface TotalVolumeModalProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-card/95 backdrop-blur-sm border border-border p-3 rounded-xl shadow-xl">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
+            <div className="bg-card/95 border border-border p-3 rounded-xl ">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">
                     {format(new Date(payload[0].payload.date), "MMM dd, yyyy")}
                 </p>
-                <p className="text-sm font-black text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                     {payload[0].payload.totalVol.toLocaleString()} L
                 </p>
             </div>
@@ -55,14 +55,14 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="!w-[70vw] !max-w-[70vw] rounded-3xl p-4 bg-card/95 backdrop-blur-xl border-white/20">
+            <DialogContent className="!w-[70vw] !max-w-[70vw] rounded-card p-4 bg-card/95 border-white/20">
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2">
                         <div className={`p-2 rounded-xl bg-accent`}>
-                            <Droplets className="h-6 w-6 text-primary" />
+                            <Droplets className="h-6 w-6 text-brand" />
                         </div>
                         <div>
-                            <DialogTitle className="text-2xl font-bold text-foreground">
+                            <DialogTitle className="text-2xl font-semibold text-foreground">
                                 Total Volume Analysis
                             </DialogTitle>
                             <DialogDescription className="text-muted-foreground">
@@ -75,7 +75,7 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
                     {/* Main Chart Area */}
                     <div className="col-span-1 lg:col-span-3 h-[200px] w-full border border-border rounded-xl p-3 bg-muted/40 flex flex-col">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                        <h3 className="text-xs font-semibold text-muted-foreground mb-2">
                             Daily Volume Distribution
                         </h3>
                         <div className="flex-1 w-full min-h-0">
@@ -124,21 +124,21 @@ export function TotalVolumeModal({ open, onOpenChange, data }: TotalVolumeModalP
 
                     {/* Stats Side Panel */}
                     <div className="flex flex-col gap-3">
-                        <div className="p-3 rounded-xl border border-border bg-card shadow-sm min-w-0">
-                            <p className="text-xs font-bold uppercase text-muted-foreground truncate">Total Period Volume</p>
-                            <p className="text-lg font-black text-foreground mt-1 truncate" title={`${totalVolume.toLocaleString()} L`}>
+                        <div className="p-3 rounded-xl border border-border bg-card min-w-0">
+                            <p className="text-xs font-semibold text-muted-foreground truncate">Total Period Volume</p>
+                            <p className="text-lg font-semibold text-foreground mt-1 truncate" title={`${totalVolume.toLocaleString()} L`}>
                                 {totalVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L
                             </p>
                         </div>
-                        <div className="p-3 rounded-xl border border-border bg-card shadow-sm min-w-0">
-                            <p className="text-xs font-bold uppercase text-muted-foreground truncate">Peak Daily Volume</p>
-                            <p className="text-lg font-black text-foreground mt-1 truncate" title={`${maxVolume.toLocaleString()} L`}>
+                        <div className="p-3 rounded-xl border border-border bg-card min-w-0">
+                            <p className="text-xs font-semibold text-muted-foreground truncate">Peak Daily Volume</p>
+                            <p className="text-lg font-semibold text-foreground mt-1 truncate" title={`${maxVolume.toLocaleString()} L`}>
                                 {maxVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L
                             </p>
                         </div>
-                        <div className="p-3 rounded-xl border border-border bg-card shadow-sm min-w-0">
-                            <p className="text-xs font-bold uppercase text-muted-foreground truncate">Average Daily</p>
-                            <p className="text-lg font-black text-foreground mt-1 truncate" title={`${avgVolume.toLocaleString()} L`}>
+                        <div className="p-3 rounded-xl border border-border bg-card min-w-0">
+                            <p className="text-xs font-semibold text-muted-foreground truncate">Average Daily</p>
+                            <p className="text-lg font-semibold text-foreground mt-1 truncate" title={`${avgVolume.toLocaleString()} L`}>
                                 {avgVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L
                             </p>
                         </div>

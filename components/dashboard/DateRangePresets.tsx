@@ -53,22 +53,18 @@ export function DateRangePresets({ className }: { className?: string }) {
     const chips: { key: Preset; label: string }[] = [
         { key: "this-month", label: "This month" },
         { key: "last-month", label: "Last month" },
-        { key: "ytd", label: "YTD" },
+        { key: "ytd", label: "Year to date" },
     ];
 
     return (
-        <div className={cn("flex flex-wrap gap-1.5", className)}>
+        <div className={cn("flex flex-wrap gap-2", className)}>
             {chips.map(({ key, label }) => (
                 <button
                     key={key}
                     type="button"
                     onClick={() => apply(key)}
-                    className={cn(
-                        "h-9 px-3.5 rounded-lg text-xs font-semibold border [transition:transform_160ms_var(--ease-out-soft),background-color_160ms_ease,border-color_160ms_ease,color_160ms_ease] active:scale-[0.97] motion-reduce:active:scale-100 ",
-                        activePreset === key
-                            ? "bg-accent text-accent-foreground border-transparent"
-                            : "bg-card text-foreground/80 border-border hover:bg-muted"
-                    )}
+                    className="tab"
+                    aria-pressed={activePreset === key}
                 >
                     {label}
                 </button>

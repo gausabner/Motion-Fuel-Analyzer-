@@ -1,13 +1,9 @@
 import { ReactNode } from "react";
 
 /**
- * Standard page header — sentence-case title plus a scope line that states
- * exactly what data the page is showing (range, transaction type, etc.).
- * Actions (upload / export buttons) slot in on the right.
- *
- * The title is the page's single h1. Every dashboard page renders this, so the
- * document outline starts with the page name; the sidebar's group labels are
- * styled text inside a labelled nav, not headings competing for the outline.
+ * Page head: the page's single h1, a scope line stating exactly what data is
+ * on screen, and controls on the right. `scope` may be a string or a list of
+ * short facts, which are set apart by spacing rather than punctuation.
  */
 export function PageHeader({
     title,
@@ -15,16 +11,21 @@ export function PageHeader({
     children,
 }: {
     title: ReactNode;
-    scope?: ReactNode;
+    scope?: ReactNode | ReactNode[];
     children?: ReactNode;
 }) {
+    const facts = Array.isArray(scope) ? scope.filter(Boolean) : scope ? [scope] : [];
     return (
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-foreground">{title}</h1>
-                {scope && <p className="text-muted-foreground mt-1 font-medium">{scope}</p>}
+        <header className="flex flex-wrap items-end gap-x-3.5 gap-y-3">
+            <div className="min-w-0">
+                <h1 className="text-[25px] font-semibold leading-[1.15] text-foreground">{title}</h1>
+                {facts.length > 0 && (
+                    <p className="mt-1 flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] text-muted-foreground">
+                        {facts.map((f, i) => <span key={i}>{f}</span>)}
+                    </p>
+                )}
             </div>
-            {children && <div className="flex items-center gap-3 shrink-0">{children}</div>}
+            {children && <div className="ml-auto flex flex-wrap items-center gap-2 max-sm:ml-0">{children}</div>}
         </header>
     );
 }

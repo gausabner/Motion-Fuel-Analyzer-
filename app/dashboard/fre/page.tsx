@@ -97,10 +97,10 @@ export default async function FREPage({
     const exportUrl = `/api/reports/export?${exportParams.toString()}`;
 
     return (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-3.5">
             <PageHeader
-                title={<>Fuel receipts <span className="text-muted-foreground">(FRE)</span></>}
-                scope="Fuel delivered into storage tanks — stock replenishment, not fleet consumption."
+                title="Fuel receipts"
+                scope="Fuel delivered into the storage tanks. This is replenishment, not consumption."
             >
                 <TableCsvButton filename="fre.csv" serverUrl={exportUrl} />
             </PageHeader>
@@ -139,7 +139,7 @@ export default async function FREPage({
 
             <Card className="monumental-card">
                 <CardHeader>
-                    <CardTitle className="text-lg font-bold tracking-tight">Replenishment trend</CardTitle>
+                    <CardTitle className="text-lg font-semibold tracking-tight">Replenishment trend</CardTitle>
                     <CardDescription>Daily volume received into storage tanks.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -158,27 +158,27 @@ export default async function FREPage({
             <div className="grid lg:grid-cols-2 gap-4">
                 <Card className="monumental-card">
                     <CardHeader>
-                        <CardTitle className="text-sm font-bold uppercase tracking-wide">Receipts by Tank</CardTitle>
+                        <CardTitle className="text-sm font-semibold ">Receipts by Tank</CardTitle>
                         <CardDescription>Where deliveries landed.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="rounded-sm border border-border">
+                        <div className="">
                             <Table>
-                                <TableHeader className="bg-muted/50">
+                                <TableHeader>
                                     <TableRow>
-                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Tank</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Fuel</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Deliveries</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Volume (L)</TableHead>
+                                        <TableHead>Tank</TableHead>
+                                        <TableHead>Fuel</TableHead>
+                                        <TableHead className="text-right">Deliveries</TableHead>
+                                        <TableHead className="text-right">Volume (L)</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {data.byTank.map((t: any, i: number) => (
                                         <TableRow key={i}>
-                                            <TableCell className="font-mono text-xs font-bold">{t.storeNo}</TableCell>
+                                            <TableCell className="font-mono text-xs font-semibold">{t.storeNo}</TableCell>
                                             <TableCell className="text-xs">{t.fuelType}</TableCell>
                                             <TableCell className="text-xs text-right font-mono">{Number(t.deliveries)}</TableCell>
-                                            <TableCell className="text-xs text-right font-mono font-bold">{(t.vol || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                                            <TableCell className="text-xs text-right font-mono font-semibold">{(t.vol || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                                         </TableRow>
                                     ))}
                                     {data.byTank.length === 0 && (
@@ -194,18 +194,18 @@ export default async function FREPage({
 
                 <Card className="monumental-card">
                     <CardHeader>
-                        <CardTitle className="text-sm font-bold uppercase tracking-wide">Recent Deliveries</CardTitle>
+                        <CardTitle className="text-sm font-semibold ">Recent Deliveries</CardTitle>
                         <CardDescription>Latest 50 FRE transactions.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="rounded-sm border border-border max-h-[420px] overflow-y-auto">
+                        <div className="max-h-[420px] overflow-y-auto">
                             <Table>
-                                <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                                <TableHeader className="sticky top-0 z-10">
                                     <TableRow>
-                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Date</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Ref No</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-xs">Tank</TableHead>
-                                        <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Volume (L)</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Ref No</TableHead>
+                                        <TableHead>Tank</TableHead>
+                                        <TableHead className="text-right">Volume (L)</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -214,7 +214,7 @@ export default async function FREPage({
                                             <TableCell className="text-xs font-medium">{format(new Date(t.transDate), 'dd MMM yyyy')}</TableCell>
                                             <TableCell className="text-xs font-mono">{t.transRefNo || '—'}</TableCell>
                                             <TableCell className="text-xs font-mono">{t.storeNo}</TableCell>
-                                            <TableCell className="text-xs text-right font-mono font-bold">{(t.transQty || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                                            <TableCell className="text-xs text-right font-mono font-semibold">{(t.transQty || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                                         </TableRow>
                                     ))}
                                     {data.recent.length === 0 && (

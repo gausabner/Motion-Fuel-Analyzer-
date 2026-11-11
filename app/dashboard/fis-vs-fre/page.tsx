@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { FuelLogFilters } from "@/components/dashboard/FuelLogFilters";
 import { IndustrialKPI } from "@/components/dashboard/IndustrialKPI";
-import { FlowChart } from "@/components/dashboard/FlowChart";
+import { FlowMirror } from "@/components/fuel/FlowMirror";
+import { fmtLitres } from "@/lib/format";
 import { ReplenishmentForecast } from "@/components/dashboard/ReplenishmentForecast";
 import { FuelPriceChart } from "@/components/dashboard/FuelPriceChart";
 import { getFlowSeries, getReplenishmentForecast, getCostSummary, type Granularity } from "@/lib/fuel-flow";
@@ -61,17 +62,35 @@ export default async function FisVsFrePage({
     const frequencyDays = deliveries > 1 && spanDays > 0 ? spanDays / (deliveries - 1) : null;
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3.5">
             <PageHeader
-                title="FIS vs FRE"
-                scope="Fuel issued to the fleet against fuel received into storage · issues and deliveries are separate flows and are never summed"
+                title="Issues vs receipts"
+                scope={[`${fmtLitres(received)} received`, `${fmtLitres(issued)} issued`, `${deliveries} deliver${deliveries === 1 ? "y" : "ies"}`]}
             />
 
             <FuelLogFilters costCentres={costCentres} hideVehicle hideCostCentres />
 
-            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            <section className="monumental-card" aria-label="Summary">
+                <p className="bigline">
+                    {received === 0 && issued === 0
+                        ? "No fuel was received or issued in this selection."
+                        : received === 0
+                            ? `${fmtLitres(issued)} was issued with no receipt on record for the same dates.`
+                            : Math.abs(net) / Math.max(received, 1) < 0.02
+                                ? `Receipts and issues agree to within 2%: ${fmtLitres(received)} in, ${fmtLitres(issued)} out.`
+                                : net > 0
+                                    ? `${fmtLitres(net)} more was received than issued, ${(net / received * 100).toFixed(1)}% of what came in.`
+                                    : `${fmtLitres(Math.abs(net))} more was issued than received, ${(Math.abs(net) / received * 100).toFixed(1)}% over what came in.`}
+                    <small>
+                        Receipts and issues are separate flows and are never added together. A difference is a book figure, not a measured loss:
+                        the reports carry no opening stock or dip readings, so fuel already in the tanks at the start of the period is not counted.
+                    </small>
+                </p>
+            </section>
+
+            <div className="grid gap-3.5 grid-cols-2 lg:grid-cols-4 stagger-tiles">
                 <IndustrialKPI
-                    label="Issued (FIS)"
+                    label="Issued"
                     value={`${Math.round(issued).toLocaleString()} L`}
                     subValue="Out to vehicles"
                     icon={ArrowUpFromLine}
@@ -96,7 +115,7 @@ export default async function FisVsFrePage({
                 />
             </div>
 
-            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3.5 grid-cols-2 lg:grid-cols-4 stagger-tiles">
                 <IndustrialKPI
                     label="Fuel spend"
                     value={money(cost.receivedCost)}
@@ -137,11 +156,11 @@ export default async function FisVsFrePage({
             </div>
 
             {cost.recoveryTrend?.reversal && (
-                <div className="rounded-md border border-amber-500/50 bg-amber-50/60 dark:bg-amber-950/20 p-4 -mt-2">
+                <div className="rounded-tile bg-warn-soft p-4">
                     <div className="flex items-start gap-3">
-                        <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                        <AlertTriangle className="h-4 w-4 text-warn mt-0.5 shrink-0" />
                         <div className="text-sm">
-                            <p className="font-bold text-foreground">The period average hides a reversal</p>
+                            <p className="font-semibold text-foreground">The period average hides a reversal</p>
                             <p className="text-muted-foreground mt-1">
                                 Cost recovery averages{" "}
                                 <span className="font-semibold text-foreground">
@@ -166,14 +185,14 @@ export default async function FisVsFrePage({
             )}
 
             {cost.outstandingOrders > 0 && (
-                <p className="text-xs text-muted-foreground -mt-2">
+                <p className="text-xs text-muted-foreground">
                     {cost.outstandingOrders} order{cost.outstandingOrders === 1 ? "" : "s"} raised with nothing received
                     against {cost.outstandingOrders === 1 ? "it" : "them"} yet
                     ({Math.round(cost.outstandingLitres).toLocaleString()} L ordered) — excluded from received totals.
                 </p>
             )}
 
-            <FlowChart data={series} granularity={granularity} />
+            <FlowMirror data={series} granularity={granularity} />
 
             <FuelPriceChart data={series} currency={cur} />
 

@@ -156,7 +156,7 @@ export function DashboardCharts({
                         height={36}
                         iconType="square"
                         iconSize={9}
-                        wrapperStyle={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: chart.axis }}
+                        wrapperStyle={{ fontSize: '12px', fontWeight: 600, color: chart.axis }}
                     />
                 </>
             )
@@ -184,19 +184,9 @@ export function DashboardCharts({
 
         return (
             <AreaChart {...commonProps}>
-                <defs>
-                    <linearGradient id="colorPetrol" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={PETROL} stopOpacity={0.25} />
-                        <stop offset="95%" stopColor={PETROL} stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorDiesel" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={DIESEL} stopOpacity={0.25} />
-                        <stop offset="95%" stopColor={DIESEL} stopOpacity={0} />
-                    </linearGradient>
-                </defs>
                 {commonProps.children}
-                <Area type="monotone" dataKey="petrol" stroke={PETROL} strokeWidth={2.5} fillOpacity={1} fill="url(#colorPetrol)" name="Petrol" />
-                <Area type="monotone" dataKey="diesel" stroke={DIESEL} strokeWidth={2.5} fillOpacity={1} fill="url(#colorDiesel)" name="Diesel" />
+                <Area type="monotone" dataKey="petrol" stroke={PETROL} strokeWidth={2.5} fillOpacity={0.1} fill={PETROL} name="Petrol" />
+                <Area type="monotone" dataKey="diesel" stroke={DIESEL} strokeWidth={2.5} fillOpacity={0.1} fill={DIESEL} name="Diesel" />
             </AreaChart>
         );
     };
@@ -213,8 +203,8 @@ export function DashboardCharts({
             <Card className="monumental-card" ref={trendRef}>
                 <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4 px-0 pb-6 border-b border-border">
                     <div>
-                        <CardTitle className="text-lg font-bold tracking-tight">Consumption trend</CardTitle>
-                        <p className="text-xs text-muted-foreground font-medium mt-1 tracking-wide">
+                        <CardTitle className="text-lg font-semibold tracking-tight">Consumption trend</CardTitle>
+                        <p className="text-xs text-muted-foreground font-medium mt-1 ">
                             {granularity.charAt(0).toUpperCase() + granularity.slice(1)} Volume Analysis
                         </p>
                     </div>
@@ -226,7 +216,7 @@ export function DashboardCharts({
                             <Button
                                 variant={granularity === 'daily' ? 'default' : 'ghost'}
                                 size="sm"
-                                className={`rounded-md h-7 px-3 text-xs font-bold uppercase tracking-wide ${granularity === 'daily' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                className={`rounded-[12px] h-7 px-3 text-xs font-semibold ${granularity === 'daily' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                 onClick={() => setGranularity('daily')}
                             >
                                 Daily
@@ -234,7 +224,7 @@ export function DashboardCharts({
                             <Button
                                 variant={granularity === 'monthly' ? 'default' : 'ghost'}
                                 size="sm"
-                                className={`rounded-md h-7 px-3 text-xs font-bold uppercase tracking-wide ${granularity === 'monthly' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                className={`rounded-[12px] h-7 px-3 text-xs font-semibold ${granularity === 'monthly' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                 onClick={() => setGranularity('monthly')}
                             >
                                 Monthly
@@ -242,7 +232,7 @@ export function DashboardCharts({
                             <Button
                                 variant={granularity === 'yearly' ? 'default' : 'ghost'}
                                 size="sm"
-                                className={`rounded-md h-7 px-3 text-xs font-bold uppercase tracking-wide ${granularity === 'yearly' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                className={`rounded-[12px] h-7 px-3 text-xs font-semibold ${granularity === 'yearly' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                 onClick={() => setGranularity('yearly')}
                             >
                                 Yearly
@@ -254,7 +244,7 @@ export function DashboardCharts({
                             <Button
                                 variant={mainChartType === 'area' ? 'default' : 'ghost'}
                                 size="sm"
-                                className={`rounded-md h-7 px-2 ${mainChartType === 'area' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+                                className={`rounded-[12px] h-7 px-2 ${mainChartType === 'area' ? 'bg-card text-foreground ' : 'text-muted-foreground'}`}
                                 onClick={() => setMainChartType('area')}
                                 aria-label="Area chart"
                             >
@@ -263,7 +253,7 @@ export function DashboardCharts({
                             <Button
                                 variant={mainChartType === 'line' ? 'default' : 'ghost'}
                                 size="sm"
-                                className={`rounded-md h-7 px-2 ${mainChartType === 'line' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+                                className={`rounded-[12px] h-7 px-2 ${mainChartType === 'line' ? 'bg-card text-foreground ' : 'text-muted-foreground'}`}
                                 onClick={() => setMainChartType('line')}
                                 aria-label="Line chart"
                             >
@@ -272,7 +262,7 @@ export function DashboardCharts({
                             <Button
                                 variant={mainChartType === 'bar' ? 'default' : 'ghost'}
                                 size="sm"
-                                className={`rounded-md h-7 px-2 ${mainChartType === 'bar' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+                                className={`rounded-[12px] h-7 px-2 ${mainChartType === 'bar' ? 'bg-card text-foreground ' : 'text-muted-foreground'}`}
                                 onClick={() => setMainChartType('bar')}
                                 aria-label="Bar chart"
                             >
@@ -292,11 +282,11 @@ export function DashboardCharts({
                 {/* Top 10 Vote Numbers */}
                 <Card className="monumental-card bg-card col-span-1 md:col-span-2 lg:col-span-2" ref={departmentRef}>
                     <CardHeader className="px-0 pt-0 pb-6 border-b border-border mb-6 flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm font-bold uppercase tracking-wide">High-Consuming Departments</CardTitle>
+                        <CardTitle className="text-sm font-semibold ">High-Consuming Departments</CardTitle>
                         <ChartExportButton targetRef={departmentRef} fileName="high_consuming_departments" />
                     </CardHeader>
                     <CardContent className="px-0 pb-0">
-                        <div className="w-full relative border border-border rounded-md bg-muted/40">
+                        <div className="w-full relative border border-border rounded-[12px] bg-muted/40">
                             <div className="overflow-y-auto pr-4 custom-scrollbar" style={{ height: '250px' }}>
                                 <div style={{ height: `${topVotes.length * 50}px`, width: '100%' }}>
                                     <ResponsiveContainer width="100%" height="100%">
@@ -319,7 +309,7 @@ export function DashboardCharts({
                                                                 <div className="w-[30%] text-muted-foreground font-medium pl-2 flex items-center h-full">
                                                                     #{rank}
                                                                 </div>
-                                                                <div className={`w-[70%] font-bold whitespace-normal leading-[1.1] flex items-center text-xs pr-1 ${name === 'Unassigned' ? 'text-amber-600' : 'text-foreground'}`} title={name}>
+                                                                <div className={`w-[70%] font-semibold whitespace-normal leading-[1.1] flex items-center text-xs pr-1 ${name === 'Unassigned' ? 'text-warn' : 'text-foreground'}`} title={name}>
                                                                     <span className="line-clamp-3">{name === 'Unassigned' ? '⚑ Unassigned' : name}</span>
                                                                 </div>
                                                             </div>
@@ -349,7 +339,7 @@ export function DashboardCharts({
                 {/* Distribution Pie */}
                 <Card className="monumental-card bg-card col-span-1 md:col-span-2 lg:col-span-2" ref={energyRef}>
                     <CardHeader className="px-0 pt-0 pb-6 border-b border-border mb-6 flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm font-bold uppercase tracking-wide">Energy Mix</CardTitle>
+                        <CardTitle className="text-sm font-semibold ">Energy Mix</CardTitle>
                         <ChartExportButton targetRef={energyRef} fileName="energy_mix" />
                     </CardHeader>
                     {/*
@@ -368,18 +358,18 @@ export function DashboardCharts({
                             return (
                                 <div className="flex flex-col gap-5 py-2">
                                     <div
-                                        className="flex h-14 w-full gap-[2px] overflow-hidden rounded-md"
+                                        className="flex h-14 w-full gap-[2px] overflow-hidden rounded-[12px]"
                                         role="img"
                                         aria-label={`Energy mix: petrol ${fmtLitres(petrolVal)} at ${fmtShare(petrolVal, mixTotal)}, diesel ${fmtLitres(dieselVal)} at ${fmtShare(dieselVal, mixTotal)}`}
                                     >
                                         <div
-                                            className="flex items-center justify-center text-xs font-bold text-white"
+                                            className="flex items-center justify-center text-xs font-semibold text-primary-foreground"
                                             style={{ width: `${pct(petrolVal)}%`, background: chart.petrol }}
                                         >
                                             {pct(petrolVal) >= 12 && fmtShare(petrolVal, mixTotal)}
                                         </div>
                                         <div
-                                            className="flex items-center justify-center text-xs font-bold text-white"
+                                            className="flex items-center justify-center text-xs font-semibold text-primary-foreground"
                                             style={{ width: `${pct(dieselVal)}%`, background: chart.diesel }}
                                         >
                                             {pct(dieselVal) >= 12 && fmtShare(dieselVal, mixTotal)}
@@ -391,11 +381,11 @@ export function DashboardCharts({
                                             { name: "Diesel", value: dieselVal, color: chart.diesel },
                                         ].map((row) => (
                                             <div key={row.name} className="flex flex-col gap-1 min-w-0">
-                                                <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                <dt className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                                                     <span className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ background: row.color }} />
                                                     {row.name}
                                                 </dt>
-                                                <dd className="text-lg font-extrabold tabular-nums text-foreground">
+                                                <dd className="text-lg font-semibold tabular-nums text-foreground">
                                                     {fmtLitres(row.value)}
                                                 </dd>
                                             </div>
@@ -411,7 +401,7 @@ export function DashboardCharts({
             {/* Top Fleet Units */}
             <Card className="monumental-card" ref={fleetRef}>
                 <CardHeader className="px-0 pt-0 pb-6 border-b border-border mb-6 flex flex-row items-center justify-between">
-                    <CardTitle className="text-sm font-bold uppercase tracking-wide">Top Fleet Utilization</CardTitle>
+                    <CardTitle className="text-sm font-semibold ">Top Fleet Utilization</CardTitle>
                     <ChartExportButton targetRef={fleetRef} fileName="top_fleet_utilization" />
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
@@ -440,8 +430,8 @@ export function DashboardCharts({
                 <CardHeader className="px-0 pt-0 pb-6 border-b border-border mb-6 flex flex-row items-center justify-between">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <div>
-                            <CardTitle className="text-sm font-bold uppercase tracking-wide">Financial Velocity</CardTitle>
-                            <p className="text-xs text-muted-foreground font-medium mt-1 tracking-wide">
+                            <CardTitle className="text-sm font-semibold ">Financial Velocity</CardTitle>
+                            <p className="text-xs text-muted-foreground font-medium mt-1 ">
                                 Cost accumulation over time ({currencySymbol})
                             </p>
                         </div>
@@ -451,12 +441,6 @@ export function DashboardCharts({
                 <CardContent className="px-0 pb-0">
                     <ResponsiveContainer width="100%" height={210}>
                         <AreaChart data={costAggregatedData}>
-                            <defs>
-                                <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={chart.petrol} stopOpacity={0.25} />
-                                    <stop offset="95%" stopColor={chart.petrol} stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
                             <XAxis
                                 dataKey="date"
                                 tick={{ fontSize: AXIS.tickSize, fill: chart.axis, fontWeight: 500 }}
@@ -480,7 +464,7 @@ export function DashboardCharts({
                                 }}
                                 formatter={(value: any) => [fmtMoney(Number(value), { decimals: 0, currency: currencySymbol }), 'Total Cost']}
                             />
-                            <Area type="monotone" dataKey="cost" stroke={chart.petrol} strokeWidth={2} fillOpacity={1} fill="url(#colorCost)" name="Total Cost" />
+                            <Area type="monotone" dataKey="cost" stroke={chart.petrol} strokeWidth={2} fillOpacity={0.1} fill={chart.petrol} name="Total Cost" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </CardContent>
@@ -512,12 +496,6 @@ export function FocusedChart({ data, fuelType, currencySymbol = "N$", color: col
         <div className="h-[280px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
-                    <defs>
-                        <linearGradient id="focusedGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={color} stopOpacity={0.2} />
-                            <stop offset="95%" stopColor={color} stopOpacity={0} />
-                        </linearGradient>
-                    </defs>
                     <XAxis
                         dataKey="date"
                         tick={{ fontSize: AXIS.tickSize, fill: chart.axis }}
@@ -539,8 +517,8 @@ export function FocusedChart({ data, fuelType, currencySymbol = "N$", color: col
                         dataKey="value"
                         stroke={color}
                         strokeWidth={2.5}
-                        fillOpacity={1}
-                        fill="url(#focusedGradient)"
+                        fillOpacity={0.1}
+                        fill={color}
                         name={fuelType}
                         animationDuration={400}
                     />

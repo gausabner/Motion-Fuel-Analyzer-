@@ -22,10 +22,10 @@ export function UploadTemplates() {
             <CardHeader className="pb-4 border-b border-border">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-accent rounded-lg">
-                        <FileSpreadsheet className="h-5 w-5 text-primary" />
+                        <FileSpreadsheet className="h-5 w-5 text-brand" />
                     </div>
                     <div>
-                        <CardTitle className="text-lg font-bold tracking-tight">Templates</CardTitle>
+                        <CardTitle className="text-lg font-semibold tracking-tight">Templates</CardTitle>
                         <CardDescription className="font-medium text-xs mt-1">
                             Blank workbooks with the exact columns each report needs
                         </CardDescription>
@@ -36,7 +36,7 @@ export function UploadTemplates() {
                 {Object.values(UPLOAD_TEMPLATES).map(t => (
                     <div key={t.key} className="flex items-start justify-between gap-3 border border-border rounded-lg p-3">
                         <div className="min-w-0">
-                            <p className="text-sm font-bold text-foreground">{t.label}</p>
+                            <p className="text-sm font-semibold text-foreground">{t.label}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">{t.description}</p>
                             <p className="text-xs text-muted-foreground mt-1 font-mono truncate">
                                 {t.headers.slice(0, 4).join(" · ")} · +{t.headers.length - 4} more

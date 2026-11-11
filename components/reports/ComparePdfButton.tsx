@@ -38,16 +38,16 @@ export function ComparePdfButton({
             const pageWidth = doc.internal.pageSize.getWidth();
 
             // Header — Municipal Blue theme (ink + blue accent)
-            doc.setFillColor(15, 23, 42);          // ink #0F172A
+            doc.setFillColor(11, 19, 36);          // ink #0B1324
             doc.rect(0, 0, pageWidth, 92, "F");
-            doc.setFillColor(37, 99, 235);          // blue #2563EB
+            doc.setFillColor(29, 78, 216);          // municipal blue #1D4ED8
             doc.rect(0, 92, pageWidth, 5, "F");
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(19);
             doc.text("Period comparison report", 40, 40);
             doc.setFontSize(10);
-            doc.setTextColor(147, 197, 253);        // blue-300
+            doc.setTextColor(184, 196, 216);        // menu ink-on-dark #B8C4D8
             doc.text(`${dimensionLabel}  ·  Period A: ${aLabel}   vs   Period B: ${bLabel}`, 40, 60);
             doc.setTextColor(148, 163, 184);
             doc.setFont("helvetica", "normal");
@@ -58,7 +58,7 @@ export function ComparePdfButton({
             const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 0 });
             const deltaStr = `${totals.deltaVolume >= 0 ? "+" : ""}${fmt(totals.deltaVolume)} L` +
                 (totals.deltaPct === null ? "" : ` (${totals.deltaPct >= 0 ? "+" : ""}${totals.deltaPct.toFixed(1)}%)`);
-            doc.setTextColor(15, 23, 42);
+            doc.setTextColor(11, 19, 36);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.text(
@@ -81,7 +81,7 @@ export function ComparePdfButton({
                         `${dVol >= 0 ? "+" : ""}${fmt(dVol)}`, `${dCost >= 0 ? "+" : ""}${currency}${fmt(dCost)}`,
                     ];
                 };
-                doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(15, 23, 42);
+                doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(11, 19, 36);
                 doc.text("Petrol vs diesel — consumption & cost", 40, cursorY);
                 autoTable(doc, {
                     startY: cursorY + 8,
@@ -95,8 +95,8 @@ export function ComparePdfButton({
                     ],
                     margin: { left: 40, right: 40 },
                     styles: { fontSize: 8, cellPadding: 4 },
-                    headStyles: { fillColor: [15, 23, 42], textColor: [147, 197, 253], fontStyle: "bold" },
-                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    headStyles: { fillColor: [244, 247, 251], textColor: [91, 107, 130], fontStyle: "normal", lineColor: [226, 232, 241], lineWidth: { bottom: 0.2 } },
+                    alternateRowStyles: { fillColor: [255, 255, 255] },
                     columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" } },
                     didParseCell: (d: any) => {
                         if (d.section === "body" && (d.column.index === 5 || d.column.index === 6)) {
@@ -111,7 +111,7 @@ export function ComparePdfButton({
             }
 
             // Main dimension table
-            doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(15, 23, 42);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(11, 19, 36);
             doc.text(`Comparison by ${dimensionLabel.toLowerCase()}`, 40, cursorY);
             cursorY += 8;
             const head = [[dimensionLabel, "A · Volume (L)", "A · Cost", "B · Volume (L)", "B · Cost", "Change (L)", "Change (%)"]];
@@ -136,8 +136,8 @@ export function ComparePdfButton({
                 body,
                 margin: { left: 40, right: 40 },
                 styles: { fontSize: 8, cellPadding: 4 },
-                headStyles: { fillColor: [15, 23, 42], textColor: [147, 197, 253], fontStyle: "bold" },
-                alternateRowStyles: { fillColor: [248, 250, 252] },
+                headStyles: { fillColor: [244, 247, 251], textColor: [91, 107, 130], fontStyle: "normal", lineColor: [226, 232, 241], lineWidth: { bottom: 0.2 } },
+                alternateRowStyles: { fillColor: [255, 255, 255] },
                 columnStyles: {
                     1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" },
                     4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" },

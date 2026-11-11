@@ -2,12 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { getPeriodComparison, type CompareDimension } from "@/lib/analytics";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { ComparisonControls } from "@/components/reports/ComparisonControls";
-import { ComparisonChart } from "@/components/reports/ComparisonChart";
+import { ChartCard, PairedBars } from "@/components/fuel/charts";
+import { fmtDept, fmtLitres } from "@/lib/format";
 import { FuelSplitComparison, type FuelStat } from "@/components/reports/FuelSplitComparison";
 import { ComparePdfButton } from "@/components/reports/ComparePdfButton";
 import { TableCsvButton } from "@/components/reports/ReportExports";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plate } from "@/components/fuel/VehiclePanel";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -28,10 +30,10 @@ function DeltaCell({ deltaVolume, deltaPct }: { deltaVolume: number; deltaPct: n
     const up = deltaVolume > 0.5;
     const down = deltaVolume < -0.5;
     // For consumption, down is favourable (green), up is unfavourable (red).
-    const cls = down ? "text-emerald-600" : up ? "text-red-600" : "text-muted-foreground";
+    const cls = down ? "text-ok" : up ? "text-crit" : "text-muted-foreground";
     const Icon = down ? ArrowDownRight : up ? ArrowUpRight : Minus;
     return (
-        <span className={`inline-flex items-center gap-1 justify-end font-semibold tabular-nums ${cls}`}>
+        <span className={`inline-flex items-center gap-1 justify-end mono ${cls}`}>
             <Icon className="h-3.5 w-3.5" />
             {deltaVolume >= 0 ? "+" : ""}{deltaVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L
             {deltaPct !== null && <span className="text-xs opacity-80">({deltaPct >= 0 ? "+" : ""}{deltaPct.toFixed(1)}%)</span>}
@@ -91,6 +93,9 @@ export default async function ComparePage({
     const aLabel = `${fmtDate(aFrom)} – ${fmtDate(aTo)}`;
     const bLabel = `${fmtDate(bFrom)} – ${fmtDate(bTo)}`;
     const t = result.totals;
+    const litres = (v: number) => fmtLitres(v);
+    // The row that moved most in absolute litres, for the sentence under the headline.
+    const mover = dimension === "total" ? null : [...result.rows].sort((x, y) => Math.abs(y.deltaVolume) - Math.abs(x.deltaVolume))[0] ?? null;
 
     const rangeQs = `&aFrom=${encodeURIComponent(aFrom)}&aTo=${encodeURIComponent(aTo)}` +
         `&bFrom=${encodeURIComponent(bFrom)}&bTo=${encodeURIComponent(bTo)}` +
@@ -109,10 +114,10 @@ export default async function ComparePage({
     ].filter(Boolean).join(" · ");
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3.5">
             <PageHeader
-                title="Period comparison"
-                scope={`${DIM_LABEL[dimension]} · ${aLabel}  vs  ${bLabel}${activeFilters ? " · " + activeFilters : ""}`}
+                title="Compare periods"
+                scope={[`By ${DIM_LABEL[dimension].toLowerCase()}`, `${aLabel} against ${bLabel}`, ...(activeFilters ? [activeFilters] : [])]}
             >
                 <TableCsvButton filename="period_comparison.csv" serverUrl={csvUrl} />
                 <ComparePdfButton
@@ -130,39 +135,45 @@ export default async function ComparePage({
 
             <ComparisonControls costCentres={costCentres} />
 
-            {/* Summary cards */}
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-                <Card className="monumental-card">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Period A · {aLabel}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-extrabold tabular-nums">{t.aVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L</p>
-                        <p className="text-xs text-muted-foreground mt-1">{currency}{t.aCost.toLocaleString(undefined, { maximumFractionDigits: 0 })} · {t.aTxns.toLocaleString()} issues</p>
-                    </CardContent>
-                </Card>
-                <Card className="monumental-card">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Period B · {bLabel}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-extrabold tabular-nums">{t.bVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L</p>
-                        <p className="text-xs text-muted-foreground mt-1">{currency}{t.bCost.toLocaleString(undefined, { maximumFractionDigits: 0 })} · {t.bTxns.toLocaleString()} issues</p>
-                    </CardContent>
-                </Card>
-                <Card className="monumental-card">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Change</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className={`text-2xl font-extrabold tabular-nums ${t.deltaVolume < 0 ? "text-emerald-600" : t.deltaVolume > 0 ? "text-red-600" : ""}`}>
-                            {t.deltaVolume >= 0 ? "+" : ""}{t.deltaVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {t.deltaPct === null ? "no baseline" : `${t.deltaPct >= 0 ? "+" : ""}${t.deltaPct.toFixed(1)}% vs Period A`}
-                        </p>
-                    </CardContent>
-                </Card>
+            {/* Words before charts: the answer, then the evidence. */}
+            <section className="monumental-card" aria-label="Summary">
+                <p className="bigline">
+                    {t.aVolume === 0 && t.bVolume === 0
+                        ? "No fuel was issued in either period for these filters."
+                        : t.deltaPct === null
+                            ? `${litres(t.bVolume)} issued in period B; period A has nothing to compare it with.`
+                            : Math.abs(t.deltaPct) < 0.5
+                                ? `Consumption is level between the two periods at about ${litres(t.bVolume)}.`
+                                : `Consumption ${t.deltaVolume > 0 ? "rose" : "fell"} ${Math.abs(t.deltaPct).toFixed(1)}% between the two periods, ${t.deltaVolume > 0 ? "up" : "down"} ${litres(Math.abs(t.deltaVolume))}.`}
+                    <small>
+                        {mover
+                            ? `The largest movement is ${fmtDept(mover.key)}, ${mover.deltaVolume > 0 ? "up" : "down"} ${litres(Math.abs(mover.deltaVolume))}${mover.deltaPct !== null ? ` (${mover.deltaPct >= 0 ? "+" : "−"}${Math.abs(mover.deltaPct).toFixed(1)}%)` : ""}. `
+                            : ""}
+                        Period A is {aLabel}; period B is {bLabel}.
+                    </small>
+                </p>
+            </section>
+
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3 stagger-tiles">
+                <div className="kpi">
+                    <div className="kpi-h">Period A</div>
+                    <div className="kpi-v num">{litres(t.aVolume)}</div>
+                    <div className="kpi-f"><span className="ctx">{currency}{t.aCost.toLocaleString("en-GB", { maximumFractionDigits: 0 })} · {t.aTxns.toLocaleString("en-GB")} issues</span></div>
+                </div>
+                <div className="kpi">
+                    <div className="kpi-h">Period B</div>
+                    <div className="kpi-v num">{litres(t.bVolume)}</div>
+                    <div className="kpi-f"><span className="ctx">{currency}{t.bCost.toLocaleString("en-GB", { maximumFractionDigits: 0 })} · {t.bTxns.toLocaleString("en-GB")} issues</span></div>
+                </div>
+                <div className="kpi">
+                    <div className="kpi-h">Change</div>
+                    <div className="kpi-v num">{t.deltaVolume >= 0 ? "+" : "−"}{litres(Math.abs(t.deltaVolume))}</div>
+                    <div className="kpi-f">
+                        {t.deltaPct === null
+                            ? <span className="ctx">No baseline in period A</span>
+                            : <><span className={`delta ${t.deltaPct > 0.5 ? "bad" : t.deltaPct < -0.5 ? "good" : "flat"}`}>{t.deltaPct >= 0 ? "+" : "−"}{Math.abs(t.deltaPct).toFixed(1)}%</span><span className="ctx">against period A</span></>}
+                    </div>
+                </div>
             </div>
 
             {/* Petrol vs diesel — volume & cost */}
@@ -175,50 +186,59 @@ export default async function ComparePage({
                 csvUrl={fuelCsvUrl}
             />
 
-            {/* Chart */}
             {result.rows.length > 0 && (
-                <Card className="monumental-card">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-bold tracking-tight">Volume by {DIM_LABEL[dimension].toLowerCase()}</CardTitle>
-                        <CardDescription>Period A vs Period B — top {Math.min(result.rows.length, 12)} by volume.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <ComparisonChart
-                            data={result.rows.slice(0, 12).map(r => ({ name: r.key, a: r.aVolume, b: r.bVolume }))}
-                            aLabel="Period A"
-                            bLabel="Period B"
-                        />
-                    </CardContent>
-                </Card>
+                <ChartCard
+                    title={`Volume by ${DIM_LABEL[dimension].toLowerCase()}`}
+                    sub={`Largest ${Math.min(result.rows.length, 8)} by volume · litres`}
+                    legend={
+                        <>
+                            <span><i className="sw" style={{ background: "var(--bar)" }} />Period A</span>
+                            <span><i className="sw" style={{ background: "var(--primary)" }} />Period B</span>
+                            <span><i className="sw dia" />Up more than 5%</span>
+                        </>
+                    }
+                    table={{
+                        head: [DIM_LABEL[dimension], "Period A (L)", "Period B (L)", "Change"],
+                        rows: result.rows.slice(0, 8).map(r => [
+                            fmtDept(r.key), Math.round(r.aVolume).toLocaleString("en-GB"), Math.round(r.bVolume).toLocaleString("en-GB"),
+                            r.deltaPct === null ? "new" : `${r.deltaPct >= 0 ? "+" : "−"}${Math.abs(r.deltaPct).toFixed(1)}%`,
+                        ]),
+                    }}
+                >
+                    <PairedBars
+                        data={result.rows.slice(0, 8).map(r => ({ label: fmtDept(r.key), a: r.aVolume, b: r.bVolume }))}
+                        ariaLabel={`Fuel issued in period A and period B for the largest ${DIM_LABEL[dimension].toLowerCase()} groups`}
+                    />
+                </ChartCard>
             )}
 
             {/* Table */}
             <Card className="monumental-card">
                 <CardHeader className="flex flex-row items-start justify-between gap-4">
                     <div>
-                        <CardTitle className="text-lg font-bold tracking-tight">Comparison detail</CardTitle>
-                        <CardDescription>{result.rows.length} {DIM_LABEL[dimension].toLowerCase()}{result.rows.length === 1 ? "" : "s"}. Consumption down is shown green, up red.</CardDescription>
+                        <CardTitle className="text-base font-semibold">Every row</CardTitle>
+                        <CardDescription>{result.rows.length} {DIM_LABEL[dimension].toLowerCase()}{result.rows.length === 1 ? "" : "s"}. Arrows show direction; a fall in consumption is marked as favourable.</CardDescription>
                     </div>
                     <TableCsvButton filename="period_comparison.csv" serverUrl={csvUrl} />
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-sm border border-border max-h-[560px] overflow-y-auto">
+                    <div className="max-h-[560px] overflow-y-auto">
                         <Table>
-                            <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                            <TableHeader className="sticky top-0 z-10">
                                 <TableRow>
-                                    <TableHead className="font-bold uppercase tracking-wider text-xs">{DIM_LABEL[dimension]}</TableHead>
-                                    <TableHead className="font-bold uppercase tracking-wider text-xs text-right">A · Volume (L)</TableHead>
-                                    <TableHead className="font-bold uppercase tracking-wider text-xs text-right">B · Volume (L)</TableHead>
-                                    <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Change</TableHead>
+                                    <TableHead >{DIM_LABEL[dimension]}</TableHead>
+                                    <TableHead className="text-right">A · Volume (L)</TableHead>
+                                    <TableHead className="text-right">B · Volume (L)</TableHead>
+                                    <TableHead className="text-right">Change</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {result.rows.map((r) => (
                                     <TableRow key={r.key}>
-                                        <TableCell className="text-xs font-semibold">{r.key}</TableCell>
-                                        <TableCell className="text-xs text-right font-mono">{r.aVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
-                                        <TableCell className="text-xs text-right font-mono">{r.bVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
-                                        <TableCell className="text-xs text-right"><DeltaCell deltaVolume={r.deltaVolume} deltaPct={r.deltaPct} /></TableCell>
+                                        <TableCell>{dimension === "fleetUnit" ? <Plate unit={r.key} /> : fmtDept(r.key)}</TableCell>
+                                        <TableCell className="mono text-right">{r.aVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
+                                        <TableCell className="mono text-right">{r.bVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
+                                        <TableCell className="text-right"><DeltaCell deltaVolume={r.deltaVolume} deltaPct={r.deltaPct} /></TableCell>
                                     </TableRow>
                                 ))}
                                 {result.rows.length === 0 && (
@@ -230,10 +250,10 @@ export default async function ComparePage({
                                 )}
                                 {result.rows.length > 1 && (
                                     <TableRow className="bg-muted/40">
-                                        <TableCell className="text-xs font-extrabold">TOTAL</TableCell>
-                                        <TableCell className="text-xs text-right font-mono font-extrabold">{t.aVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
-                                        <TableCell className="text-xs text-right font-mono font-extrabold">{t.bVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
-                                        <TableCell className="text-xs text-right"><DeltaCell deltaVolume={t.deltaVolume} deltaPct={t.deltaPct} /></TableCell>
+                                        <TableCell className="font-semibold">Total</TableCell>
+                                        <TableCell className="mono text-right font-semibold">{t.aVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
+                                        <TableCell className="mono text-right font-semibold">{t.bVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
+                                        <TableCell className="text-right"><DeltaCell deltaVolume={t.deltaVolume} deltaPct={t.deltaPct} /></TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>

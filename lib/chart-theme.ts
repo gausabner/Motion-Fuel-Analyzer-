@@ -51,11 +51,11 @@ export type ChartTheme = {
  * the first render pass on the server, where there is no document to read.
  */
 const LIGHT: ChartTheme = {
-    petrol: "#2A78D6",
-    diesel: "#EB6834",
-    received: "#1BAF7A",
-    grid: "#E2E8F0",
-    axis: "#64748B",
+    petrol: "#60A5FA",
+    diesel: "#1D4ED8",
+    received: "#64748B",
+    grid: "#EBEFF5",
+    axis: "#5B6B82",
     cursor: "#94A3B8",
     surface: "#FFFFFF",
     ink: "#0F172A",
@@ -151,7 +151,7 @@ export function tooltipStyles(t: ChartTheme) {
         contentStyle: {
             background: t.surface,
             border: `1px solid ${t.grid}`,
-            borderRadius: 8,
+            borderRadius: 12,
             boxShadow: "0 4px 16px -4px rgb(15 23 42 / 0.18)",
             padding: "10px 12px",
             fontSize: 12,

@@ -32,7 +32,7 @@ export function FuelPriceChart({ data, currency = "N$" }: { data: FlowBucket[]; 
                 <CardDescription>
                     What fuel cost to buy, against what the fleet was charged for it.
                     {underRecovered > 0 && (
-                        <span className="block mt-1 text-amber-600 font-medium">
+                        <span className="block mt-1 text-warn font-medium">
                             {underRecovered} period{underRecovered === 1 ? "" : "s"} where fuel was issued below its purchase price.
                         </span>
                     )}

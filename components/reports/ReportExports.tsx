@@ -52,7 +52,7 @@ export function TableCsvButton({ filename, headers, rows, serverUrl }: {
     return (
         <Button
             variant="outline" size="sm" onClick={handleClick}
-            className="h-8 font-bold uppercase text-xs tracking-wider"
+            className="h-8 font-semibold text-xs "
         >
             <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
         </Button>
@@ -77,16 +77,16 @@ export function FullReportPdfButton({ title, subtitle, sections }: {
             const pageWidth = doc.internal.pageSize.getWidth();
 
             // Cover header — Municipal Blue theme (ink + blue accent)
-            doc.setFillColor(15, 23, 42);          // ink #0F172A
+            doc.setFillColor(11, 19, 36);          // ink #0B1324
             doc.rect(0, 0, pageWidth, 90, "F");
-            doc.setFillColor(37, 99, 235);          // blue #2563EB accent
+            doc.setFillColor(29, 78, 216);          // municipal blue #1D4ED8
             doc.rect(0, 90, pageWidth, 5, "F");
             doc.setTextColor(255, 255, 255);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(20);
             doc.text(title, 40, 42);
             doc.setFontSize(10);
-            doc.setTextColor(147, 197, 253);        // blue-300 #93C5FD
+            doc.setTextColor(184, 196, 216);        // menu ink-on-dark #B8C4D8
             doc.text(subtitle, 40, 62);
             doc.setTextColor(148, 163, 184);        // slate-400
             doc.setFont("helvetica", "normal");
@@ -98,7 +98,7 @@ export function FullReportPdfButton({ title, subtitle, sections }: {
 
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(12);
-                doc.setTextColor(15, 23, 42);        // ink
+                doc.setTextColor(11, 19, 36);        // ink
                 doc.text(section.title.toUpperCase(), 40, y);
                 if (section.note) {
                     doc.setFont("helvetica", "normal");
@@ -114,8 +114,8 @@ export function FullReportPdfButton({ title, subtitle, sections }: {
                     body: section.rows.map(r => r.map(String)),
                     margin: { left: 40, right: 40 },
                     styles: { fontSize: 7, cellPadding: 3 },
-                    headStyles: { fillColor: [15, 23, 42], textColor: [147, 197, 253], fontStyle: "bold" },
-                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    headStyles: { fillColor: [244, 247, 251], textColor: [91, 107, 130], fontStyle: "normal", lineColor: [226, 232, 241], lineWidth: { bottom: 0.2 } },
+                    alternateRowStyles: { fillColor: [255, 255, 255] },
                 });
 
                 y = (doc as any).lastAutoTable.finalY + 30;

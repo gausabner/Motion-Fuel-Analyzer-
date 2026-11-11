@@ -25,58 +25,58 @@ export function ConsumptionSummary({ data, currencySymbol = "N$" }: { data: Summ
     return (
         <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-                <div className="p-4 bg-muted/40 border border-border rounded-md">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                <div className="p-4 bg-muted/40 border border-border rounded-[12px]">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-2">
                         <Fuel className="h-4 w-4" /> Total Petrol Consumption
                     </div>
-                    <p className="text-3xl font-extrabold tabular-nums">{fmtLitres(data.petrolVolume)}</p>
+                    <p className="text-3xl font-semibold tabular-nums">{fmtLitres(data.petrolVolume)}</p>
                     <p className="text-xs text-muted-foreground mt-1 font-medium">
                         {fmtMoney(data.petrolCost, { currency: currencySymbol })} · {fmtCount(data.petrolCount)} transactions
                     </p>
                 </div>
-                <div className="p-4 bg-muted/40 border border-border rounded-md">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                <div className="p-4 bg-muted/40 border border-border rounded-[12px]">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-2">
                         <Droplets className="h-4 w-4" /> Total Diesel Consumption
                     </div>
-                    <p className="text-3xl font-extrabold tabular-nums">{fmtLitres(data.dieselVolume)}</p>
+                    <p className="text-3xl font-semibold tabular-nums">{fmtLitres(data.dieselVolume)}</p>
                     <p className="text-xs text-muted-foreground mt-1 font-medium">
                         {fmtMoney(data.dieselCost, { currency: currencySymbol })} · {fmtCount(data.dieselCount)} transactions
                     </p>
                 </div>
             </div>
 
-            <div className="rounded-sm border border-border bg-card">
+            <div className="bg-card">
                 <Table>
-                    <TableHeader className="bg-muted/50">
+                    <TableHeader>
                         <TableRow>
-                            <TableHead className="font-bold uppercase tracking-wider text-xs">Fuel Type</TableHead>
-                            <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Volume (L)</TableHead>
-                            <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Cost</TableHead>
-                            <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Transactions</TableHead>
-                            <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Share</TableHead>
+                            <TableHead>Fuel Type</TableHead>
+                            <TableHead className="text-right">Volume (L)</TableHead>
+                            <TableHead className="text-right">Cost</TableHead>
+                            <TableHead className="text-right">Transactions</TableHead>
+                            <TableHead className="text-right">Share</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         <TableRow>
-                            <TableCell className="text-xs font-bold">PETROL</TableCell>
+                            <TableCell className="text-xs font-semibold">PETROL</TableCell>
                             <TableCell className="text-xs text-right font-mono tabular-nums">{fmtLitres(data.petrolVolume)}</TableCell>
                             <TableCell className="text-xs text-right font-mono tabular-nums">{fmtMoney(data.petrolCost, { currency: currencySymbol })}</TableCell>
                             <TableCell className="text-xs text-right font-mono tabular-nums">{fmtCount(data.petrolCount)}</TableCell>
                             <TableCell className="text-xs text-right font-mono">{total > 0 ? fmtPercent((data.petrolVolume / total) * 100) : fmtPercent(0)}</TableCell>
                         </TableRow>
                         <TableRow>
-                            <TableCell className="text-xs font-bold">DIESEL</TableCell>
+                            <TableCell className="text-xs font-semibold">DIESEL</TableCell>
                             <TableCell className="text-xs text-right font-mono tabular-nums">{fmtLitres(data.dieselVolume)}</TableCell>
                             <TableCell className="text-xs text-right font-mono tabular-nums">{fmtMoney(data.dieselCost, { currency: currencySymbol })}</TableCell>
                             <TableCell className="text-xs text-right font-mono tabular-nums">{fmtCount(data.dieselCount)}</TableCell>
                             <TableCell className="text-xs text-right font-mono">{total > 0 ? fmtPercent((data.dieselVolume / total) * 100) : fmtPercent(0)}</TableCell>
                         </TableRow>
                         <TableRow className="bg-muted/30">
-                            <TableCell className="text-xs font-extrabold">TOTAL</TableCell>
-                            <TableCell className="text-xs text-right font-mono font-extrabold tabular-nums">{fmtLitres(total)}</TableCell>
-                            <TableCell className="text-xs text-right font-mono font-extrabold tabular-nums">{fmtMoney(data.petrolCost + data.dieselCost, { currency: currencySymbol })}</TableCell>
-                            <TableCell className="text-xs text-right font-mono font-extrabold tabular-nums">{fmtCount(data.petrolCount + data.dieselCount)}</TableCell>
-                            <TableCell className="text-xs text-right font-mono font-extrabold">100%</TableCell>
+                            <TableCell className="text-xs font-semibold">TOTAL</TableCell>
+                            <TableCell className="text-xs text-right font-mono font-semibold tabular-nums">{fmtLitres(total)}</TableCell>
+                            <TableCell className="text-xs text-right font-mono font-semibold tabular-nums">{fmtMoney(data.petrolCost + data.dieselCost, { currency: currencySymbol })}</TableCell>
+                            <TableCell className="text-xs text-right font-mono font-semibold tabular-nums">{fmtCount(data.petrolCount + data.dieselCount)}</TableCell>
+                            <TableCell className="text-xs text-right font-mono font-semibold">100%</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>

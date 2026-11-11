@@ -1,385 +1,138 @@
 ---
 name: Motion Fuel Analyzer
-description: A municipal fuel-attribution console that shows what it can account for and links to what it cannot.
+description: A municipal fuel-accounting console that says what happened in words, then shows the evidence.
 colors:
-  action-blue: "#2563EB"
-  ink: "#0F172A"
-  paper: "#F8FAFC"
-  card-white: "#FFFFFF"
-  rule: "#E2E8F0"
-  secondary-ink: "#64748B"
-  blue-tint: "#DBEAFE"
-  alarm-red: "#DC2626"
-  petrol-blue: "#2A78D6"
-  diesel-orange: "#EB6834"
-  receipt-aqua: "#1BAF7A"
-  night-canvas: "#0B1220"
-  night-card: "#111C33"
-  night-rule: "#1E293B"
-  night-ink: "#F8FAFC"
-  night-secondary-ink: "#94A3B8"
-  night-petrol: "#3987E5"
-  night-diesel: "#D95926"
-  night-receipt: "#199E70"
+  ink: "#0B1324"
+  municipal-blue: "#1D4ED8"
+  sky: "#60A5FA"
+  slate: "#64748B"
+  canvas: "#EEF2F8"
+  wash: "#D6E4FB"
+  card: "#FFFFFF"
+  surface-2: "#F4F7FB"
+  line: "#E2E8F1"
+  grid: "#EBEFF5"
+  bar: "#D5E0F1"
+  body-ink: "#0F172A"
+  muted-ink: "#5B6B82"
+  ok: "#15803D"
+  warn: "#B45309"
+  crit: "#B91C1C"
+  night-canvas: "#090E18"
+  night-card: "#111827"
+  night-ink: "#E6ECF5"
+  night-muted-ink: "#9AAAC0"
+  night-blue: "#3B82F6"
+  night-sky: "#93C5FD"
 typography:
-  display:
-    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.875rem"
-    fontWeight: 700
-    lineHeight: 1.15
-    letterSpacing: "-0.022em"
-  headline:
-    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 800
-    lineHeight: 1.2
-    letterSpacing: "-0.02em"
-  title:
-    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.125rem"
-    fontWeight: 700
-    lineHeight: 1.3
-  body:
-    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.6
-  label:
-    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.75rem"
-    fontWeight: 600
-    lineHeight: 1.4
-    letterSpacing: "0.1em"
+  ui:
+    fontFamily: "Instrument Sans, ui-sans-serif, system-ui, sans-serif"
+  data:
+    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
 rounded:
-  sm: "8px"
-  md: "10px"
-  lg: "12px"
-  pill: "99px"
-spacing:
-  xs: "4px"
-  sm: "8px"
-  md: "16px"
-  lg: "24px"
-  xl: "32px"
-components:
-  button-primary:
-    backgroundColor: "{colors.action-blue}"
-    textColor: "{colors.card-white}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
-    typography: "{typography.label}"
-  button-primary-active:
-    backgroundColor: "{colors.action-blue}"
-    size: "0.97"
-  button-outline:
-    backgroundColor: "{colors.card-white}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
-  card-surface:
-    backgroundColor: "{colors.card-white}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.lg}"
-    padding: "16px"
-  kpi-tile:
-    backgroundColor: "{colors.card-white}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.lg}"
-    padding: "16px"
-  kpi-tile-active:
-    backgroundColor: "{colors.card-white}"
-    size: "0.985"
-  input-field:
-    backgroundColor: "{colors.card-white}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: "8px 12px"
-    height: "36px"
-  table-head:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.card-white}"
-    typography: "{typography.label}"
-    height: "48px"
-  sidebar:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.rule}"
-    width: "224px"
+  card: "22px"
+  tile: "18px"
+  control: "999px"
 ---
 
-# Design System: Motion Fuel Analyzer
+# Design system: Motion Fuel Analyzer
 
-## Overview
+This replaces the earlier "Audit Trail" system. The source of truth is the
+six-screen prototype made in Claude Design; the tokens live in
+`app/globals.css` and the shared pieces in `components/fuel/`,
+`components/ui/` and `components/brand/`.
 
-**Creative North Star: "The Audit Trail"**
+## Six rules
 
-Every number on screen has to be traceable to the transaction that produced it.
-The interface's job is not to summarise fuel consumption attractively — it is to
-show exactly how much of the total it can stand behind and to put the
-unaccounted remainder one click away. Where a conventional dashboard would round
-a gap away, this one names it: *28 codes · 47,624 L unassigned*, linked straight
-to the registry that resolves them.
+1. **One ink mark per chart.** The selected or most important mark is ink;
+   everything else is a pale bar. Colour is never used for variety.
+2. **Every number has a "compared to".** A KPI carries a delta, a share or a
+   reference; a bare figure is unfinished.
+3. **Words before charts.** Each page opens with a sentence (`.bigline`) that
+   states the finding. The chart underneath is the evidence.
+4. **Two clicks to the plate.** Any unit number is a `Plate` that opens the
+   vehicle panel.
+5. **Motion only on change.** Things move when the selection, the period or
+   the data changes. The liquid in the tank gauge is the single ambient motion.
+6. **Status is shape plus colour.** Severity is a dot or a diamond as well as
+   a hue, so it survives greyscale and colour-blindness.
 
-That purpose sets the density and the restraint. Surfaces are flat white cards
-on a cool slate canvas, separated by a single hairline rule, because anything
-more would be decoration competing with figures that end up in a council report.
-Exactly one saturated colour exists in the chrome — Action Blue — and it means
-"you can act here". The sidebar is ink in both light and dark, so the frame of
-the application never moves while the data inside it changes.
+## Colour
 
-The two rejected worlds are on record. An earlier industrial black-and-yellow
-direction ("Hudson 8") was abandoned and must not be picked back up. The generic
-SaaS dashboard — gradient hero tiles, purple-blue accents, rounded-everything,
-emoji section markers — is the default this system exists in opposition to.
+| Role | Light | Dark | Used for |
+|---|---|---|---|
+| Ink (`--primary`) | `#0B1324` | `#E6ECF5` | Primary button, selected tab, the one emphasised chart mark, the menu bar |
+| Municipal Blue (`--brand`) | `#1D4ED8` | `#3B82F6` | Links, focus ring, diesel, liquid, ordinary chart marks |
+| Sky (`--sky`, chart-1) | `#60A5FA` | `#93C5FD` | Petrol |
+| Slate (`--slate`, chart-3) | `#64748B` | `#94A3B8` | Receipts |
+| Canvas | `#EEF2F8` with `#D6E4FB` blooms | `#090E18` | Page background only |
+| Card | `#FFFFFF` | `#111827` | Every surface |
+| Surface 2 | `#F4F7FB` | `#0E1522` | Table headers, inset panels, tracks |
+| Muted ink | `#5B6B82` | `#9AAAC0` | Secondary text, axis labels |
+| ok / warn / crit | `#15803D` / `#B45309` / `#B91C1C` | `#4ADE80` / `#FBBF24` / `#F87171` | Status, each with a `-soft` fill |
 
-**Key Characteristics:**
+Emphasis is ink, not blue. Blue means "you can act on this" or "this is
+diesel". Petrol's sky blue does not reach 3:1 on white, so every chart that
+uses it also carries direct labels and a table view.
 
-- Flat surfaces, hairline borders, no shadow anywhere
-- One saturated accent in the chrome; colour otherwise belongs to data
-- Figures in tabular numerals, grouped, with a non-breaking space before the unit
-- Uppercase micro-labels at 12px with wide tracking, never below that floor
-- Ink sidebar in both themes; the frame holds still
-- Exceptions are surfaced and linked, never smoothed
+## Type
 
-## Colors
+Instrument Sans for the interface; IBM Plex Mono (`.mono`) for anything a
+person might read back to someone else: unit numbers, vote codes, dates,
+litres and money in tables. Page title 25px/600, card title 16px/600, summary
+sentence 22px/600, body 13 to 14px, table header 11.5px/500. No uppercase
+labels, no weights above 600.
 
-A cool, near-neutral system with one saturated blue for action and a separate
-three-hue set reserved for data. Chrome colours and data colours never borrow
-from each other.
+## Shape and surface
 
-### Primary
-- **Action Blue** (`#2563EB`): The only saturated colour in the chrome. Primary
-  buttons, the active sidebar item, focus rings, links. Its scarcity is what
-  makes it legible as "this does something".
-
-### Secondary
-- **Blue Tint** (`#DBEAFE`): Selected and active surfaces, icon wells inside
-  tiles. The quiet companion to Action Blue, never used for text.
-
-### Tertiary — the data set
-Reserved for chart series and never used for interface chrome. Assigned by
-entity, so a filter that drops a series cannot repaint the ones that remain.
-Validated in both themes: all-pairs CVD ΔE 9.2 light, 9.4 dark.
-
-- **Petrol Blue** (`#2A78D6` / night `#3987E5`): Petrol volume, series slot 1.
-- **Diesel Orange** (`#EB6834` / night `#D95926`): Diesel volume, series slot 2.
-- **Receipt Aqua** (`#1BAF7A` / night `#199E70`): Fuel received (FRE), slot 3.
-
-### Neutral
-- **Ink** (`#0F172A`): Body text, table headers, and the sidebar ground in both
-  themes.
-- **Paper** (`#F8FAFC`): The page canvas that cards float on in light mode.
-- **Card White** (`#FFFFFF`): Card and popover surfaces.
-- **Rule** (`#E2E8F0`): Borders, dividers, chart gridlines.
-- **Secondary Ink** (`#64748B`): Labels, captions, axis ticks.
-- **Night Canvas** (`#0B1220`) / **Night Card** (`#111C33`) / **Night Rule**
-  (`#1E293B`): The dark theme is ink-based rather than grey-based, so it reads
-  as the same product at night rather than an inverted copy.
-
-### Named Rules
-
-**The One Action Colour Rule.** Action Blue is the only saturated hue in the
-chrome. If a new element needs attention and is not actionable, it earns it
-through weight, size, or position — never by introducing a second accent.
-
-**The Data-Chrome Separation Rule.** Series colours are for marks only. An
-interface element never borrows Petrol Blue or Diesel Orange, and a chart series
-never uses Action Blue. Cross the line and the reader stops being able to tell
-what is data and what is a control.
-
-**The Measured Colour Rule.** Every series colour resolves from a CSS custom
-property through `lib/chart-theme.ts`. A hex literal in a chart component is a
-defect — it cannot follow the theme, and dark mode is where that shows.
-
-## Typography
-
-**Display / Body Font:** Outfit (with `ui-sans-serif, system-ui, sans-serif`)
-**Label Font:** Outfit, uppercase with wide tracking
-**Numerals:** Outfit with `font-variant-numeric: tabular-nums`
-
-**Character:** A single geometric sans carries the whole system. Outfit's even
-circular forms match the "motion" wordmark, and its tabular figures line up down
-a column, which matters more here than typographic variety — most of the text in
-this product is a number.
-
-### Hierarchy
-- **Display** (700, 1.875rem/30px, -0.022em): Page titles. One per route.
-- **Headline** (800, 1.5rem/24px, -0.02em): KPI values, section figures. Sized
-  by the card's own width rather than the viewport (see Layout).
-- **Title** (700, 1.125rem/18px): Card titles, table captions.
-- **Body** (400, 1rem/16px, 1.6): Running copy, descriptions, table cells.
-- **Label** (600, 0.75rem/12px, 0.1em tracking, uppercase): Column headers, KPI
-  labels, axis ticks, chart legends.
-
-### Named Rules
-
-**The 12px Floor Rule.** No text renders below 12px, anywhere, including SVG
-labels inside charts. Recharts tick and legend sizes are px on SVG and do not
-scale with the root, so they are set explicitly to 12 and checked separately.
-
-**The Honest Root Rule.** The root font-size stays at the browser default. It
-was once pinned to 68% to buy density, which silently overrode every reader's
-own font-size preference and dropped body text to 10.88px. Density comes from
-spacing — padding, gaps, sidebar width — never from shrinking the root em.
-
-**The Tabular Figure Rule.** Any digit that appears in a column gets
-`tabular-nums`. A number that shifts horizontally between rows cannot be scanned.
-
-## Layout
-
-A fixed ink sidebar (224px, `lg:pl-56` on the main region) beside a fluid content
-column capped at 1600px, on a 4px spacing scale. Tight groups sit at 8–16px;
-sections separate at 24–32px.
-
-KPI tiles run in a responsive grid — four across on wide screens, two at tablet,
-one on phones — at a 16px gutter. Cards carry 16px of internal padding, the same
-step the rest of the layout uses: there is one card in this system and one
-spacing step for it. Tables
-scroll inside their own container so the page body never scrolls sideways.
-
-**The Container-Sized Figure Rule.** A headline figure is sized by the width of
-the card holding it, not by the viewport. Each KPI tile is a container query
-scope, stepping 18 → 20 → 24 → 30px as the card crosses 170/230/310px. A viewport
-breakpoint cannot distinguish a four-up row at 1280px from a three-up row at the
-same width, which is how `N$37,021,710` once rendered at 30px in a 220px card.
-
-**The No Side-Scroll Rule.** The page body never scrolls horizontally at any
-width down to 375px. Only tables, charts and code may exceed the column, each in
-its own `overflow-x: auto` container.
-
-## Elevation & Depth
-
-**Surfaces in this system have no shadows.** Cards, tiles, tables and panels are
-flat at every state, including hover. The single exception is the floating
-overlay — see the Overlay Exception below. Depth is carried entirely by a 1px border in Rule against the Paper
-canvas, and by the ink sidebar sitting behind the content plane.
-
-Interactive surfaces signal through border colour and a press scale, not by
-lifting. A clickable KPI tile brightens its border toward Action Blue on hover
-and compresses to 0.985 on press; a button compresses to 0.97. Nothing rises
-off the page.
-
-### Named Rules
-
-**The Flat Surface Rule.** No `box-shadow` on any surface that sits in the page
-plane — cards, tiles, tables, panels — in any state. If an element needs to
-separate from its neighbour, it gets a border or more space. A shadow added to
-signal interactivity is a sign the border and press states were not doing their
-job.
-
-**The Overlay Exception.** Something that genuinely floats above the plane and
-is dismissed — a chart tooltip, a popover, a dialog — carries exactly one
-elevation: `0 4px 16px -4px rgb(15 23 42 / 0.18)`. This is the only shadow in
-the system, and it exists to say "this is temporary and above everything", not
-to add depth.
-
-## Shapes
-
-Softly rounded rectangles on a 12px base radius (`--radius: 0.75rem`), stepping
-down to 10px for medium controls and 8px for small ones. Pills (99px) appear
-only on scrollbar thumbs and status badges.
-
-Chart marks follow the same logic: bars carry a 3–4px radius on their data end
-only, anchored flush to the baseline, so the rounding never implies the value
-floats above zero. Stacked segments are separated by a 2px gap in the surface
-colour rather than a stroke.
+Cards are flat: 22px radius, 1px line, 18px padding, no shadow, no blur, no
+gradient. KPI tiles use 18px. Buttons, tabs, inputs and badges are pills.
+Popovers and the vehicle drawer are the only elevated surfaces. Page sections
+sit 14px apart (`gap-3.5`).
 
 ## Components
 
-### Buttons
-- **Shape:** Gently rounded (10px), 36px tall at default size.
-- **Primary:** Action Blue ground, white label, 8px × 16px padding.
-- **Outline / Ghost:** Card White or transparent ground with a Rule border.
-- **Press:** `scale(0.97)` over 160ms on the soft ease-out curve. This is the
-  only acknowledgement the operator gets before the query returns, so it is not
-  optional.
-- **Hover:** Background shifts only, gated behind `(hover: hover)` so a tap on a
-  phone does not leave the state stuck.
-- **Focus:** A 2px Action Blue ring at 2px offset, drawn outside the element so
-  it never shifts layout.
+- **Menu** (`TopNav`, `Seg`): three groups in an ink segmented control with a
+  sliding white pill; the pages of the open group are pill tabs beneath.
+  A sidebar layout is available per browser from Settings.
+- **PageHeader**: title plus two or three scope facts, actions on the right.
+- **Summary** (`.bigline`): one sentence, one supporting line.
+- **KPI tile** (`.kpi`, `IndustrialKPI`): label, value, then context or delta.
+- **ChartCard**: title, sub-label, legend, and a chart/table toggle on every chart.
+- **Charts** (`components/fuel/charts.tsx`): `CapsuleColumns`, `RankedBars`,
+  `PairedBars`, `MirroredBars`, `DotStrip`, `DailyLine`, `Sparkline`. Flat
+  fills, y from zero, labels on the marks when there are 12 or fewer.
+- **Plate** and **VehiclePanel**: the unit number and the drawer it opens.
+- **Tables**: surface-2 header with rounded ends, hairline rows, mono figures.
+- **Toast**: ink pill, bottom centre, with Undo for five seconds after any
+  action that changes a record.
 
-### Cards / Containers
-- **Corner Style:** 12px.
-- **Background:** Card White on Paper; Night Card on Night Canvas.
-- **Shadow Strategy:** None, in any state. See Elevation & Depth.
-- **Border:** 1px Rule.
-- **Internal Padding:** 16px.
+## Motion
 
-### KPI Tiles
-The signature component. An icon well in Blue Tint, an uppercase label that
-wraps rather than truncating, the figure in tabular numerals sized by container
-query, and an optional sub-value. When the tile opens a drill-down it renders as
-a `<button>` with an accessible name of the form "*label*: *value*. View
-breakdown", so the figure is reachable and announced without a mouse.
+| What | Duration | Curve |
+|---|---|---|
+| Press | 150ms, scale 0.96 | spring |
+| Menu and tab indicator | 320ms | spring `cubic-bezier(.34,1.36,.64,1)` |
+| Figures rolling on period change | 450ms, tiles 35ms apart | ease-out `cubic-bezier(.22,1,.36,1)` |
+| Chart marks on load | 700ms | spring |
+| Drawer | 340ms in, 260ms out | spring in, ease-out out |
+| Liquid level | 900ms | ease-out |
 
-### Inputs / Fields
-- **Style:** Card White ground, 1px Rule border, 10px radius, 36px tall.
-- **Focus:** The shared 2px Action Blue ring.
-- **Labels:** Every control has one. Where the visual design carries the meaning
-  (a search field behind a magnifier icon), the label is `sr-only` rather than
-  absent — a placeholder is not a label.
+Selection changes are transitions, so they retarget mid-flight. Hover effects
+are gated to hover-capable pointers. With reduced motion, movement is removed
+and colour and opacity changes remain.
 
-### Tables
-Ink header band with white uppercase labels at the 12px label style, 48px tall.
-Rows separate on 1px Rule with a muted hover tint. Numeric columns are right
-aligned and tabular. Long tables paginate rather than scroll indefinitely.
+## Logo
 
-### Navigation
-The ink sidebar, 224px, grouped under uppercase section headings (Overview,
-Analysis, Data & Admin). The active item takes an Action Blue ground. Both the
-desktop rail and the mobile sheet are `<nav>` landmarks with distinct accessible
-names, and their section ids derive from a `useId()` so the two copies can
-coexist in the DOM without colliding.
+Ink on light, near-white on dark, through `currentColor`. Never blue, never in
+a circle or tinted box, never a spinner or watermark. The full logo appears at
+240px or wider (sign-in, landing, Settings → About); the square mark is used
+in the menu and the favicon.
 
-### Charts
-- **Grid:** Horizontal rules only, in Rule at 70% opacity, with a solid baseline.
-  No vertical gridlines, no dashes.
-- **Axes:** 12px Secondary Ink ticks, no axis line, no tick marks. Volume axes
-  speak in thousands (`8k`), not six-digit litres; the exact figure lives in the
-  tooltip.
-- **Marks:** 2px lines, bars capped at a sensible max width, 8px active dots.
-- **Tooltip:** Card surface, 1px Rule border, 8px radius. Line and area charts
-  get a dashed crosshair; bar and category charts get a translucent band.
-- **Legend:** Present whenever two or more series are drawn; series with four or
-  fewer members also carry direct labels so identity is never colour-alone.
+## Do not
 
-### Named Rules
-
-**The Press-Is-Feedback Rule.** Anything pressable compresses on `:active`.
-Buttons 0.97, large tiles 0.985, both over 160ms. On a surface where most
-actions wait on a database read, the press is the only immediate response the
-interface can give.
-
-**The Repeated-Action Rule.** Controls used dozens of times an hour — filters,
-pagination, tab switches — get no entrance or exit animation. Motion on a
-repeated action reads as latency, not polish.
-
-## Do's and Don'ts
-
-### Do:
-- **Do** route every displayed number through `lib/format.ts`, and every chart
-  colour through `lib/chart-theme.ts`. One quantity reads identically on every
-  screen and in every export, or the reader stops trusting all of it.
-- **Do** take the currency symbol from `SystemSettings`. A literal `N$` goes
-  stale the moment Settings changes while every figure around it updates.
-- **Do** state coverage as a measured share with a link to its exceptions.
-- **Do** keep issues (FIS) and receipts (FRE) visually distinct and never summed.
-- **Do** hold WCAG 2.1 AA: 4.5:1 on body text, 3:1 on large text and chart
-  marks, keyboard reach for every drill-down, one visible `h1` per route.
-- **Do** gate every hover style behind `@media (hover: hover)`.
-
-### Don't:
-- **Don't** add a `box-shadow` to any surface in the page plane, in any state.
-  Only a floating, dismissible overlay gets the one elevation value.
-- **Don't** introduce a second saturated accent into the chrome, or use a series
-  colour on an interface element.
-- **Don't** encode a categorical difference as two steps of one hue. Petrol and
-  Diesel are different fuels, not more and less of one thing.
-- **Don't** colour a mark by its rank. A filter that changes the set must not
-  repaint the survivors; sorted bars already encode rank by position.
-- **Don't** use `transition-all`, or any `ease-in` curve on an interface element.
-- **Don't** pin a font size in px where the rem scale would do, and never render
-  text below 12px.
-- **Don't** put a coloured border wider than 1px on a card, list item or callout.
-- **Don't** drift toward the abandoned "Hudson 8" black-and-yellow industrial
-  direction, or toward the generic SaaS dashboard look — gradient hero tiles,
-  purple-blue accents, emoji section markers.
+- Show a figure the data cannot support. Say what is missing instead.
+- Use pies, donuts, coloured bars for variety, glass, blur or card gradients.
+- Add a second ambient animation.
+- Use emoji or mix icon families (lucide, 2px stroke, throughout).
+- Add FIS and FRE together.

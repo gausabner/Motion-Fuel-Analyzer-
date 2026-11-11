@@ -109,10 +109,10 @@ export default async function FISPage({
     const exportUrl = `/api/reports/export?${exportParams.toString()}`;
 
     return (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-3.5">
             <PageHeader
-                title={<>Fuel issues <span className="text-primary">(FIS)</span></>}
-                scope="Fuel extracted from tanks and issued to fleet vehicles — this is true consumption."
+                title="Fuel issues"
+                scope="Fuel issued from the tanks to vehicles and plant. This is consumption."
             >
                 <TableCsvButton filename="fis.csv" serverUrl={exportUrl} />
             </PageHeader>

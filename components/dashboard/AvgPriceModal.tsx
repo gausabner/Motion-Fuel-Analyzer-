@@ -43,11 +43,11 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             return (
-                <div className="bg-popover border border-border p-3 rounded-lg shadow-xl text-xs">
-                    <p className="font-bold text-foreground mb-1">{format(new Date(data.date), "MMM dd, yyyy")}</p>
+                <div className="bg-popover border border-border p-3 rounded-lg text-xs">
+                    <p className="font-semibold text-foreground mb-1">{format(new Date(data.date), "MMM dd, yyyy")}</p>
                     <p className="text-muted-foreground flex items-center justify-between gap-4">
                         <span>Avg Price:</span>
-                        <span className="font-mono text-foreground font-bold">{currencySymbol}{data.value.toFixed(2)} /L</span>
+                        <span className="font-mono text-foreground font-semibold">{currencySymbol}{data.value.toFixed(2)} /L</span>
                     </p>
                 </div>
             );
@@ -62,14 +62,14 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="!w-[70vw] !max-w-[70vw] rounded-3xl p-4 bg-card/95 backdrop-blur-xl border-white/20">
+            <DialogContent className="!w-[70vw] !max-w-[70vw] rounded-card p-4 bg-card/95 border-white/20">
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2">
                         <div className={`p-2 rounded-xl bg-accent`}>
                             <Coins className="h-5 w-5 text-foreground" />
                         </div>
                         <div>
-                            <DialogTitle className="text-2xl font-bold text-foreground">
+                            <DialogTitle className="text-2xl font-semibold text-foreground">
                                 Daily Price Analysis
                             </DialogTitle>
                             <DialogDescription className="text-muted-foreground">
@@ -82,7 +82,7 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
                     {/* Main Chart Area */}
                     <div className="col-span-1 lg:col-span-3 h-[200px] w-full border border-border rounded-xl p-3 bg-muted/40 flex flex-col">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                        <h3 className="text-xs font-semibold text-muted-foreground mb-2">
                             Price Scatter Distribution
                         </h3>
                         <div className="flex-1 w-full min-h-0">
@@ -131,21 +131,21 @@ export function AvgPriceModal({ open, onOpenChange, data, currencySymbol }: AvgP
 
                     {/* Stats Side Panel */}
                     <div className="flex flex-col gap-3">
-                        <div className="p-3 rounded-xl border border-border bg-card shadow-sm min-w-0">
-                            <p className="text-xs font-bold uppercase text-muted-foreground truncate">Highest Recorded</p>
-                            <p className="text-lg font-black text-foreground mt-1 truncate" title={`${currencySymbol}${maxPrice.toFixed(2)}`}>
+                        <div className="p-3 rounded-xl border border-border bg-card min-w-0">
+                            <p className="text-xs font-semibold text-muted-foreground truncate">Highest Recorded</p>
+                            <p className="text-lg font-semibold text-foreground mt-1 truncate" title={`${currencySymbol}${maxPrice.toFixed(2)}`}>
                                 {currencySymbol}{maxPrice.toFixed(2)}
                             </p>
                         </div>
-                        <div className="p-3 rounded-xl border border-border bg-card shadow-sm min-w-0">
-                            <p className="text-xs font-bold uppercase text-muted-foreground truncate">Lowest Recorded</p>
-                            <p className="text-lg font-black text-foreground mt-1 truncate" title={`${currencySymbol}${minPrice.toFixed(2)}`}>
+                        <div className="p-3 rounded-xl border border-border bg-card min-w-0">
+                            <p className="text-xs font-semibold text-muted-foreground truncate">Lowest Recorded</p>
+                            <p className="text-lg font-semibold text-foreground mt-1 truncate" title={`${currencySymbol}${minPrice.toFixed(2)}`}>
                                 {currencySymbol}{minPrice.toFixed(2)}
                             </p>
                         </div>
-                        <div className="p-3 rounded-xl border border-border bg-card shadow-sm min-w-0">
-                            <p className="text-xs font-bold uppercase text-muted-foreground truncate">Period Average</p>
-                            <p className="text-lg font-black text-foreground mt-1 truncate" title={`${currencySymbol}${avgTotal.toFixed(2)}`}>
+                        <div className="p-3 rounded-xl border border-border bg-card min-w-0">
+                            <p className="text-xs font-semibold text-muted-foreground truncate">Period Average</p>
+                            <p className="text-lg font-semibold text-foreground mt-1 truncate" title={`${currencySymbol}${avgTotal.toFixed(2)}`}>
                                 {currencySymbol}{avgTotal.toFixed(2)}
                             </p>
                         </div>

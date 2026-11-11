@@ -159,12 +159,12 @@ export default async function ReportsPage({
             rows: costCentreData.map((d: any) => [d.cc.voteNo, d.cc.division, d.cc.department, d.petrol.toFixed(2), d.diesel.toFixed(2), (d.petrol + d.diesel).toFixed(2)]),
         },
         {
-            title: "Top 10 Petrol Issue Votes",
+            title: "Top 10 Petrol Issue votes",
             headers: ["Rank", "Vote No", "Division", "Volume (L)", `Cost (${currencySymbol})`],
             rows: topVotesPetrol.map((d: any, i: number) => [i + 1, d.voteNo, d.division, d.volume.toFixed(2), d.cost.toFixed(2)]),
         },
         {
-            title: "Top 10 Diesel Issue Votes",
+            title: "Top 10 Diesel Issue votes",
             headers: ["Rank", "Vote No", "Division", "Volume (L)", `Cost (${currencySymbol})`],
             rows: topVotesDiesel.map((d: any, i: number) => [i + 1, d.voteNo, d.division, d.volume.toFixed(2), d.cost.toFixed(2)]),
         },
@@ -210,7 +210,7 @@ export default async function ReportsPage({
     }
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Fuel report"
                 scope={`${scopeLabel} · every table exports to CSV, the full report to PDF`}
@@ -231,12 +231,12 @@ export default async function ReportsPage({
             />
 
             <Tabs defaultValue="summary" className="space-y-4">
-                <TabsList className="bg-muted p-1 flex-wrap h-auto">
-                    <TabsTrigger value="summary" className="data-[state=active]:bg-card shadow-none">Summary</TabsTrigger>
-                    <TabsTrigger value="consumption" className="data-[state=active]:bg-card shadow-none">Daily Consumption</TabsTrigger>
-                    <TabsTrigger value="fleet" className="data-[state=active]:bg-card shadow-none">Fleet Analysis</TabsTrigger>
-                    <TabsTrigger value="votes" className="data-[state=active]:bg-card shadow-none">Issue Votes</TabsTrigger>
-                    <TabsTrigger value="transactions" className="data-[state=active]:bg-card shadow-none">Transactions (FIS/FRE)</TabsTrigger>
+                <TabsList>
+                    <TabsTrigger value="summary">Summary</TabsTrigger>
+                    <TabsTrigger value="consumption">Daily consumption</TabsTrigger>
+                    <TabsTrigger value="fleet">Fleet</TabsTrigger>
+                    <TabsTrigger value="votes">Issue votes</TabsTrigger>
+                    <TabsTrigger value="transactions">Transactions</TabsTrigger>
                 </TabsList>
 
                 {/* ============ SUMMARY ============ */}
@@ -321,7 +321,7 @@ export default async function ReportsPage({
                         <Card className="monumental-card">
                             <CardHeader className="flex flex-row items-start justify-between gap-4">
                                 <div>
-                                    <CardTitle>Top 10 Petrol Issue Votes</CardTitle>
+                                    <CardTitle>Top 10 Petrol Issue votes</CardTitle>
                                     <CardDescription>Highest petrol-consuming divisions.</CardDescription>
                                 </div>
                                 <TableCsvButton filename="top_votes_petrol.csv" serverUrl={csvUrl("top-votes-petrol")} />
@@ -333,7 +333,7 @@ export default async function ReportsPage({
                         <Card className="monumental-card">
                             <CardHeader className="flex flex-row items-start justify-between gap-4">
                                 <div>
-                                    <CardTitle>Top 10 Diesel Issue Votes</CardTitle>
+                                    <CardTitle>Top 10 Diesel Issue votes</CardTitle>
                                     <CardDescription>Highest diesel-consuming divisions.</CardDescription>
                                 </div>
                                 <TableCsvButton filename="top_votes_diesel.csv" serverUrl={csvUrl("top-votes-diesel")} />
@@ -372,10 +372,10 @@ export default async function ReportsPage({
                         </CardHeader>
                         <CardContent>
                             <Tabs defaultValue="all">
-                                <TabsList className="bg-muted p-1 mb-3">
-                                    <TabsTrigger value="all" className="data-[state=active]:bg-card shadow-none text-xs">All ({fisData.length})</TabsTrigger>
-                                    <TabsTrigger value="petrol" className="data-[state=active]:bg-card shadow-none text-xs">Petrol ({fisPetrol.length})</TabsTrigger>
-                                    <TabsTrigger value="diesel" className="data-[state=active]:bg-card shadow-none text-xs">Diesel ({fisDiesel.length})</TabsTrigger>
+                                <TabsList className="mb-3">
+                                    <TabsTrigger value="all">All<span className="ct">{fisData.length}</span></TabsTrigger>
+                                    <TabsTrigger value="petrol">Petrol<span className="ct">{fisPetrol.length}</span></TabsTrigger>
+                                    <TabsTrigger value="diesel">Diesel<span className="ct">{fisDiesel.length}</span></TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="all"><FISTable data={fisData} /></TabsContent>
                                 <TabsContent value="petrol"><FISTable data={fisPetrol} /></TabsContent>
@@ -391,7 +391,7 @@ export default async function ReportsPage({
                                 <CardDescription>
                                     Fuel received into tanks (stock replenishment). Showing latest 100 — CSV includes all.
                                     {(params.department || params.division || params.vehicleId) && (
-                                        <span className="block mt-1 text-amber-600 font-medium">
+                                        <span className="block mt-1 text-warn font-medium">
                                             Receipts aren&apos;t attributed to cost centres — department, division and unit filters don&apos;t apply here.
                                         </span>
                                     )}
@@ -401,10 +401,10 @@ export default async function ReportsPage({
                         </CardHeader>
                         <CardContent>
                             <Tabs defaultValue="all">
-                                <TabsList className="bg-muted p-1 mb-3">
-                                    <TabsTrigger value="all" className="data-[state=active]:bg-card shadow-none text-xs">All ({freData.length})</TabsTrigger>
-                                    <TabsTrigger value="petrol" className="data-[state=active]:bg-card shadow-none text-xs">Petrol ({frePetrol.length})</TabsTrigger>
-                                    <TabsTrigger value="diesel" className="data-[state=active]:bg-card shadow-none text-xs">Diesel ({freDiesel.length})</TabsTrigger>
+                                <TabsList className="mb-3">
+                                    <TabsTrigger value="all">All<span className="ct">{freData.length}</span></TabsTrigger>
+                                    <TabsTrigger value="petrol">Petrol<span className="ct">{frePetrol.length}</span></TabsTrigger>
+                                    <TabsTrigger value="diesel">Diesel<span className="ct">{freDiesel.length}</span></TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="all"><FRETable data={freData} /></TabsContent>
                                 <TabsContent value="petrol"><FRETable data={frePetrol} /></TabsContent>

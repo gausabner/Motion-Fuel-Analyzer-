@@ -10,12 +10,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Users, FileWarning, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { IndustrialKPI } from "@/components/dashboard/IndustrialKPI";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 
 export const dynamic = 'force-dynamic';
 
 import { FuelLogFilters } from "@/components/dashboard/FuelLogFilters";
-import { DepartmentCharts } from "@/components/dashboard/DepartmentCharts";
+import { ChartCard, RankedBars } from "@/components/fuel/charts";
+import { fmtDept } from "@/lib/format";
 import { getDepartmentBreakdown } from "@/lib/analytics";
 import { TablePagination } from "@/components/dashboard/TablePagination";
 import { paginate } from "@/lib/pagination";
@@ -42,6 +44,14 @@ export default async function DepartmentsPage({
     const departments = await getDepartmentBreakdown(filters);
 
     const totalSpend = departments.reduce((sum, d) => sum + d.totalCost, 0);
+    const vol = (d: { petrolVolume: number; dieselVolume: number }) => d.petrolVolume + d.dieselVolume;
+    const totalLitres = departments.reduce((sum, d) => sum + vol(d), 0);
+    const byVolume = [...departments].sort((a, b) => vol(b) - vol(a));
+    // A row keyed by a bare vote code has no cost centre behind it yet.
+    const isCode = (id: string) => /^\d+$/.test(id) || id === "Unassigned";
+    const name = (id: string) => (isCode(id) ? `Unassigned · ${id}` : fmtDept(id));
+    const top = byVolume.slice(0, 8);
+    const topCost = departments.slice(0, 8);
 
     // What the removed "Cost allocation 100%" card claimed, measured instead of
     // asserted: litres whose vote number resolves to a registered cost centre.
@@ -88,81 +98,76 @@ export default async function DepartmentsPage({
     });
 
     return (
-        <div className="space-y-8">
+        <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Cost centres"
-                scope="Departmental fuel expenditure and allocation analysis · FIS transactions only"
+                scope="Fuel issued and what it cost, by department and division. Fuel issues only."
             >
                 <TableCsvButton filename="departmental_breakdown.csv" serverUrl={departmentsExportUrl} />
             </PageHeader>
 
             <FuelLogFilters costCentres={costCentres} />
 
-            <div className="grid gap-4 md:grid-cols-3 stagger-tiles">
-                <Card className="monumental-card">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Primary Depts</CardTitle>
-                        <Building2 className="h-4 w-4 text-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{departments.length} Units</div>
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Active cost centers recorded</p>
-                    </CardContent>
-                </Card>
+            <div className="grid gap-3.5 md:grid-cols-3 stagger-tiles">
+                <IndustrialKPI label="Departments" icon={Building2} value={`${departments.length}`} subValue="With fuel issued in this selection" />
 
-                <Card className="monumental-card border-l-4 border-l-yellow-400">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Total Spend</CardTitle>
-                        <Users className="h-4 w-4 text-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground break-words">{fmtMoneyCompact(totalSpend, cur)}</div>
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Aggregated period cost</p>
-                    </CardContent>
-                </Card>
+                <IndustrialKPI label="Total spend" icon={Users} value={fmtMoneyCompact(totalSpend, cur)} subValue="Value of fuel issued in this selection" />
 
-                <Card className="monumental-card">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-bold uppercase text-muted-foreground tracking-widest">Attributed</CardTitle>
-                        {openCodes > 0
-                            ? <FileWarning className="h-4 w-4 text-amber-600" />
-                            : <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xl md:text-2xl xl:text-3xl font-extrabold text-foreground">{attributedShare}</div>
+                <div className="kpi">
+                    <div className="kpi-h">Charged to a cost centre</div>
+                    <div className="kpi-v num">{attributedShare}</div>
+                    <div className="kpi-f">
                         {openCodes > 0 ? (
-                            <Link
-                                href="/dashboard/registry?tab=unassigned"
-                                className="mt-1 inline-flex items-center gap-1 rounded-sm text-xs font-bold uppercase tracking-wider text-amber-700 underline underline-offset-2 hover:text-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-amber-400 dark:hover:text-amber-300"
-                            >
-                                {openCodes} code{openCodes === 1 ? "" : "s"} · {fmtLitres(Number(cov.openLitres || 0))} unassigned
+                            <Link href="/dashboard/registry?tab=unassigned" className="lnk text-xs">
+                                {openCodes} code{openCodes === 1 ? "" : "s"} · {fmtLitres(Number(cov.openLitres || 0))} still unassigned
                             </Link>
-                        ) : (
-                            <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1">Every vote resolves to a cost centre</p>
-                        )}
-                    </CardContent>
-                </Card>
+                        ) : <span className="ctx">Every vote code is mapped</span>}
+                    </div>
+                </div>
             </div>
 
-            {/* Charts Section */}
-            <section>
-                <DepartmentCharts data={departments} />
+            <section className="monumental-card" aria-label="Summary">
+                <p className="bigline">
+                    {departments.length === 0
+                        ? "No fuel was issued to a cost centre in this selection."
+                        : `${name(byVolume[0].id)} took the most fuel: ${fmtLitres(vol(byVolume[0]))}, ${fmtShare(vol(byVolume[0]), totalLitres)} of everything issued.`}
+                    {departments.length > 3 && (
+                        <small>The three largest cost centres account for {fmtShare(byVolume.slice(0, 3).reduce((x, d) => x + vol(d), 0), totalLitres)} of the litres issued.</small>
+                    )}
+                </p>
             </section>
+
+            {departments.length > 0 && (
+                <div className="grid gap-3.5 lg:grid-cols-2">
+                    <ChartCard
+                        title="Litres issued" sub={`Largest ${top.length} cost centres`}
+                        table={{ head: ["Cost centre", "Litres"], rows: top.map(d => [fmtDept(d.id), Math.round(vol(d)).toLocaleString("en-GB")]) }}
+                    >
+                        <RankedBars wide ariaLabel="Litres issued by cost centre" rows={top.map(d => ({ label: name(d.id), value: vol(d), display: fmtLitres(vol(d)), unassigned: isCode(d.id) }))} />
+                    </ChartCard>
+                    <ChartCard
+                        title="Cost" sub={`Largest ${topCost.length} cost centres`}
+                        table={{ head: ["Cost centre", "Cost"], rows: topCost.map(d => [fmtDept(d.id), fmtMoney(d.totalCost, { currency: cur })]) }}
+                    >
+                        <RankedBars wide ariaLabel="Fuel cost by cost centre" rows={topCost.map(d => ({ label: name(d.id), value: d.totalCost, display: fmtMoneyCompact(d.totalCost, cur), unassigned: isCode(d.id) }))} />
+                    </ChartCard>
+                </div>
+            )}
 
             <Card className="monumental-card bg-card p-0 overflow-hidden">
                 <CardHeader className="p-4 border-b border-border">
-                    <CardTitle className="text-lg font-extrabold uppercase tracking-tight">Departmental Breakdown</CardTitle>
+                    <CardTitle className="text-base font-semibold">Every department</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-black hover:bg-black">
-                                    <TableHead className="font-bold text-white uppercase tracking-wider text-xs h-12">Vote No / Department</TableHead>
-                                    <TableHead className="font-bold text-white uppercase tracking-wider text-xs h-12">Total Cost</TableHead>
-                                    <TableHead className="font-bold text-white uppercase tracking-wider text-xs h-12">Petrol (L)</TableHead>
-                                    <TableHead className="font-bold text-white uppercase tracking-wider text-xs h-12">Diesel (L)</TableHead>
-                                    <TableHead className="font-bold text-white uppercase tracking-wider text-xs h-12 text-right">% of Total</TableHead>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead>Vote No / Department</TableHead>
+                                    <TableHead>Total Cost</TableHead>
+                                    <TableHead>Petrol (L)</TableHead>
+                                    <TableHead>Diesel (L)</TableHead>
+                                    <TableHead className="text-right">% of Total</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -174,20 +179,20 @@ export default async function DepartmentsPage({
                                     </TableRow>
                                 ) : (
                                     pageRows.map((dept) => (
-                                        <TableRow key={dept.id} className="hover:bg-muted/40 transition-colors border-b border-border last:border-0">
-                                            <TableCell className="font-bold text-foreground py-4">
-                                                {dept.id}
+                                        <TableRow key={dept.id}>
+                                            <TableCell>
+                                                {fmtDept(dept.id)}
                                             </TableCell>
-                                            <TableCell className="font-bold text-foreground">
+                                            <TableCell className="mono">
                                                 {fmtMoney(dept.totalCost, { currency: cur })}
                                             </TableCell>
-                                            <TableCell className="font-medium text-muted-foreground font-mono text-xs">
+                                            <TableCell className="mono text-muted-foreground">
                                                 {fmtLitres(dept.petrolVolume)}
                                             </TableCell>
-                                            <TableCell className="font-medium text-muted-foreground font-mono text-xs">
+                                            <TableCell className="mono text-muted-foreground">
                                                 {fmtLitres(dept.dieselVolume)}
                                             </TableCell>
-                                            <TableCell className="text-right font-bold text-foreground">
+                                            <TableCell className="mono text-right">
                                                 {fmtShare(dept.totalCost, totalSpend)}
                                             </TableCell>
                                         </TableRow>

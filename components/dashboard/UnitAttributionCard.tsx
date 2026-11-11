@@ -37,9 +37,9 @@ export function UnitAttributionCard({
 
     if (attribution.matchedCount === 0) {
         return (
-            <Card className="monumental-card border-l-4 border-l-muted">
+            <Card className="monumental-card">
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Unit attribution</CardTitle>
+                    <CardTitle className="text-sm font-semibold text-muted-foreground">Unit attribution</CardTitle>
                     <CardDescription>No fuel issues found for “{attribution.query}” in this period.</CardDescription>
                 </CardHeader>
             </Card>
@@ -52,16 +52,16 @@ export function UnitAttributionCard({
         const { units, departments, unassignedUnits } = attribution.summary;
         const shown = attribution.units.slice(0, MULTI_LIST_LIMIT);
         return (
-            <Card className="monumental-card border-l-4 border-l-foreground/20">
+            <Card className="monumental-card">
                 <CardHeader className="pb-3">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Unit attribution</CardTitle>
+                            <CardTitle className="text-sm font-semibold text-muted-foreground">Unit attribution</CardTitle>
                             <CardDescription className="mt-1.5">
                                 <span className="font-semibold text-foreground">{units} units</span> match “{attribution.query}”,
                                 spanning <span className="font-semibold text-foreground">{departments}</span> department{departments === 1 ? "" : "s"}
                                 {unassignedUnits > 0 && (
-                                    <> · <span className="font-semibold text-amber-600">{unassignedUnits}</span> with unregistered votes</>
+                                    <> · <span className="font-semibold text-warn">{unassignedUnits}</span> with unregistered votes</>
                                 )}
                                 . Search one unit number to see and fix its attribution.
                             </CardDescription>
@@ -73,11 +73,11 @@ export function UnitAttributionCard({
                     <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                             <thead>
-                                <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                                    <th className="py-1.5 pr-3 font-bold">Unit</th>
-                                    <th className="py-1.5 pr-3 font-bold">Cost centre</th>
-                                    <th className="py-1.5 pr-3 font-bold text-right">Litres</th>
-                                    <th className="py-1.5 font-bold text-right">Status</th>
+                                <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                                    <th className="py-1.5 pr-3 font-semibold">Unit</th>
+                                    <th className="py-1.5 pr-3 font-semibold">Cost centre</th>
+                                    <th className="py-1.5 pr-3 font-semibold text-right">Litres</th>
+                                    <th className="py-1.5 font-semibold text-right">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -87,7 +87,7 @@ export function UnitAttributionCard({
                                         <td className="py-1.5 pr-3">
                                             {u.primary
                                                 ? <>{u.primary.department}<span className="text-muted-foreground"> / {u.primary.division}</span></>
-                                                : <span className="text-amber-600 font-semibold">No registered cost centre</span>}
+                                                : <span className="text-warn font-semibold">No registered cost centre</span>}
                                             {u.departments.length > 1 && (
                                                 <span className="text-muted-foreground"> +{u.departments.length - 1} more</span>
                                             )}
@@ -119,25 +119,25 @@ function SingleUnit({ unit, canAssign, exportUrl }: {
     exportUrl?: string;
 }) {
     const assigned = unit.status === "assigned";
-    const accent = assigned ? "border-l-emerald-500" : "border-l-amber-500";
+    const accent = assigned ? "border-border" : "border-warn/30";
 
     return (
-        <Card className={`monumental-card border-l-4 ${accent}`}>
+        <Card className={`monumental-card ${accent}`}>
             <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+                        <CardTitle className="text-sm font-semibold text-muted-foreground">
                             Unit attribution
                         </CardTitle>
                         <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                             <Building2 className="h-4 w-4 text-foreground" />
-                            <span className="text-lg font-extrabold text-foreground">{unit.unitNo}</span>
+                            <span className="text-lg font-semibold text-foreground">{unit.unitNo}</span>
                             {unit.primary ? (
                                 <span className="text-sm text-muted-foreground">
                                     · {unit.primary.department} <span className="opacity-60">/ {unit.primary.division}</span>
                                 </span>
                             ) : (
-                                <span className="text-sm text-amber-600 font-semibold">· No registered cost centre</span>
+                                <span className="text-sm text-warn font-semibold">· No registered cost centre</span>
                             )}
                         </div>
                     </div>
@@ -160,12 +160,12 @@ function SingleUnit({ unit, canAssign, exportUrl }: {
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                         <thead>
-                            <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                                <th className="py-1.5 pr-3 font-bold">Issue vote</th>
-                                <th className="py-1.5 pr-3 font-bold">Department</th>
-                                <th className="py-1.5 pr-3 font-bold">Division</th>
-                                <th className="py-1.5 pr-3 font-bold text-right">Litres</th>
-                                <th className="py-1.5 font-bold text-right">Txns</th>
+                            <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                                <th className="py-1.5 pr-3 font-semibold">Issue vote</th>
+                                <th className="py-1.5 pr-3 font-semibold">Department</th>
+                                <th className="py-1.5 pr-3 font-semibold">Division</th>
+                                <th className="py-1.5 pr-3 font-semibold text-right">Litres</th>
+                                <th className="py-1.5 font-semibold text-right">Txns</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -174,7 +174,7 @@ function SingleUnit({ unit, canAssign, exportUrl }: {
                                     <td className="py-1.5 pr-3 font-mono">{v.voteNo || "—"}</td>
                                     <td className="py-1.5 pr-3">
                                         {v.department ?? (
-                                            <span className="text-amber-600 font-semibold">
+                                            <span className="text-warn font-semibold">
                                                 Unregistered
                                                 {v.suggestedDepartment && (
                                                     <span className="font-normal opacity-80"> · suggested: {v.suggestedDepartment}</span>
@@ -193,9 +193,9 @@ function SingleUnit({ unit, canAssign, exportUrl }: {
 
                 {/* Assignment is only offered when something is actually unregistered. */}
                 {unit.unresolved.length > 0 && (
-                    <div className="rounded-md border border-amber-500/40 bg-amber-50/50 dark:bg-amber-950/20 p-3 space-y-2">
+                    <div className="rounded-[12px] border border-warn/30 bg-warn-soft p-3 space-y-2">
                         <p className="text-xs text-foreground">
-                            <AlertTriangle className="h-3.5 w-3.5 inline mr-1.5 text-amber-600" />
+                            <AlertTriangle className="h-3.5 w-3.5 inline mr-1.5 text-warn" />
                             {unit.unresolved.length} vote{unit.unresolved.length === 1 ? " is" : "s are"} not registered to a cost centre.
                         </p>
                         {canAssign ? (
@@ -222,13 +222,13 @@ function SingleUnit({ unit, canAssign, exportUrl }: {
 function StatusBadge({ status }: { status: "assigned" | "partial" | "unassigned" }) {
     if (status === "assigned") {
         return (
-            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-emerald-200">
+            <Badge className="bg-ok-soft text-ok hover:bg-ok-soft border-ok/30">
                 <CheckCircle2 className="h-3 w-3 mr-1" /> Assigned
             </Badge>
         );
     }
     return (
-        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">
+        <Badge className="bg-warn-soft text-warn hover:bg-warn-soft border-warn/30">
             <AlertTriangle className="h-3 w-3 mr-1" />
             {status === "partial" ? "Partly assigned" : "Not assigned"}
         </Badge>
@@ -285,11 +285,11 @@ function AssignDialog({ vote, unitNo }: { vote: UnitVoteRow; unitNo: string }) {
 
                 <div className="space-y-3">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Department</label>
+                        <label className="text-xs font-semibold text-muted-foreground">Department</label>
                         <Input value={department} onChange={e => setDepartment(e.target.value)} placeholder="DEPARTMENT OF …" />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Division</label>
+                        <label className="text-xs font-semibold text-muted-foreground">Division</label>
                         <Input value={division} onChange={e => setDivision(e.target.value)} placeholder="DIVISION NAME" />
                     </div>
                     {vote.suggestedDepartment && (
@@ -297,7 +297,7 @@ function AssignDialog({ vote, unitNo }: { vote: UnitVoteRow; unitNo: string }) {
                             Suggested from the vote’s division prefix. Check before saving.
                         </p>
                     )}
-                    {error && <p className="text-xs text-red-600 font-medium">{error}</p>}
+                    {error && <p className="text-xs text-crit font-medium">{error}</p>}
                 </div>
 
                 <DialogFooter>

@@ -9,10 +9,10 @@ import { CloudUpload } from "lucide-react";
 
 export default function IngestionPage() {
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Uploads"
-                scope="Import fuel log spreadsheets — Excel or CSV, duplicates skipped automatically."
+                scope="Excel or CSV exports from the fuel system. Rows already loaded are skipped."
             />
 
             <UploadTemplates />
@@ -22,10 +22,10 @@ export default function IngestionPage() {
                     <CardHeader className="pb-4 border-b border-border">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-accent rounded-lg">
-                                <CloudUpload className="h-5 w-5 text-primary" />
+                                <CloudUpload className="h-5 w-5 text-brand" />
                             </div>
                             <div>
-                                <CardTitle className="text-lg font-bold tracking-tight">Data import</CardTitle>
+                                <CardTitle className="text-lg font-semibold tracking-tight">Data import</CardTitle>
                                 <CardDescription className="font-medium text-xs mt-1">Supported formats: .xlsx, .xls, .csv</CardDescription>
                             </div>
                         </div>
@@ -39,11 +39,11 @@ export default function IngestionPage() {
                             <FileUpload />
                         </div>
 
-                        <div className="mt-8 p-4 bg-muted/40 rounded-sm border border-border">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Required Columns</h4>
+                        <div className="mt-8 p-4 bg-muted/40 ">
+                            <h4 className="text-xs font-semibold text-foreground mb-2">Required Columns</h4>
                             <div className="flex flex-wrap gap-2">
                                 {["Trans Date", "Vehicle ID", "Fuel Type", "Quantity", "Amount", "Odometer"].map((col) => (
-                                    <span key={col} className="text-xs font-mono font-medium px-2 py-1 bg-card border border-border rounded-sm text-muted-foreground">
+                                    <span key={col} className="text-xs font-mono font-medium px-2 py-1 bg-card border border-border rounded-[10px] text-muted-foreground">
                                         {col}
                                     </span>
                                 ))}

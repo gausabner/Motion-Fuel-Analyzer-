@@ -37,8 +37,8 @@ export function ReplenishmentForecast({
             </CardHeader>
             <CardContent className="space-y-4">
                 {anyStale && (
-                    <div className="rounded-md border border-amber-500/40 bg-amber-50/50 dark:bg-amber-950/20 p-3 text-xs">
-                        <AlertTriangle className="h-3.5 w-3.5 inline mr-1.5 text-amber-600" />
+                    <div className="rounded-[12px] border border-warn/30 bg-warn-soft p-3 text-xs">
+                        <AlertTriangle className="h-3.5 w-3.5 inline mr-1.5 text-warn" />
                         Delivery records stop at <span className="font-semibold">{fmtDate(latestDeliveryDate)}</span>, while fuel
                         issues continue to <span className="font-semibold">{latestIssueDate ?? "—"}</span>. The forecast is paused
                         rather than reported as overdue — the silence is almost certainly missing delivery data, not an empty tank.
@@ -48,19 +48,19 @@ export function ReplenishmentForecast({
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                         <thead>
-                            <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                                <th className="py-2 pr-3 font-bold">Fuel</th>
-                                <th className="py-2 pr-3 font-bold text-right">Burn rate</th>
-                                <th className="py-2 pr-3 font-bold text-right">Typical delivery</th>
-                                <th className="py-2 pr-3 font-bold text-right">Cycle</th>
-                                <th className="py-2 pr-3 font-bold">Last delivery</th>
-                                <th className="py-2 font-bold text-right">Next due</th>
+                            <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                                <th className="py-2 pr-3 font-semibold">Fuel</th>
+                                <th className="py-2 pr-3 font-semibold text-right">Burn rate</th>
+                                <th className="py-2 pr-3 font-semibold text-right">Typical delivery</th>
+                                <th className="py-2 pr-3 font-semibold text-right">Cycle</th>
+                                <th className="py-2 pr-3 font-semibold">Last delivery</th>
+                                <th className="py-2 font-semibold text-right">Next due</th>
                             </tr>
                         </thead>
                         <tbody>
                             {forecasts.map(f => (
                                 <tr key={f.fuelType} className="border-b border-border/50 last:border-0">
-                                    <td className="py-2.5 pr-3 font-bold text-foreground">{f.fuelType}</td>
+                                    <td className="py-2.5 pr-3 font-semibold text-foreground">{f.fuelType}</td>
                                     <td className="py-2.5 pr-3 text-right font-mono">{fmtLitres(f.burnLitresPerDay)}/d</td>
                                     <td className="py-2.5 pr-3 text-right font-mono">{fmtLitres(f.avgDeliveryLitres)}</td>
                                     <td className="py-2.5 pr-3 text-right font-mono">
@@ -83,7 +83,7 @@ export function ReplenishmentForecast({
                                                 )}
                                             </>
                                         ) : f.status === "stale" ? (
-                                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">
+                                            <Badge className="bg-warn-soft text-warn hover:bg-warn-soft border-warn/30">
                                                 <HelpCircle className="h-3 w-3 mr-1" /> Awaiting data
                                             </Badge>
                                         ) : (
@@ -99,7 +99,7 @@ export function ReplenishmentForecast({
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                    <CheckCircle2 className="h-3 w-3 inline mr-1 text-emerald-600" />
+                    <CheckCircle2 className="h-3 w-3 inline mr-1 text-ok" />
                     Cycle is the typical delivery divided by the measured burn rate. It is shown against the observed gap between
                     deliveries as a cross-check — the two agree closely, which is what gives the figure its confidence. A true
                     “days to empty” is not derivable: recorded deliveries do not span the whole issue history, so live tank

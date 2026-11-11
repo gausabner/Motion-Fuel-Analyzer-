@@ -94,7 +94,7 @@ export function FuelLogFilters({
     const advancedCount = [department, division, !hideFuelType && fuelType !== "all" ? fuelType : ""].filter(Boolean).length;
 
     return (
-        <div className="monumental-card mb-6 space-y-4 shadow-none p-4">
+        <div className="monumental-card space-y-4">
             {/* Primary row: presets, custom range, vehicle search, actions */}
             <div className="flex flex-wrap items-center gap-3">
                 <DateRangePresets />
@@ -125,7 +125,7 @@ export function FuelLogFilters({
                 <Button
                     variant="outline"
                     onClick={() => setShowAdvanced(v => !v)}
-                    className={cn("h-9 px-3.5 text-xs", advancedCount > 0 && "border-primary/50 text-primary")}
+                    className={cn("h-9 px-3.5 text-xs", advancedCount > 0 && "border-brand/40 text-brand")}
                 >
                     <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5" />
                     All filters{advancedCount > 0 ? ` (${advancedCount})` : ""}
@@ -150,7 +150,7 @@ export function FuelLogFilters({
                 <div className="flex flex-wrap items-end gap-4 pt-4 border-t border-border">
                     {!hideFuelType && (
                     <div className="w-[170px] space-y-1.5">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Fuel type</label>
+                        <label className="text-xs font-semibold text-muted-foreground ml-1">Fuel type</label>
                         <Select value={fuelType} onValueChange={setFuelType}>
                             <SelectTrigger className="bg-background h-9">
                                 <SelectValue placeholder="All types" />
@@ -167,7 +167,7 @@ export function FuelLogFilters({
 
                     {!hideCostCentres && (
                     <div className="flex-1 min-w-[200px] max-w-sm space-y-1.5" key="dept">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Department</label>
+                        <label className="text-xs font-semibold text-muted-foreground ml-1">Department</label>
                         <Popover open={openDept} onOpenChange={setOpenDept}>
                             <PopoverTrigger asChild>
                                 <Button
@@ -204,7 +204,7 @@ export function FuelLogFilters({
                                                 >
                                                     <Check
                                                         className={cn(
-                                                            "mr-2 h-3 w-3 shrink-0",
+ "mr-2 h-3 w-3 shrink-0",
                                                             department === dept ? "opacity-100" : "opacity-0"
                                                         )}
                                                     />
@@ -222,7 +222,7 @@ export function FuelLogFilters({
                     {/* Division appears only once a department is chosen */}
                     {!hideCostCentres && department && availableDivisions.length > 0 && (
                         <div className="flex-1 min-w-[200px] max-w-sm space-y-1.5">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">Division</label>
+                            <label className="text-xs font-semibold text-muted-foreground ml-1">Division</label>
                             <Popover open={openDiv} onOpenChange={setOpenDiv}>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -255,7 +255,7 @@ export function FuelLogFilters({
                                                     >
                                                         <Check
                                                             className={cn(
-                                                                "mr-2 h-3 w-3 shrink-0",
+ "mr-2 h-3 w-3 shrink-0",
                                                                 division === div ? "opacity-100" : "opacity-0"
                                                             )}
                                                         />

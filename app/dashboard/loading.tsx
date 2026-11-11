@@ -1,46 +1,23 @@
-import { Skeleton } from "@/components/ui/skeleton";
-
 /**
- * Shared loading state for every dashboard route — the official arrow mark
- * drifts up-right (brand motion) above the standard page-anatomy skeleton,
- * so route changes read as a branded transition rather than a blank flash.
+ * Shared loading state: a skeleton in the page's own shape — head, KPI row,
+ * a chart drawn as capsule columns. Never a spinner on an empty axis.
  */
 export default function DashboardLoading() {
     return (
-        <div className="space-y-8 animate-in fade-in duration-300">
-            {/* Page header */}
-            <div className="flex justify-between items-center gap-4">
-                <div className="space-y-2">
-                    <Skeleton className="h-8 w-64" />
-                    <Skeleton className="h-4 w-96 max-w-full" />
+        <div className="flex flex-col gap-3.5" aria-busy="true" aria-label="Loading">
+            <div className="flex flex-col gap-2">
+                <div className="skel-line h-7 w-64" />
+                <div className="skel-line h-4 w-96 max-w-full" />
+            </div>
+            <div className="skel-line h-[76px] rounded-[22px]" />
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skel-line h-[128px] rounded-[18px]" />)}
+            </div>
+            <div className="monumental-card">
+                <div className="skel h-[220px]">
+                    {[55, 48, 70, 62, 88, 66, 74, 58, 80, 68].map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}
                 </div>
-                <Skeleton className="h-11 w-36 hidden md:block" />
             </div>
-
-            {/* Filter bar */}
-            <Skeleton className="h-[72px] w-full rounded-xl" />
-
-            {/* Branded loading indicator */}
-            <div className="flex flex-col items-center justify-center py-6 gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                    src="/logo-mark.svg"
-                    alt=""
-                    aria-hidden="true"
-                    className="w-12 h-12 animate-logo-drift"
-                />
-                <span className="text-xs font-semibold text-muted-foreground tracking-wide">Loading…</span>
-            </div>
-
-            {/* KPI row */}
-            <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="h-[130px] rounded-xl" />
-                ))}
-            </div>
-
-            {/* Chart card */}
-            <Skeleton className="h-[380px] w-full rounded-xl" />
         </div>
     );
 }

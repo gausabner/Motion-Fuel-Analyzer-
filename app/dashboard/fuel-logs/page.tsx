@@ -89,32 +89,32 @@ export default async function FuelLogsPage({
     });
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3.5">
             <PageHeader
                 title="Fuel logs"
-                scope="Raw transaction log — all types (FIS, FRE, GRN, ISS, RET, TRN)."
+                scope="Every row as it was uploaded, all transaction types."
             />
 
             <FuelLogFilters costCentres={costCentres} />
 
             <Card className="monumental-card shadow-none border-border p-0">
                 <CardHeader className="border-b border-border bg-card px-6 py-4">
-                    <CardTitle className="text-sm font-bold uppercase tracking-wide">Recent Transactions</CardTitle>
+                    <CardTitle className="text-sm font-semibold ">Recent Transactions</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div>
                         <table className="w-full caption-bottom text-sm">
-                            <TableHeader className="sticky top-0 z-10 bg-muted/40 shadow-sm">
+                            <TableHeader className="sticky top-0 z-10 bg-muted/40 ">
                                 <TableRow className="hover:bg-transparent border-border">
-                                    <TableHead className="font-bold text-foreground uppercase text-xs tracking-wider h-10 bg-muted/40">Date</TableHead>
-                                    <TableHead className="font-bold text-foreground uppercase text-xs tracking-wider h-10 bg-muted/40">Time</TableHead>
-                                    <TableHead className="font-bold text-foreground uppercase text-xs tracking-wider h-10 bg-muted/40">Tank</TableHead>
-                                    <TableHead className="font-bold text-foreground uppercase text-xs tracking-wider h-10 bg-muted/40">Pump</TableHead>
-                                    <TableHead className="font-bold text-foreground uppercase text-xs tracking-wider h-10 bg-muted/40">Fuel Type</TableHead>
-                                    <TableHead className="font-bold text-foreground uppercase text-xs tracking-wider h-10 bg-muted/40">Fleet Unit</TableHead>
-                                    <TableHead className="font-bold text-foreground uppercase text-xs tracking-wider h-10 bg-muted/40">Issue Vote</TableHead>
-                                    <TableHead className="font-bold text-foreground uppercase text-xs tracking-wider h-10 text-right bg-muted/40">Quantity (L)</TableHead>
-                                    <TableHead className="font-bold text-foreground uppercase text-xs tracking-wider h-10 text-right bg-muted/40">Cost</TableHead>
+                                    <TableHead className="text-foreground">Date</TableHead>
+                                    <TableHead className="text-foreground">Time</TableHead>
+                                    <TableHead className="text-foreground">Tank</TableHead>
+                                    <TableHead className="text-foreground">Pump</TableHead>
+                                    <TableHead className="text-foreground">Fuel Type</TableHead>
+                                    <TableHead className="text-foreground">Fleet Unit</TableHead>
+                                    <TableHead className="text-foreground">Issue Vote</TableHead>
+                                    <TableHead className="text-foreground text-right">Quantity (L)</TableHead>
+                                    <TableHead className="text-foreground text-right">Cost</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -126,8 +126,8 @@ export default async function FuelLogsPage({
                                     </TableRow>
                                 ) : (
                                     transactions.map((tx: any) => (
-                                        <TableRow key={tx.id} className="hover:bg-yellow-50/50 border-zinc-50 transition-colors">
-                                            <TableCell className="font-bold text-foreground/80 text-xs">
+                                        <TableRow key={tx.id} className="hover:bg-warn-soft border-border transition-colors">
+                                            <TableCell className="font-semibold text-foreground/80 text-xs">
                                                 {format(new Date(tx.transDate), 'dd MMM yyyy')}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground text-xs font-mono">{tx.issueTime || '—'}</TableCell>
@@ -137,18 +137,18 @@ export default async function FuelLogsPage({
                                                 <Badge
                                                     variant="outline"
                                                     className={tx.fuelType?.toLowerCase().includes('petrol')
-                                                        ? 'border-black text-foreground font-bold bg-card text-xs uppercase rounded-sm'
-                                                        : 'border-yellow-400 text-foreground font-bold bg-yellow-400 text-xs uppercase rounded-sm'}
+                                                        ? 'border-black text-foreground font-semibold bg-card text-xs  rounded-[10px]'
+                                                        : 'border-warn/30 text-foreground font-semibold bg-warn-soft text-xs  rounded-[10px]'}
                                                 >
                                                     {tx.fuelType}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="font-black text-foreground text-xs">{tx.vehicleId || 'N/A'}</TableCell>
+                                            <TableCell className="font-semibold text-foreground text-xs">{tx.vehicleId || 'N/A'}</TableCell>
                                             <TableCell className="text-muted-foreground text-xs font-mono">{tx.transVoteNo || '—'}</TableCell>
-                                            <TableCell className="text-right font-mono font-bold text-xs">
+                                            <TableCell className="text-right font-mono font-semibold text-xs">
                                                 {tx.transQty.toFixed(2)}
                                             </TableCell>
-                                            <TableCell className="text-right font-mono font-bold text-xs">
+                                            <TableCell className="text-right font-mono font-semibold text-xs">
                                                 {currencySymbol}{tx.transAmt?.toFixed(2) || '0.00'}
                                             </TableCell>
                                         </TableRow>

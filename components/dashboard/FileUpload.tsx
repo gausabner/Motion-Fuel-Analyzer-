@@ -135,16 +135,16 @@ export function FileUpload() {
             </label>
 
             {status !== 'idle' && (
-                <Card className={`absolute top-12 right-0 p-3 min-w-[250px] shadow-lg z-50 ${status === 'success' ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
-                    }`}>
+                <Card className={`absolute top-12 right-0 p-3 min-w-[250px] z-50 ${status === 'success' ? 'border-ok/30 bg-ok-soft' : 'border-crit/30 bg-crit-soft'
+ }`}>
                     <div className="flex items-center gap-2">
                         {status === 'success' ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            <CheckCircle2 className="h-5 w-5 text-ok" />
                         ) : (
-                            <AlertCircle className="h-5 w-5 text-red-600" />
+                            <AlertCircle className="h-5 w-5 text-crit" />
                         )}
-                        <p className={`text-sm font-medium ${status === 'success' ? 'text-green-800' : 'text-red-800'
-                            }`}>
+                        <p className={`text-sm font-medium ${status === 'success' ? 'text-ok' : 'text-crit'
+ }`}>
                             {message}
                         </p>
                     </div>
@@ -164,7 +164,7 @@ export function FileUpload() {
                     
                     <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
                         {previewSheets.map((sheet, index) => (
-                            <div key={index} className={`flex items-start space-x-3 p-3 rounded-md border ${sheet.isEligible ? 'bg-muted/40 border-border' : 'bg-red-50 border-red-100 opacity-70'}`}>
+                            <div key={index} className={`flex items-start space-x-3 p-3 rounded-[12px] border ${sheet.isEligible ? 'bg-muted/40 border-border' : 'bg-crit-soft border-crit/30 opacity-70'}`}>
                                 <div className="mt-1">
                                     <Checkbox 
                                         id={`sheet-${index}`} 
@@ -182,7 +182,7 @@ export function FileUpload() {
                                         {sheet.name}
                                     </Label>
                                     {!sheet.isEligible && (
-                                        <div className="mt-1 flex items-center gap-1 text-xs text-red-600 font-medium">
+                                        <div className="mt-1 flex items-center gap-1 text-xs text-crit font-medium">
                                             <XCircle className="h-3 w-3" />
                                             Missing: {sheet.missingColumns.join(', ')}
                                         </div>

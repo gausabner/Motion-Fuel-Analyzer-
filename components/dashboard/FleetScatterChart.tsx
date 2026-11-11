@@ -100,17 +100,17 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
         <Card className="monumental-card border-0 shadow-none bg-card" ref={chartRef}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b border-border pl-0">
                 <div className="space-y-1">
-                    <CardTitle className="text-lg font-extrabold tracking-tight uppercase">Fleet Operations Matrix</CardTitle>
-                    <CardDescription className="text-xs font-medium tracking-wide">
+                    <CardTitle className="text-lg font-semibold tracking-tight ">Fleet Operations Matrix</CardTitle>
+                    <CardDescription className="text-xs font-medium ">
                         Consumption distribution per vehicle.
                     </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                     <ChartExportButton targetRef={chartRef} fileName={`fleet_matrix_${granularity}`} />
                     <ToggleGroup type="single" value={granularity} onValueChange={(v) => v && setGranularity(v as Granularity)}>
-                        <ToggleGroupItem value="daily" className="text-xs font-bold uppercase" aria-label="Daily">Daily</ToggleGroupItem>
-                        <ToggleGroupItem value="weekly" className="text-xs font-bold uppercase" aria-label="Weekly">Weekly</ToggleGroupItem>
-                        <ToggleGroupItem value="monthly" className="text-xs font-bold uppercase" aria-label="Monthly">Monthly</ToggleGroupItem>
+                        <ToggleGroupItem value="daily" className="text-xs font-semibold " aria-label="Daily">Daily</ToggleGroupItem>
+                        <ToggleGroupItem value="weekly" className="text-xs font-semibold " aria-label="Weekly">Weekly</ToggleGroupItem>
+                        <ToggleGroupItem value="monthly" className="text-xs font-semibold " aria-label="Monthly">Monthly</ToggleGroupItem>
                     </ToggleGroup>
                 </div>
             </CardHeader>
@@ -148,15 +148,15 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
                                 if (active && payload && payload.length) {
                                     const data = payload[0].payload;
                                     return (
-                                        <div className="bg-card shadow-xl rounded-lg p-4 border border-border text-sm min-w-[200px]">
-                                            <p className="font-extrabold mb-2 text-black uppercase tracking-wide border-b border-border pb-2">{data.vehicleId}</p>
+                                        <div className="bg-card rounded-lg p-4 border border-border text-sm min-w-[200px]">
+                                            <p className="font-semibold mb-2 text-black border-b border-border pb-2">{data.vehicleId}</p>
                                             <div className="space-y-1.5 text-muted-foreground">
-                                                <p className="flex justify-between"><span className="font-semibold text-xs uppercase">Period</span> <span className="text-black">{data.timeKey}</span></p>
-                                                <p className="flex justify-between"><span className="font-semibold text-xs uppercase">Volume</span> <span className="text-black">{data.quantity.toFixed(1)} L</span></p>
-                                                <p className="flex justify-between"><span className="font-semibold text-xs uppercase">Count</span> <span className="text-black">{data.count}</span></p>
+                                                <p className="flex justify-between"><span className="font-semibold text-xs ">Period</span> <span className="text-black">{data.timeKey}</span></p>
+                                                <p className="flex justify-between"><span className="font-semibold text-xs ">Volume</span> <span className="text-black">{data.quantity.toFixed(1)} L</span></p>
+                                                <p className="flex justify-between"><span className="font-semibold text-xs ">Count</span> <span className="text-black">{data.count}</span></p>
                                                 <div className="mt-2 pt-2 border-t border-border flex items-center gap-2">
                                                     <div className={`w-3 h-3 rounded-full ${data.fuelType === 'Petrol' ? 'bg-[#60A5FA]' : 'bg-[#1D4ED8]'}`} />
-                                                    <span className="text-xs font-bold uppercase text-black">{data.fuelType}</span>
+                                                    <span className="text-xs font-semibold text-black">{data.fuelType}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -168,7 +168,7 @@ export function FleetScatterChart({ data }: { data: FleetTransaction[] }) {
                         <Legend
                             verticalAlign="top"
                             height={36}
-                            wrapperStyle={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                            wrapperStyle={{ fontSize: '12px', fontWeight: 600 }}
                         />
                         <Scatter name="Petrol" data={chartData.filter(d => d.fuelType === 'Petrol')} fill={PALETTE.petrol} shape="circle" />
                         <Scatter name="Diesel" data={chartData.filter(d => d.fuelType === 'Diesel')} fill={PALETTE.diesel} shape="square" />

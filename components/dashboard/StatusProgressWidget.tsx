@@ -10,16 +10,16 @@ interface StatusProgressWidgetProps {
 export function StatusProgressWidget({ petrolPercentage, dieselPercentage, className }: StatusProgressWidgetProps) {
     return (
         <div className={cn("monumental-card col-span-full", className)}>
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-6">Fuel type split</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-6">Fuel type split</h3>
 
             <div className="flex items-end justify-between mb-2">
                 <div>
-                    <span className="text-2xl font-extrabold tabular-nums text-[#60A5FA]">{petrolPercentage}%</span>
-                    <span className="text-xs font-bold text-muted-foreground ml-2 uppercase">Petrol</span>
+                    <span className="text-2xl font-semibold tabular-nums text-[#60A5FA]">{petrolPercentage}%</span>
+                    <span className="text-xs font-semibold text-muted-foreground ml-2 ">Petrol</span>
                 </div>
                 <div className="text-right">
-                    <span className="text-2xl font-extrabold tabular-nums text-[#1D4ED8]">{dieselPercentage}%</span>
-                    <span className="text-xs font-bold text-muted-foreground ml-2 uppercase">Diesel</span>
+                    <span className="text-2xl font-semibold tabular-nums text-[#1D4ED8]">{dieselPercentage}%</span>
+                    <span className="text-xs font-semibold text-muted-foreground ml-2 ">Diesel</span>
                 </div>
             </div>
 

@@ -9,7 +9,7 @@ function Delta({ a, b, unit, currency }: { a: number; b: number; unit?: string; 
     const d = b - a;
     const pct = a > 0 ? (d / a) * 100 : null;
     const up = d > 0.5, down = d < -0.5;
-    const cls = down ? "text-emerald-600" : up ? "text-red-600" : "text-muted-foreground";
+    const cls = down ? "text-ok" : up ? "text-crit" : "text-muted-foreground";
     const Icon = down ? ArrowDownRight : up ? ArrowUpRight : Minus;
     const val = currency
         ? `${currency}${Math.abs(d).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
@@ -28,18 +28,18 @@ function FuelPanel({ label, icon: Icon, stat, aLabel, bLabel, currency }: {
 }) {
     return (
         <div className="p-5 bg-muted/40 border border-border rounded-lg">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
-                <Icon className="h-4 w-4 text-primary" /> {label}
+            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-4">
+                <Icon className="h-4 w-4 text-brand" /> {label}
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{aLabel}</p>
-                    <p className="text-xl font-extrabold tabular-nums mt-1">{stat.aVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L</p>
+                    <p className="text-xs font-semibold text-muted-foreground">{aLabel}</p>
+                    <p className="text-xl font-semibold tabular-nums mt-1">{stat.aVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L</p>
                     <p className="text-xs text-muted-foreground">{currency}{stat.aCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{bLabel}</p>
-                    <p className="text-xl font-extrabold tabular-nums mt-1">{stat.bVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L</p>
+                    <p className="text-xs font-semibold text-muted-foreground">{bLabel}</p>
+                    <p className="text-xl font-semibold tabular-nums mt-1">{stat.bVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })} L</p>
                     <p className="text-xs text-muted-foreground">{currency}{stat.bCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
             </div>
@@ -67,7 +67,7 @@ export function FuelSplitComparison({
         <Card className="monumental-card">
             <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
-                    <CardTitle className="text-lg font-bold tracking-tight">Petrol vs diesel — consumption &amp; cost</CardTitle>
+                    <CardTitle className="text-lg font-semibold tracking-tight">Petrol vs diesel — consumption &amp; cost</CardTitle>
                     <CardDescription>Split by fuel type for both periods{csvUrl.includes("fuelType") ? "" : ""}. Reflects the active filters.</CardDescription>
                 </div>
                 <TableCsvButton filename="petrol_vs_diesel.csv" serverUrl={csvUrl} />
@@ -78,23 +78,23 @@ export function FuelSplitComparison({
                     <FuelPanel label="Diesel" icon={Droplets} stat={diesel} aLabel={aLabel} bLabel={bLabel} currency={currency} />
                 </div>
 
-                <div className="rounded-sm border border-border">
+                <div className="">
                     <Table>
-                        <TableHeader className="bg-muted/50">
+                        <TableHeader>
                             <TableRow>
-                                <TableHead className="font-bold uppercase tracking-wider text-xs">Fuel</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">A · Volume (L)</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">A · Cost</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">B · Volume (L)</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">B · Cost</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Δ Volume</TableHead>
-                                <TableHead className="font-bold uppercase tracking-wider text-xs text-right">Δ Cost</TableHead>
+                                <TableHead>Fuel</TableHead>
+                                <TableHead className="text-right">A · Volume (L)</TableHead>
+                                <TableHead className="text-right">A · Cost</TableHead>
+                                <TableHead className="text-right">B · Volume (L)</TableHead>
+                                <TableHead className="text-right">B · Cost</TableHead>
+                                <TableHead className="text-right">Δ Volume</TableHead>
+                                <TableHead className="text-right">Δ Cost</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {([["Petrol", petrol], ["Diesel", diesel]] as [string, FuelStat][]).map(([name, s]) => (
                                 <TableRow key={name}>
-                                    <TableCell className="text-xs font-bold">{name}</TableCell>
+                                    <TableCell className="text-xs font-semibold">{name}</TableCell>
                                     <TableCell className="text-xs text-right font-mono">{s.aVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
                                     <TableCell className="text-xs text-right font-mono">{currency}{s.aCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
                                     <TableCell className="text-xs text-right font-mono">{s.bVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
@@ -104,11 +104,11 @@ export function FuelSplitComparison({
                                 </TableRow>
                             ))}
                             <TableRow className="bg-muted/40">
-                                <TableCell className="text-xs font-extrabold">TOTAL</TableCell>
-                                <TableCell className="text-xs text-right font-mono font-extrabold">{totA.vol.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
-                                <TableCell className="text-xs text-right font-mono font-extrabold">{currency}{totA.cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
-                                <TableCell className="text-xs text-right font-mono font-extrabold">{totB.vol.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
-                                <TableCell className="text-xs text-right font-mono font-extrabold">{currency}{totB.cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
+                                <TableCell className="text-xs font-semibold">TOTAL</TableCell>
+                                <TableCell className="text-xs text-right font-mono font-semibold">{totA.vol.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
+                                <TableCell className="text-xs text-right font-mono font-semibold">{currency}{totA.cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
+                                <TableCell className="text-xs text-right font-mono font-semibold">{totB.vol.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
+                                <TableCell className="text-xs text-right font-mono font-semibold">{currency}{totB.cost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</TableCell>
                                 <TableCell className="text-xs text-right"><Delta a={totA.vol} b={totB.vol} unit=" L" /></TableCell>
                                 <TableCell className="text-xs text-right"><Delta a={totA.cost} b={totB.cost} currency={currency} /></TableCell>
                             </TableRow>

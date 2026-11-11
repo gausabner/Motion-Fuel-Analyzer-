@@ -26,18 +26,18 @@ export function RecentUploads() {
     return (
         <Card className="monumental-card">
             <CardHeader>
-                <CardTitle className="text-lg font-bold tracking-tight">Recent uploads</CardTitle>
+                <CardTitle className="text-lg font-semibold tracking-tight">Recent uploads</CardTitle>
                 <CardDescription>Re-download the original file of any past import (admins only).</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="rounded-sm border border-border max-h-[420px] overflow-y-auto">
+                <div className="max-h-[420px] overflow-y-auto">
                     <Table>
-                        <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                        <TableHeader className="sticky top-0 z-10">
                             <TableRow>
-                                <TableHead className="text-xs uppercase font-bold">File</TableHead>
-                                <TableHead className="text-xs uppercase font-bold">Uploaded</TableHead>
-                                <TableHead className="text-xs uppercase font-bold text-right">Rows</TableHead>
-                                <TableHead className="text-xs uppercase font-bold text-right">Original</TableHead>
+                                <TableHead>File</TableHead>
+                                <TableHead>Uploaded</TableHead>
+                                <TableHead className="text-right">Rows</TableHead>
+                                <TableHead className="text-right">Original</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -54,7 +54,7 @@ export function RecentUploads() {
                                     <TableCell className="text-right">
                                         <a
                                             href={`/api/uploads/${u.id}`}
-                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline underline-offset-2"
+                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline underline-offset-2"
                                         >
                                             <Download className="h-3.5 w-3.5" /> Download
                                         </a>

@@ -98,14 +98,14 @@ export function DashboardInteractivity({
             </div>
 
             <Dialog open={!!selectedFuel} onOpenChange={(open) => !open && setSelectedFuel(null)}>
-                <DialogContent className="w-[95vw] max-w-[95vw] rounded-3xl p-4 md:p-8 bg-card/95 backdrop-blur-xl border-white/20">
+                <DialogContent className="w-[95vw] max-w-[95vw] rounded-card p-4 md:p-8 bg-card/95 border-white/20">
                     <DialogHeader>
                         <div className="flex items-center gap-3 mb-2">
                             <div className={`p-2 rounded-xl bg-black/5`}>
                                 <Activity className="h-6 w-6 text-black" />
                             </div>
                             <div>
-                                <DialogTitle className="text-2xl font-bold text-foreground">
+                                <DialogTitle className="text-2xl font-semibold text-foreground">
                                     Analysis Mode: {selectedFuel}
                                 </DialogTitle>
                                 <DialogDescription className="text-muted-foreground">

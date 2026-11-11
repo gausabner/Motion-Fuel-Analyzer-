@@ -63,7 +63,7 @@ export function ChartExportButton({ targetRef, fileName, className }: ChartExpor
             size="icon"
             onClick={handleExport}
             disabled={isExporting}
-            className={`h-6 w-6 text-muted-foreground hover:text-zinc-900 transition-colors export-btn ${className}`}
+            className={`h-8 w-8 rounded-full text-muted-foreground hover:text-foreground transition-colors export-btn ${className}`}
             title="Export as Image"
             aria-label="Export chart as image"
         >

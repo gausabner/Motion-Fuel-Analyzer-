@@ -61,8 +61,8 @@ export function TablePagination({
         <div className="flex flex-wrap items-center justify-between gap-4 px-2 py-4">
             <div className="flex flex-wrap items-center gap-4">
                 <div className="text-sm text-muted-foreground font-medium">
-                    Showing <span className="font-bold text-foreground">{startItem}</span> to <span className="font-bold text-foreground">{endItem}</span> of <span className="font-bold text-foreground">{totalItems}</span> {unitLabel}
-                    {remaining > 0 && <span className="text-muted-foreground"> · <span className="font-bold text-foreground">{remaining}</span> more below</span>}
+                    Showing <span className="font-semibold text-foreground">{startItem}</span> to <span className="font-semibold text-foreground">{endItem}</span> of <span className="font-semibold text-foreground">{totalItems}</span> {unitLabel}
+                    {remaining > 0 && <span className="text-muted-foreground"> · <span className="font-semibold text-foreground">{remaining}</span> more below</span>}
                 </div>
                 {showPageSize && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
@@ -76,7 +76,7 @@ export function TablePagination({
                             onChange={(e) => setSizeInput(e.target.value)}
                             onBlur={commitPageSize}
                             onKeyDown={(e) => { if (e.key === "Enter") commitPageSize(); }}
-                            className="h-8 w-16 rounded-md border border-border bg-background px-2 text-center text-sm font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                            className="h-8 w-16 rounded-[12px] border border-border bg-background px-2 text-center text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                             aria-label={`Rows per page (${pageSizeMin} to ${pageSizeMax})`}
                         />
                     </div>
@@ -85,7 +85,7 @@ export function TablePagination({
             <div className="flex items-center space-x-1">
                 <Button
                     variant="outline" size="sm"
-                    className="h-8 w-8 p-0 rounded-none border-border"
+                    className="h-8 w-8 p-0 border-border"
                     onClick={() => goToPage(1)}
                     disabled={currentPage <= 1}
                 >
@@ -94,19 +94,19 @@ export function TablePagination({
                 </Button>
                 <Button
                     variant="outline" size="sm"
-                    className="h-8 w-8 p-0 rounded-none border-border"
+                    className="h-8 w-8 p-0 border-border"
                     onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage <= 1}
                 >
                     <span className="sr-only">Go to previous page</span>
                     <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <div className="text-sm font-bold mx-2 whitespace-nowrap">
+                <div className="text-sm font-semibold mx-2 whitespace-nowrap">
                     Page {currentPage} of {totalPages}
                 </div>
                 <Button
                     variant="outline" size="sm"
-                    className="h-8 w-8 p-0 rounded-none border-border"
+                    className="h-8 w-8 p-0 border-border"
                     onClick={() => goToPage(currentPage + 1)}
                     disabled={currentPage >= totalPages}
                 >
@@ -115,7 +115,7 @@ export function TablePagination({
                 </Button>
                 <Button
                     variant="outline" size="sm"
-                    className="h-8 w-8 p-0 rounded-none border-border"
+                    className="h-8 w-8 p-0 border-border"
                     onClick={() => goToPage(totalPages)}
                     disabled={currentPage >= totalPages}
                 >

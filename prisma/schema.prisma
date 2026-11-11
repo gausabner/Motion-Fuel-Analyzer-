@@ -146,3 +146,16 @@ model FuelDelivery {
   @@index([orderDate])
   @@index([fuelType])
 }
+
+/// A human decision recorded against a computed fuel exception.
+///
+/// Exceptions themselves are never stored: they are recomputed from the fills
+/// by fixed rules (lib/fuel-insights.ts), so they cannot drift from the data.
+/// Only the review — "explained" or "escalated", by whom and when — persists,
+/// keyed by the exception's stable key (rule:unit:date:ref).
+model ExceptionReview {
+  key        String   @id
+  status     String
+  reviewedBy String?
+  reviewedAt DateTime @default(now())
+}
