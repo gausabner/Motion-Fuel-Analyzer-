@@ -15,7 +15,7 @@ import { usePathname } from "next/navigation";
  *
  * It is a CSS animation now. It runs on the compositor, it cannot be starved
  * by a busy main thread, and there is no exit — the new page simply arrives.
- * 180ms and a 6px rise is enough to say "this is a different page" on a
+ * 180ms and a 6px rise (set on .route-enter in globals.css) is enough to say "this is a different page" on a
  * surface where someone changes pages all day.
  *
  * The key on the wrapper restarts the animation per route. Content is visible

@@ -45,7 +45,7 @@ export function TanksSection() {
             .catch(() => toast.error("The tank register could not be loaded. Reload the page to try again."));
     }, []);
 
-    if (!data) return <div className="skel h-72" aria-busy="true" aria-label="Loading the tank register" />;
+    if (!data) return <div className="skel-line h-72" aria-busy="true" aria-label="Loading the tank register" />;
 
     const send = async (method: "POST" | "DELETE", url: string, body: unknown): Promise<Payload | null> => {
         setBusy(true);

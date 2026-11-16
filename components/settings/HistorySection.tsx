@@ -36,7 +36,7 @@ export function HistorySection() {
 
     useEffect(() => { load(area); }, [area, load]);
 
-    if (events === null) return <div className="skel h-64" aria-busy="true" aria-label="Loading the change history" />;
+    if (events === null) return <div className="skel-line h-64" aria-busy="true" aria-label="Loading the change history" />;
 
     return (
         <Section id="history" title="Change history"

@@ -152,9 +152,9 @@ export default function RegistryPage() {
 
     if (loading) return (
         <div className="flex flex-col gap-3.5" aria-busy="true" aria-label="Loading the registry">
-            <div className="skel h-9 w-56" />
-            <div className="skel h-28" />
-            <div className="skel h-96" />
+            <div className="skel-line h-9 w-56" />
+            <div className="skel-line h-28" />
+            <div className="skel-line h-96" />
         </div>
     );
 

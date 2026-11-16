@@ -30,7 +30,7 @@ export function OrganisationSection() {
             .catch(() => toast.error("The organisation details could not be loaded. Reload the page to try again."));
     }, []);
 
-    if (!saved || !draft) return <div className="skel h-80" aria-busy="true" aria-label="Loading organisation details" />;
+    if (!saved || !draft) return <div className="skel-line h-80" aria-busy="true" aria-label="Loading organisation details" />;
 
     const set = <K extends keyof Organisation>(k: K, v: Organisation[K]) => setDraft({ ...draft, [k]: v });
     const dirty = KEYS.some(k => draft[k] !== saved[k]);

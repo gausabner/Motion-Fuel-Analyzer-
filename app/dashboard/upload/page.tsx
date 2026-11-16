@@ -1,11 +1,18 @@
 "use client";
 
 import { FileUpload } from "@/components/dashboard/FileUpload";
+import { UPLOAD_TEMPLATES } from "@/lib/upload-templates";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { RecentUploads } from "@/components/dashboard/RecentUploads";
 import { UploadTemplates } from "@/components/dashboard/UploadTemplates";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CloudUpload } from "lucide-react";
+
+/** The two report layouts the importer recognises. The column lists come from the same definitions the templates are built from, so this hint cannot drift from what the parser accepts. */
+const REPORTS: { key: "hr580" | "hr640"; title: string; note: string }[] = [
+    { key: "hr580", title: "HR580 tank report", note: "Fuel issues to vehicles and receipts into tanks. Rows with no Tank or no Issue Qty are skipped, and a row whose Issue Date cannot be read is reported." },
+    { key: "hr640", title: "HR640 delivery register", note: "Supplier orders and what was received against them." },
+];
 
 export default function IngestionPage() {
     return (
@@ -39,15 +46,21 @@ export default function IngestionPage() {
                             <FileUpload />
                         </div>
 
-                        <div className="mt-8 p-4 bg-muted/40 ">
-                            <h4 className="text-xs font-semibold text-foreground mb-2">Required Columns</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {["Trans Date", "Vehicle ID", "Fuel Type", "Quantity", "Amount", "Odometer"].map((col) => (
-                                    <span key={col} className="text-xs font-mono font-medium px-2 py-1 bg-card border border-border rounded-[10px] text-muted-foreground">
-                                        {col}
-                                    </span>
-                                ))}
-                            </div>
+                        <div className="mt-8 flex flex-col gap-4 rounded-tile bg-surface-2 p-4">
+                            {REPORTS.map(r => (
+                                <div key={r.key}>
+                                    <h3 className="text-[13px] font-medium">{r.title}</h3>
+                                    <p className="mt-0.5 text-xs text-muted-foreground">{r.note}</p>
+                                    <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={`Columns in the ${r.title}`}>
+                                        {UPLOAD_TEMPLATES[r.key].headers.map(col => (
+                                            <li key={col} className="mono rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-muted-foreground">{col}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                            <p className="text-xs text-muted-foreground">
+                                The report is recognised by these headings, not by its file name. The templates above carry the same columns with sample rows.
+                            </p>
                         </div>
                     </CardContent>
                 </Card>

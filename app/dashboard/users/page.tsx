@@ -98,7 +98,7 @@ export default function UsersPage() {
         if (ok) closeDialog();
     };
 
-    if (loading) return <div className="flex flex-col gap-3.5" aria-busy="true" aria-label="Loading users"><div className="skel h-9 w-40" /><div className="skel h-96" /></div>;
+    if (loading) return <div className="flex flex-col gap-3.5" aria-busy="true" aria-label="Loading users"><div className="skel-line h-9 w-40" /><div className="skel-line h-96" /></div>;
 
     if (forbidden) return (
         <div className="mx-auto mt-24 max-w-md text-center">

@@ -83,9 +83,9 @@ export default function SettingsPage() {
 
     if (loading) return (
         <div className="flex max-w-[860px] flex-col gap-3.5" aria-busy="true" aria-label="Loading settings">
-            <div className="skel h-9 w-40" />
-            <div className="skel h-56" />
-            <div className="skel h-56" />
+            <div className="skel-line h-9 w-40" />
+            <div className="skel-line h-56" />
+            <div className="skel-line h-56" />
         </div>
     );
 

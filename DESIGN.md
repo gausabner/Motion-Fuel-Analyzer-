@@ -114,7 +114,9 @@ sit 14px apart (`gap-3.5`).
 | Press | 150ms, scale 0.96 | spring |
 | Menu and tab indicator | 320ms | spring `cubic-bezier(.34,1.36,.64,1)` |
 | Figures rolling on period change | 450ms, tiles 35ms apart | ease-out `cubic-bezier(.22,1,.36,1)` |
-| Chart marks on load | 700ms | spring |
+| Chart marks on load | 480ms | ease-out (never the spring: a bar must not overshoot its value) |
+| Page change | 180ms, 6px rise | ease-out |
+| Tile entrance | 200ms, 35ms apart | ease-out |
 | Drawer | 340ms in, 260ms out | spring in, ease-out out |
 | Liquid level | 900ms | ease-out |
 

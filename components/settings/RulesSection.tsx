@@ -68,7 +68,7 @@ export function RulesSection() {
     }, []);
 
     if (!saved || !draft || !defaults) {
-        return <div className="skel h-72" aria-busy="true" aria-label="Loading exception rules" />;
+        return <div className="skel-line h-72" aria-busy="true" aria-label="Loading exception rules" />;
     }
 
     const set = <K extends keyof RuleSettings>(k: K, v: RuleSettings[K]) => setDraft({ ...draft, [k]: v });

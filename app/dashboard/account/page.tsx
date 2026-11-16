@@ -31,7 +31,7 @@ export default function AccountPage() {
     }, []);
 
     if (!account) {
-        return <div className="flex max-w-[760px] flex-col gap-3.5" aria-busy="true" aria-label="Loading your account"><div className="skel h-9 w-48" /><div className="skel h-40" /><div className="skel h-64" /></div>;
+        return <div className="flex max-w-[760px] flex-col gap-3.5" aria-busy="true" aria-label="Loading your account"><div className="skel-line h-9 w-48" /><div className="skel-line h-40" /><div className="skel-line h-64" /></div>;
     }
 
     const nameDirty = name.trim() !== (account.name ?? "") && name.trim() !== "";

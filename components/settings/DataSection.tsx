@@ -18,7 +18,7 @@ export function DataSection() {
             .catch(() => toast.error("The data summary could not be loaded. Reload the page to try again."));
     }, []);
 
-    if (!data) return <div className="skel h-64" aria-busy="true" aria-label="Loading the data summary" />;
+    if (!data) return <div className="skel-line h-64" aria-busy="true" aria-label="Loading the data summary" />;
 
     const behind = data.sources.filter(s => s.daysBehind > 31);
     const otherTotal = data.otherRows.reduce((n, r) => n + r.rows, 0);

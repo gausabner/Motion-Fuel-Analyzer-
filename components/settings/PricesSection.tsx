@@ -30,7 +30,7 @@ export function PricesSection({ currencySymbol, currencyCode }: { currencySymbol
             .catch(() => toast.error("The reference prices could not be loaded. Reload the page to try again."));
     }, []);
 
-    if (!prices) return <div className="skel h-64" aria-busy="true" aria-label="Loading reference prices" />;
+    if (!prices) return <div className="skel-line h-64" aria-busy="true" aria-label="Loading reference prices" />;
 
     const send = async (method: "POST" | "DELETE", url: string, body: unknown, ok: string, undo?: () => void) => {
         setBusy(true);

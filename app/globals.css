@@ -284,7 +284,7 @@
   }
   button.plate, a.plate { cursor: pointer; }
   button.plate:active, a.plate:active { transform: scale(0.96); }
-  @media (hover: hover) { button.plate:hover, a.plate:hover { border-color: var(--brand); } }
+  @media (hover: hover) and (pointer: fine) { button.plate:hover, a.plate:hover { border-color: var(--brand); } }
 
   /* Severity — shape plus colour, so it survives colour-blindness and a mono
      printout: diamonds for problems, dots for routine. */
@@ -342,7 +342,7 @@
   .tab[aria-pressed="true"], .tab[aria-current="page"], .tab[data-state="active"] {
     background: var(--primary); color: var(--primary-foreground); border-color: var(--primary);
   }
-  @media (hover: hover) { .tab:not([aria-pressed="true"]):not([aria-current="page"]):not([data-state="active"]):hover { background: var(--surface-2); } }
+  @media (hover: hover) and (pointer: fine) { .tab:not([aria-pressed="true"]):not([aria-current="page"]):not([data-state="active"]):hover { background: var(--surface-2); } }
   .tab .ct { font-family: var(--font-mono); font-size: 11px; opacity: 0.7; }
   .nav-badge { font: 11px var(--font-mono); background: var(--crit-soft); color: var(--crit); border-radius: 999px; padding: 0 7px; }
 
@@ -353,7 +353,7 @@
     transition: transform 150ms var(--ease-spring), background-color 150ms ease;
   }
   .ibtn:active { transform: scale(0.94); }
-  @media (hover: hover) { .ibtn:hover { background: var(--surface-2); } }
+  @media (hover: hover) and (pointer: fine) { .ibtn:hover { background: var(--surface-2); } }
   .ibtn svg { width: 16px; height: 16px; }
   .disc { width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: var(--primary-foreground); display: grid; place-items: center; flex: none; }
   .disc svg { width: 14px; height: 14px; }
@@ -366,7 +366,7 @@
   }
   button.kpi { cursor: pointer; transition: border-color 180ms ease, transform 160ms var(--ease-out-soft); }
   button.kpi:active { transform: scale(0.985); }
-  @media (hover: hover) { button.kpi:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--border)); } }
+  @media (hover: hover) and (pointer: fine) { button.kpi:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--border)); } }
   .kpi-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted-foreground); font-weight: 500; }
   .kpi-v { font-size: 24px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.1; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
   @container (min-width: 230px) { .kpi-v { font-size: 28px; } }
@@ -412,12 +412,13 @@
   .bar-g { cursor: pointer; outline: none; }
   .bar-g .b { transform-box: fill-box; transform-origin: 50% 100%; transition: fill 150ms ease; }
   .bar-g .b.dn { transform-origin: 50% 0; }
-  @media (hover: hover) { .bar-g:hover .b.bar-rest { fill: var(--sky); } }
+  @media (hover: hover) and (pointer: fine) { .bar-g:hover .b.bar-rest { fill: var(--sky); } }
   .bar-g:focus-visible .b.bar-rest { fill: var(--sky); }
   .bar-g:focus-visible .b { stroke: var(--brand); stroke-width: 2; }
-  .grow .b { animation: grow 700ms var(--ease-spring) both; }
-  .grow .fu { animation: fadeup 500ms var(--ease-out-soft) both; }
-  .hb { transform-box: fill-box; transform-origin: 0 50%; animation: growx 700ms var(--ease-out-soft) both; }
+  /* Ease-out, not the spring: an overshooting bar briefly shows more than the data says. */
+  .grow .b { animation: grow 480ms var(--ease-out-soft) both; }
+  .grow .fu { animation: fadeup 280ms var(--ease-out-soft) both; }
+  .hb { transform-box: fill-box; transform-origin: 0 50%; animation: growx 480ms var(--ease-out-soft) both; }
 
   .chart-tip {
     position: absolute; pointer-events: none; background: var(--ink); color: #fff; border-radius: 12px;
@@ -434,12 +435,12 @@
   .wv { animation: wave 3.4s linear infinite; }
   .wv.w2 { animation-duration: 5.6s; animation-direction: reverse; }
   .lvl { transition: transform 900ms var(--ease-out-soft); }
-  .rise { animation: rise 1200ms var(--ease-out-soft) both; }
+  .rise { animation: rise 900ms var(--ease-out-soft) both; }
 
   /* Skeleton in the chart's own shape. */
   .skel { display: flex; align-items: flex-end; gap: 10px; height: 120px; padding: 0 6px; }
-  .skel i { flex: 1; border-radius: 999px 999px 6px 6px; background: linear-gradient(90deg, var(--bar) 25%, var(--surface-2) 50%, var(--bar) 75%); background-size: 200% 100%; animation: shim 1.4s linear infinite; }
-  .skel-line { border-radius: 8px; background: linear-gradient(90deg, var(--bar) 25%, var(--surface-2) 50%, var(--bar) 75%); background-size: 200% 100%; animation: shim 1.4s linear infinite; }
+  .skel i { flex: 1; border-radius: 999px 999px 6px 6px; background: var(--bar); animation: shim 1.4s ease-in-out infinite; }
+  .skel-line { border-radius: 8px; background: var(--bar); animation: shim 1.4s ease-in-out infinite; }
 
   /* Drawer: the vehicle panel. Slower in than out. */
   .scrim { position: fixed; inset: 0; background: rgb(6 10 20 / 0.42); opacity: 0; pointer-events: none; transition: opacity 220ms ease; z-index: 60; }
@@ -454,7 +455,8 @@
   .dr-sec { display: flex; flex-direction: column; gap: 8px; }
   .dr-sec h3 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted-foreground); }
   .cmp { position: relative; height: 14px; border-radius: 999px; background: var(--surface-2); margin: 18px 0 4px; }
-  .cmp i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--brand); transition: width 600ms var(--ease-out-soft); }
+  .cmp > span { position: absolute; inset: 0; border-radius: 999px; overflow: hidden; }
+  .cmp i { display: block; width: 100%; height: 100%; border-radius: 999px; background: var(--brand); transform: translateX(calc(var(--p, 0%) - 100%)); transition: transform 480ms var(--ease-out-soft); }
   .cmp i.over { background: var(--crit); }
   .cmp u { position: absolute; top: -5px; bottom: -5px; width: 3px; border-radius: 2px; background: var(--primary); text-decoration: none; }
   .cmp u::after { content: attr(data-l); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font: 11px var(--font-mono); color: var(--muted-foreground); white-space: nowrap; padding-bottom: 2px; }
@@ -470,16 +472,16 @@
 @keyframes fadeup { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes wave { to { transform: translateX(60px); } }
 @keyframes rise { from { transform: translateY(46px); } to { transform: none; } }
-@keyframes shim { to { background-position: -200% 0; } }
+@keyframes shim { 50% { opacity: 0.5; } }
 
 /* Route entrance: CSS, so it runs on the compositor while the next page's
    data is still loading. Starts visible enough to read if a frame is dropped. */
-@keyframes route-enter { from { opacity: 0.4; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: none; } }
-.route-enter { animation: route-enter 320ms var(--ease-out-soft) both; }
+@keyframes route-enter { from { opacity: 0.6; transform: translate3d(0, 6px, 0); } to { opacity: 1; transform: none; } }
+.route-enter { animation: route-enter 180ms var(--ease-out-soft) both; }
 
 /* The KPI row is the only staggered group: one row of figures read together. */
-@keyframes tile-rise { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: none; } }
-.stagger-tiles > * { animation: tile-rise 260ms var(--ease-out-soft) both; }
+@keyframes tile-rise { from { opacity: 0; transform: translate3d(0, 4px, 0); } to { opacity: 1; transform: none; } }
+.stagger-tiles > * { animation: tile-rise 200ms var(--ease-out-soft) both; }
 .stagger-tiles > *:nth-child(2) { animation-delay: 35ms; }
 .stagger-tiles > *:nth-child(3) { animation-delay: 70ms; }
 .stagger-tiles > *:nth-child(n+4) { animation-delay: 105ms; }
@@ -489,7 +491,10 @@
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    /* Movement is not in this list, so transforms snap; fades and colour changes still ease. */
+    transition-property: opacity, background-color, border-color, color, fill, stroke !important;
+    transition-duration: 120ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
   .route-enter, .stagger-tiles > *, .rise, .grow .b, .grow .fu, .hb {

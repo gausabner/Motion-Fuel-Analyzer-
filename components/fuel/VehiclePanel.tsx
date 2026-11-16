@@ -140,7 +140,7 @@ export function VehiclePanelProvider({ children }: { children: ReactNode }) {
                                 {v.l100 != null && v.classMedian != null ? (
                                     <>
                                         <div className="cmp">
-                                            <i className={bad ? "over" : ""} style={{ width: `${(v.l100 / mx) * 100}%` }} />
+                                            <span><i className={bad ? "over" : ""} style={{ "--p": `${Math.min(100, (v.l100 / mx) * 100)}%` } as React.CSSProperties} /></span>
                                             <u style={{ left: `${(v.classMedian / mx) * 100}%` }} data-l={`median ${v.classMedian.toFixed(1)}`} />
                                         </div>
                                         <div className="text-[13.5px]">
