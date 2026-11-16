@@ -122,7 +122,7 @@ export default async function FREPage({
                         ? "No tank receipts are on record for this selection."
                         : `${fmtLitres(data.kpi.volume)} was booked into ${data.kpi.tanks} ${data.kpi.tanks === 1 ? "tank" : "tanks"} across ${data.kpi.count} receipts.`}
                     <small>
-                        These are the receipt lines on the tank report (HR580). The supplier delivery register (HR640) is a separate report
+                        These are the receipt lines from the stores report (HR440), which is where receipts into a tank are recorded. The supplier delivery register (HR640) is a separate report
                         and shows {fmtLitres(register.litres)} across {register.deliveries} deliveries for the same filters; it is the figure used on{" "}
                         <Link href="/dashboard/fis-vs-fre" className="lnk">Issues vs receipts</Link>. The two do not match because they cover
                         different dates and are uploaded separately, so neither is added to the other.

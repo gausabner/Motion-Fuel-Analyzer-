@@ -40,7 +40,7 @@ export async function getDataCoverage(): Promise<DataCoverage> {
 
     const sources: SourceCoverage[] = [
         { key: "issues", label: "Fuel issues", report: "HR580 tank report", rows: Number(fis?.n || 0), firstDay: (fis?.a as string) ?? null, lastDay: issuesTo, daysBehind: 0 },
-        { key: "tankReceipts", label: "Tank receipts", report: "HR580 tank report", rows: Number(fre?.n || 0), firstDay: (fre?.a as string) ?? null, lastDay: (fre?.b as string) ?? null, daysBehind: gap((fre?.b as string) ?? null, issuesTo) },
+        { key: "tankReceipts", label: "Tank receipts", report: "HR440 stores report", rows: Number(fre?.n || 0), firstDay: (fre?.a as string) ?? null, lastDay: (fre?.b as string) ?? null, daysBehind: gap((fre?.b as string) ?? null, issuesTo) },
         { key: "deliveries", label: "Supplier deliveries", report: "HR640 delivery register", rows: Number(del?.n || 0), firstDay: (del?.a as string) ?? null, lastDay: (del?.b as string) ?? null, daysBehind: gap((del?.b as string) ?? null, issuesTo) },
     ];
 

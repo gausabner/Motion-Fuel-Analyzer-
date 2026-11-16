@@ -84,19 +84,29 @@ export function FileUpload() {
             const data = await response.json();
 
             if (response.ok) {
-                setStatus('success');
-                const dupNote = data.duplicates > 0 ? ` (${data.duplicates} duplicate${data.duplicates === 1 ? '' : 's'} skipped)` : '';
-                setMessage(`Successfully imported ${data.count} transactions!${dupNote}`);
+                // An upload that adds nothing is not a success: say which of the two reasons it was.
+                const added = Number(data.count ?? 0), read = Number(data.totalProcessed ?? 0), dup = Number(data.duplicates ?? 0);
+                const n = (v: number, word: string) => `${v.toLocaleString('en-GB')} ${word}${v === 1 ? '' : 's'}`;
+                if (added === 0 && read === 0) {
+                    setStatus('error');
+                    setMessage('Nothing was added. No row in the selected sheets could be read: check that the sheet has the report headings on its first row and one transaction per row.');
+                } else if (added === 0) {
+                    setStatus('success');
+                    setMessage(`Nothing new was added. All ${n(read, 'row')} in this file are already on record, so the figures are unchanged.`);
+                } else {
+                    setStatus('success');
+                    setMessage(`${n(added, 'row')} added.${dup > 0 ? ` ${n(dup, 'row')} already on record ${dup === 1 ? 'was' : 'were'} skipped.` : ''}`);
+                }
                 setTimeout(() => {
                     router.refresh();
                 }, 1500);
             } else {
                 setStatus('error');
-                setMessage(data.error || 'Upload failed');
+                setMessage(data.error || 'The file was not imported. Try again.');
             }
         } catch (error) {
             setStatus('error');
-            setMessage('Network error occurred during import');
+            setMessage('The file was not imported. Check your connection and try again.');
         } finally {
             setUploading(false);
             setSelectedFile(null);

@@ -10,7 +10,7 @@ import { CloudUpload } from "lucide-react";
 
 /** The two report layouts the importer recognises. The column lists come from the same definitions the templates are built from, so this hint cannot drift from what the parser accepts. */
 const REPORTS: { key: "hr580" | "hr640"; title: string; note: string }[] = [
-    { key: "hr580", title: "HR580 tank report", note: "Fuel issues to vehicles and receipts into tanks. Rows with no Tank or no Issue Qty are skipped, and a row whose Issue Date cannot be read is reported." },
+    { key: "hr580", title: "HR580 tank report", note: "Fuel issues to vehicles. The raw pipe-delimited export is accepted as it is. Rows with no Tank or no Issue Qty are skipped, and a row whose Issue Date cannot be read is reported." },
     { key: "hr640", title: "HR640 delivery register", note: "Supplier orders and what was received against them." },
 ];
 

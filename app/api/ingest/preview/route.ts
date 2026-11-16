@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { requireRole } from "@/lib/auth";
 import { validateUploadFile } from "@/lib/upload-validation";
 import { detectDeliveryFormat } from "@/lib/ingestion-hr640";
+import { unpipeSheet } from "@/lib/pipe-sheet";
 
 export async function POST(req: NextRequest) {
     const _auth = await requireRole(); if (_auth instanceof NextResponse) return _auth;
@@ -19,7 +20,8 @@ export async function POST(req: NextRequest) {
         const workbook = XLSX.read(buffer, { type: "buffer" });
         
         const sheetsPreview = workbook.SheetNames.map(sheetName => {
-            const sheet = workbook.Sheets[sheetName];
+            // Same rebuild the importer applies, so a pipe-delimited export is judged by its real headings.
+            const sheet = unpipeSheet(workbook.Sheets[sheetName]) ?? workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
             
             if (!jsonData || jsonData.length === 0) {

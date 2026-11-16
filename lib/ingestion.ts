@@ -15,6 +15,7 @@ export type Hr580Result = {
 export type IngestResult = Hr580Result | Hr640Result;
 import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
+import { unpipeSheet } from "@/lib/pipe-sheet";
 import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
@@ -83,6 +84,12 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
     const sheetsToProcess = selectedSheets && selectedSheets.length > 0 
         ? selectedSheets 
         : [workbook.SheetNames[0]];
+
+    // A raw pipe-delimited export is rebuilt into columns first, so every later step sees an ordinary sheet.
+    for (const name of sheetsToProcess) {
+        const fixed = workbook.Sheets[name] ? unpipeSheet(workbook.Sheets[name]) : null;
+        if (fixed) workbook.Sheets[name] = fixed;
+    }
 
     const fuelMap = await getFuelTypeMap();
     const voteRepairMap = await getVoteRepairMap();
