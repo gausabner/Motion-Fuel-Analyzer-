@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 
 import { requireSession, requireRole } from "@/lib/auth";
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
                 added++;
             }
         }
+        if (added > 0) await audit(_auth, "Registry", `${added} fleet ${added === 1 ? "unit" : "units"} added from the fuel records`);
         return NextResponse.json({ success: true, added, total: await prisma.fleetUnit.count() });
     }
 
@@ -41,6 +43,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Fleet unit already registered" }, { status: 409 });
     }
     const fleetUnit = await prisma.fleetUnit.create({ data: { unitNo, description } });
+    await audit(_auth, "Registry", `Fleet unit ${unitNo} added`);
     return NextResponse.json({ success: true, fleetUnit });
 }
 
@@ -50,6 +53,7 @@ export async function DELETE(req: NextRequest) {
     if (!unitNo) {
         return NextResponse.json({ error: "unitNo query parameter is required" }, { status: 400 });
     }
-    await prisma.fleetUnit.delete({ where: { unitNo } }).catch(() => null);
+    const gone = await prisma.fleetUnit.delete({ where: { unitNo } }).catch(() => null);
+    if (gone) await audit(_auth, "Registry", `Fleet unit ${unitNo} removed`);
     return NextResponse.json({ success: true });
 }

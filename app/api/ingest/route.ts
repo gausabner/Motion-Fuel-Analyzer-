@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { audit } from "@/lib/audit";
 import { processExcelFile } from "@/lib/ingestion";
 import { requireRole } from "@/lib/auth";
 import { validateUploadFile } from "@/lib/upload-validation";
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
         // Delivery reports (HR640/HR940) and transaction reports (HR580) return
         // different shapes; the format field tells the client which it got.
         if (result.format === "hr580") {
+            await audit(_auth, "Uploads", `${file.name}: ${result.count} rows added, ${result.duplicates} already on record`);
             return NextResponse.json({
                 success: true,
                 format: "hr580",
@@ -44,6 +46,7 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        await audit(_auth, "Uploads", `${file.name}: ${result.created} deliveries added, ${result.updated} updated`);
         return NextResponse.json({
             success: true,
             format: result.format,

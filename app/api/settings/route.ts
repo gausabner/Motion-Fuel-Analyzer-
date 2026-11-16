@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { audit, describeChanges } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSession, requireRole } from "@/lib/auth";
@@ -32,11 +33,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Invalid settings", details: parsed.error.flatten() }, { status: 400 });
         }
         const { currencyCode, currencySymbol, petrolPrice, dieselPrice } = parsed.data;
+        const before = await prisma.systemSettings.findFirst({ where: { id: 'global' } });
         const settings = await prisma.systemSettings.upsert({
             where: { id: 'global' },
             update: { currencyCode, currencySymbol, ...(petrolPrice !== undefined ? { petrolPrice } : {}), ...(dieselPrice !== undefined ? { dieselPrice } : {}) },
             create: { id: 'global', currencyCode, currencySymbol, petrolPrice: petrolPrice ?? 0, dieselPrice: dieselPrice ?? 0 },
         });
+        const changes = describeChanges(
+            { currencySymbol: before?.currencySymbol ?? "", currencyCode: before?.currencyCode ?? "" },
+            { currencySymbol, currencyCode },
+            { currencySymbol: "Currency symbol", currencyCode: "Currency code" });
+        if (changes.length) await audit(_auth, "Settings", `Currency changed. ${changes.join("; ")}`);
         return NextResponse.json({ settings });
     } catch (error) {
         return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { audit } from "@/lib/audit";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
@@ -27,5 +28,8 @@ export async function POST(req: Request) {
         const data = { status: status.toUpperCase(), reviewedBy: user.email, reviewedAt: new Date() };
         await (prisma as any).exceptionReview.upsert({ where: { key }, update: data, create: { key, ...data } });
     }
+    // The key reads rule:unit:day:reference, which is enough to find the fill again.
+    const [rule, unit, day] = key.split(":");
+    await audit(user, "Exceptions", `${unit} ${rule.replace(/-/g, " ")}${/^\d{4}-/.test(day ?? "") ? ` on ${day}` : ""} ${status === "Open" ? "reopened" : `marked ${status.toLowerCase()}`}`);
     return NextResponse.json({ ok: true });
 }

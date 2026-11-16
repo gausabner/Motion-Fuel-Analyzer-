@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { audit, describeChanges } from "@/lib/audit";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole, requireSession } from "@/lib/auth";
@@ -38,7 +39,13 @@ export async function POST(req: Request) {
         reportFooter: d.reportFooter || null, financialYearStartMonth: d.financialYearStartMonth,
     };
     try {
+        const before = await getOrganisation();
         await prisma.systemSettings.upsert({ where: { id: "global" }, update: data, create: { id: "global", ...data } });
+        const changes = describeChanges(
+            { ...before, orgLogo: before.orgLogo ? "set" : "" },
+            { ...d, orgLogo: d.orgLogo ? (d.orgLogo === before.orgLogo ? "set" : "replaced") : "" },
+            { orgName: "Name", orgLogo: "Logo", signatoryName: "Signatory", signatoryTitle: "Signatory title", reportFooter: "Report footer", financialYearStartMonth: "Financial year start month" });
+        if (changes.length) await audit(user, "Settings", `Organisation details changed. ${changes.join("; ")}`);
         return NextResponse.json({ organisation: await getOrganisation() });
     } catch {
         return NextResponse.json({ error: "The organisation details could not be saved." }, { status: 500 });

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { audit } from "@/lib/audit";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
     try {
         const by = user.name || user.email || null;
         await (prisma as any).tankDip.upsert({ where: { tankNo_day: { tankNo, day } }, update: { litres, createdBy: by }, create: { tankNo, day, litres, createdBy: by } });
+        await audit(user, "Settings", `Dip of ${litres} L recorded for tank ${tankNo} on ${day}`);
         return NextResponse.json(await payload());
     } catch {
         return NextResponse.json({ error: "The dip reading could not be saved." }, { status: 500 });
@@ -47,7 +49,8 @@ export async function DELETE(req: Request) {
     const id = new URL(req.url).searchParams.get("id");
     if (!id) return NextResponse.json({ error: "No reading was named." }, { status: 400 });
     try {
-        await (prisma as any).tankDip.delete({ where: { id } });
+        const gone = await (prisma as any).tankDip.delete({ where: { id } });
+        await audit(user, "Settings", `Dip of ${gone.litres} L on ${gone.day} removed from tank ${gone.tankNo}`);
         return NextResponse.json(await payload());
     } catch {
         return NextResponse.json({ error: "That reading could not be removed." }, { status: 500 });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 
 import { requireSession, requireRole } from "@/lib/auth";
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
             await prisma.costCentre.create({ data: { voteNo: vote, division: div, department: dept } });
             created.push(vote);
         }
+        if (created.length) await audit(_auth, "Registry", `${created.length} vote ${created.length === 1 ? "code" : "codes"} assigned to ${dept} / ${div}: ${created.join(", ")}`);
         return NextResponse.json({ success: true, created, skipped });
     }
 
@@ -75,6 +77,7 @@ export async function POST(req: NextRequest) {
     const costCentre = await prisma.costCentre.create({
         data: { voteNo: vote, division: div, department: dept }
     });
+    await audit(_auth, "Registry", `Vote ${vote} assigned to ${dept} / ${div}`);
     return NextResponse.json({ success: true, costCentre });
 }
 
@@ -95,6 +98,7 @@ export async function PUT(req: NextRequest) {
     if (!costCentre) {
         return NextResponse.json({ error: "Vote number not found" }, { status: 404 });
     }
+    await audit(_auth, "Registry", `Vote ${vote} moved to ${costCentre.department} / ${costCentre.division}`);
     return NextResponse.json({ success: true, costCentre });
 }
 
@@ -104,6 +108,7 @@ export async function DELETE(req: NextRequest) {
     if (!voteNo) {
         return NextResponse.json({ error: "voteNo query parameter is required" }, { status: 400 });
     }
-    await prisma.costCentre.delete({ where: { voteNo } }).catch(() => null);
+    const gone = await prisma.costCentre.delete({ where: { voteNo } }).catch(() => null);
+    if (gone) await audit(_auth, "Registry", `Vote ${voteNo} removed from ${gone.department} / ${gone.division}`);
     return NextResponse.json({ success: true });
 }

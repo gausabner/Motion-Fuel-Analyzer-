@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { requireRole, getSessionUser } from "@/lib/auth";
 import { z } from "zod";
@@ -35,6 +36,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         data,
         select: { id: true, email: true, name: true, role: true, status: true },
     });
+    const did = [
+        parsed.data.role && parsed.data.role !== target.role ? `role ${target.role} to ${parsed.data.role}` : null,
+        parsed.data.status && parsed.data.status !== target.status ? `status ${target.status} to ${parsed.data.status}` : null,
+        parsed.data.password ? "password reset" : null,
+    ].filter(Boolean);
+    if (did.length) await audit(auth, "Users", `${target.email}: ${did.join("; ")}`);
     return NextResponse.json({ success: true, user });
 }
 
@@ -47,6 +54,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (me?.id === id) {
         return NextResponse.json({ error: "You cannot delete your own account" }, { status: 400 });
     }
-    await prisma.user.delete({ where: { id } }).catch(() => null);
+    const gone = await prisma.user.delete({ where: { id } }).catch(() => null);
+    if (gone) await audit(auth, "Users", `Account ${gone.email} deleted`);
     return NextResponse.json({ success: true });
 }

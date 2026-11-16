@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { audit, describeChanges } from "@/lib/audit";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole, requireSession } from "@/lib/auth";
@@ -38,9 +39,16 @@ export async function POST(req: Request) {
     const { tankNo, fuelType, name, capacityLitres, reorderLitres } = parsed.data;
     try {
         const data = { fuelType, name: name || null, capacityLitres, reorderLitres };
+        const before = await (prisma as any).tankDefinition.findUnique({ where: { tankNo } });
         await (prisma as any).tankDefinition.upsert({ where: { tankNo }, update: data, create: { tankNo, ...data } });
         const reclassified = await classifyUnknownFuel(tankNo, fuelType);
         if (reclassified > 0) invalidateFillCache();
+        const changes = before
+            ? describeChanges(before, data, { fuelType: "Fuel", name: "Name", capacityLitres: "Capacity (L)", reorderLitres: "Reorder level (L)" })
+            : [`${fuelType}${capacityLitres ? `, holds ${capacityLitres} L` : ""}`];
+        if (!before || changes.length || reclassified > 0) {
+            await audit(user, "Settings", `Tank ${tankNo} ${before ? "changed" : "added"}. ${changes.join("; ")}${reclassified > 0 ? `${changes.length ? ". " : ""}${reclassified} records with no fuel type now counted as ${fuelType}` : ""}`.trim());
+        }
         return NextResponse.json({ ...(await payload()), reclassified });
     } catch {
         return NextResponse.json({ error: "The tank could not be saved." }, { status: 500 });

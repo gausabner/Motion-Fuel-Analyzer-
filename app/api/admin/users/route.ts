@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
 import { z } from "zod";
@@ -48,5 +49,6 @@ export async function POST(req: NextRequest) {
         },
         select: { id: true, email: true, name: true, role: true, status: true },
     });
+    await audit(auth, "Users", `Account created for ${user.email} as ${user.role}`);
     return NextResponse.json({ success: true, user });
 }

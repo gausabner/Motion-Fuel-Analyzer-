@@ -221,3 +221,17 @@ model ReferencePrice {
   @@unique([fuel, effectiveFrom])
   @@index([fuel, effectiveFrom])
 }
+
+/// Who changed what, and when. Written by the server on every change to
+/// settings, the registry, users, exception reviews and uploads. Never edited.
+model AuditEvent {
+  id      String   @id @default(cuid())
+  at      DateTime @default(now())
+  actor   String
+  /// "Settings" | "Registry" | "Users" | "Exceptions" | "Uploads"
+  area    String
+  summary String
+
+  @@index([at])
+  @@index([area, at])
+}

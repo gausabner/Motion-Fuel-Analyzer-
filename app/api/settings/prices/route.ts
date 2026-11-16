@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { audit } from "@/lib/audit";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole, requireSession } from "@/lib/auth";
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
             create: { fuel, price, effectiveFrom, createdBy: user.name || user.email || null },
         });
         await syncCurrentPrices();
+        await audit(user, "Settings", `${fuel} reference price set to ${price.toFixed(2)} from ${effectiveFrom}`);
         return NextResponse.json({ prices: await getPriceHistory() });
     } catch {
         return NextResponse.json({ error: "The price could not be saved." }, { status: 500 });
@@ -44,8 +46,9 @@ export async function DELETE(req: Request) {
     const id = new URL(req.url).searchParams.get("id");
     if (!id) return NextResponse.json({ error: "No price was named." }, { status: 400 });
     try {
-        await (prisma as any).referencePrice.delete({ where: { id } });
+        const gone = await (prisma as any).referencePrice.delete({ where: { id } });
         await syncCurrentPrices();
+        await audit(user, "Settings", `${gone.fuel} reference price of ${Number(gone.price).toFixed(2)} from ${gone.effectiveFrom} removed`);
         return NextResponse.json({ prices: await getPriceHistory() });
     } catch {
         return NextResponse.json({ error: "That price could not be removed." }, { status: 500 });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { audit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 
 import { requireSession, requireRole } from "@/lib/auth";
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Department already exists" }, { status: 409 });
     }
     const department = await prisma.department.create({ data: { name: trimmed } });
+    await audit(_auth, "Registry", `Department ${trimmed} added`);
     return NextResponse.json({ success: true, department });
 }
 
@@ -39,6 +41,7 @@ export async function DELETE(req: NextRequest) {
     if (inUse > 0) {
         return NextResponse.json({ error: `Department has ${inUse} cost centre(s). Remove or reassign them first.` }, { status: 409 });
     }
-    await prisma.department.delete({ where: { name } }).catch(() => null);
+    const gone = await prisma.department.delete({ where: { name } }).catch(() => null);
+    if (gone) await audit(_auth, "Registry", `Department ${name} removed`);
     return NextResponse.json({ success: true });
 }

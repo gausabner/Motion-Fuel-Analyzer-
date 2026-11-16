@@ -13,6 +13,9 @@ import { MotionLogo } from "@/components/brand/Logo";
 import { NAV_LAYOUT_COOKIE } from "@/lib/nav";
 import { Row, Section } from "@/components/settings/parts";
 import { OrganisationSection } from "@/components/settings/OrganisationSection";
+import { DataSection } from "@/components/settings/DataSection";
+import { AccessSection } from "@/components/settings/AccessSection";
+import { HistorySection } from "@/components/settings/HistorySection";
 import { TanksSection } from "@/components/settings/TanksSection";
 import { RulesSection } from "@/components/settings/RulesSection";
 import { PricesSection } from "@/components/settings/PricesSection";
@@ -89,11 +92,18 @@ export default function SettingsPage() {
 
     return (
         <div className="flex max-w-[920px] flex-col gap-3.5">
-            <PageHeader title="Settings" scope={["Organisation, prices, rules and tanks apply to everyone", "Appearance applies to this browser"]} />
+            <PageHeader title="Settings" scope={["Everything except Appearance applies to everyone", "Appearance is kept in this browser"]} />
+
+            <nav aria-label="Settings sections" className="flex flex-wrap gap-2">
+                {[["organisation", "Organisation"], ["currency", "Currency"], ["reference-prices", "Reference prices"], ["exception-rules", "Exception rules"], ["tanks", "Tanks"],
+                    ["data", "Data"], ["access", "Access"], ["history", "History"], ["appearance", "Appearance"], ["about", "About"]].map(([id, label]) => (
+                    <a key={id} href={`#${id}`} className="tab !px-3 !py-1.5 !text-xs">{label}</a>
+                ))}
+            </nav>
 
             <OrganisationSection />
 
-            <Section title="Currency" sub="How money is written on every page, export and PDF.">
+            <Section id="currency" title="Currency" sub="How money is written on every page, export and PDF.">
                 <Row label="Currency symbol" hint="Shown in front of every amount, for example N$ 1,250." htmlFor="currency-symbol">
                     <Input id="currency-symbol" value={settings.currencySymbol} maxLength={8} autoComplete="off"
                         onChange={e => setSettings({ ...settings, currencySymbol: e.target.value })} />
@@ -115,7 +125,13 @@ export default function SettingsPage() {
 
             <TanksSection />
 
-            <Section title="Appearance" sub="Kept in this browser only. Nobody else's view changes.">
+            <DataSection />
+
+            <AccessSection />
+
+            <HistorySection />
+
+            <Section id="appearance" title="Appearance" sub="Kept in this browser only. Nobody else's view changes.">
                 <Row label="Theme" hint="Follow the device, or hold the interface in light or dark.">
                     {mounted && (
                         <Seg light label="Theme" value={theme ?? "system"} onChange={setTheme}
@@ -137,7 +153,7 @@ export default function SettingsPage() {
                 </Row>
             </Section>
 
-            <Section title="About" sub="Motion Fuel Analyzer is built and maintained by Motion Dynamic Systems.">
+            <Section id="about" title="About" sub="Motion Fuel Analyzer is built and maintained by Motion Dynamic Systems.">
                 <div className="flex flex-wrap items-end justify-between gap-6 pt-3">
                     <MotionLogo className="h-auto w-[240px] max-w-full text-foreground" />
                     <dl className="grid grid-cols-[auto_auto] gap-x-6 gap-y-1 text-[13px]">
