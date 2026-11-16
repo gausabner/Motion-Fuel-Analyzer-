@@ -7,6 +7,7 @@ import { resolvePeriod } from "@/lib/periods";
 import Link from "next/link";
 import { fmtLitres, multipleLabel } from "@/lib/format";
 import { getRuleSettings } from "@/lib/rule-settings";
+import { getEscalationRecipient } from "@/lib/escalation";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function ExceptionsPage({ searchParams }: { searchParams: P
     const rows = await getExceptions(p.fromDay, p.toDay);
     const s = summariseExceptions(rows);
     const r = await getRuleSettings();
+    const recipient = await getEscalationRecipient();
     // The rule list is written from the live settings, so the page never describes a rule that is off.
     const active = [
         r.repeatFillEnabled && `a second fill the same day with under ${r.repeatFillMaxKm} km driven`,
@@ -39,6 +41,7 @@ export default async function ExceptionsPage({ searchParams }: { searchParams: P
                             ? "Every exception rule is switched off, so nothing is being raised. "
                             : `Each row is raised by a rule on the recorded fills: ${active.join("; ")}. `}
                         After-hours fills are not checked, because the reports carry no usable time of day.{" "}
+                        {recipient ? `Escalated exceptions go to ${recipient.name}. ` : "Nobody is set to receive escalated exceptions yet. "}
                         <Link href="/dashboard/settings#exception-rules" className="lnk">Change the rules</Link>
                     </small>
                 </p>

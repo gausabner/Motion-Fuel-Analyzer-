@@ -53,7 +53,9 @@ export const authOptions: NextAuthOptions = {
         }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
+            // useSession().update({ name }) after a rename on My account: accept only the display name.
+            if (trigger === "update" && typeof session?.name === "string") token.name = session.name.slice(0, 80);
             if (user) {
                 token.role = (user as any).role;
                 token.id = (user as any).id;

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { LogOut, Moon, Sun, Settings } from "lucide-react";
+import { LogOut, Moon, Sun, Settings, UserRound } from "lucide-react";
 import { Seg } from "@/components/ui/Seg";
 import { BrandLockup } from "@/components/brand/Logo";
 import { activeItem, groupsFor } from "@/lib/nav";
@@ -46,6 +46,7 @@ export function UserMenu({ onDark = false }: { onDark?: boolean }) {
                     <span className="block text-xs capitalize text-muted-foreground">{String(role).replace(/_/g, " ").toLowerCase()}</span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild><Link href="/dashboard/account"><UserRound /> My account</Link></DropdownMenuItem>
                 {role === "SUPER_ADMIN" && (
                     <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings /> Settings</Link></DropdownMenuItem>
                 )}

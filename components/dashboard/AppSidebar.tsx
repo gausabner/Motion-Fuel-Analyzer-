@@ -120,10 +120,10 @@ function NavContent({ pathname, session, setOpen, label }: { pathname: string, s
                     <div className="w-9 h-9 rounded-full bg-sidebar-hover flex items-center justify-center shrink-0">
                         <span className="text-sm font-semibold text-primary-foreground">{initial}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <Link href="/dashboard/account" className="flex-1 min-w-0 rounded-lg px-1 py-0.5 hover:bg-sidebar-hover" aria-label={`My account, ${userName}`}>
                         <p className="text-sm font-semibold text-sidebar-foreground truncate" title={userName}>{userName}</p>
                         <p className="text-xs text-sidebar-muted capitalize truncate">{roleLabel}</p>
-                    </div>
+                    </Link>
                     <SidebarThemeToggle />
                     <button
                         onClick={() => signOut({ callbackUrl: '/' })}

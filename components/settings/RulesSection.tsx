@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Seg } from "@/components/ui/Seg";
 import { useNavBadges } from "@/components/dashboard/NavBadges";
 import { Section, Switch } from "./parts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { RuleSettings } from "@/lib/rule-settings";
 
 type Loaded = RuleSettings & { updatedAt: string | null; updatedBy: string | null };
@@ -132,6 +133,8 @@ export function RulesSection() {
                     items={[{ key: "10", label: "Tenths of a km" }, { key: "1", label: "Whole km" }]} />
             </div>
 
+            <EscalationRow />
+
             <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5">
                 <span className="mr-auto text-[13px] text-muted-foreground">
                     {dirty ? "You have changes that are not saved yet."
@@ -143,5 +146,55 @@ export function RulesSection() {
                 <Button disabled={!dirty || !valid || saving} onClick={save}>{saving ? "Saving" : "Save rules"}</Button>
             </div>
         </Section>
+    );
+}
+
+type Person = { id: string; name: string | null; email: string; status: string };
+
+/** Who an escalated exception is handed to. Saved as soon as it is chosen, separately from the thresholds above. */
+function EscalationRow() {
+    const router = useRouter();
+    const [people, setPeople] = useState<Person[] | null>(null);
+    const [current, setCurrent] = useState<string>("none");
+    const [busy, setBusy] = useState(false);
+
+    useEffect(() => {
+        fetch("/api/settings/escalation").then(r => r.json()).then(d => setCurrent(d.recipient?.id ?? "none")).catch(() => {});
+        // The list of people is administrators-only; without it the row shows the current choice read-only.
+        fetch("/api/admin/users").then(r => (r.ok ? r.json() : { users: [] })).then(d => setPeople((d.users ?? []).filter((u: Person) => u.status === "ACTIVE"))).catch(() => setPeople([]));
+    }, []);
+
+    const choose = async (next: string, undoTo?: string) => {
+        const prev = current;
+        setBusy(true);
+        try {
+            const res = await fetch("/api/settings/escalation", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: next === "none" ? null : next }) });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) { toast.error(res.status === 403 ? "Only an administrator can choose who receives escalations." : d.error || "That change was not saved. Try again."); return; }
+            setCurrent(d.recipient?.id ?? "none");
+            toast(d.recipient ? `Escalated exceptions now go to ${d.recipient.name}` : "Escalated exceptions now go to no one",
+                undoTo === undefined ? { duration: 5000, action: { label: "Undo", onClick: () => choose(prev, prev) } } : undefined);
+            router.refresh();
+        } catch {
+            toast.error("That change was not saved. Check your connection and try again.");
+        } finally { setBusy(false); }
+    };
+
+    return (
+        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-border pt-4">
+            <div className="min-w-[240px] flex-1">
+                <div id="escalation-label" className="text-sm font-medium">Escalated exceptions go to</div>
+                <p className="mt-0.5 max-w-[56ch] text-[13px] leading-normal text-muted-foreground">
+                    The Escalate button names this person, and their name is kept on each escalated exception. No email is sent: they find them under Escalated on the Exceptions page.
+                </p>
+            </div>
+            <Select value={current} onValueChange={v => choose(v)} disabled={busy || !people || people.length === 0}>
+                <SelectTrigger aria-labelledby="escalation-label" className="w-[240px]"><SelectValue placeholder="No one" /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="none">No one</SelectItem>
+                    {(people ?? []).map(u => <SelectItem key={u.id} value={u.id}>{u.name || u.email}</SelectItem>)}
+                </SelectContent>
+            </Select>
+        </div>
     );
 }

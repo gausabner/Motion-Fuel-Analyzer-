@@ -20,12 +20,15 @@ export async function reviewException(e: Pick<FuelException, "key" | "unit">, st
     const res = await send(status);
     if (!res.ok) { toast("Couldn't save that review", { description: "The server didn't accept it. Try again." }); return; }
     after();
-    toast(`${e.unit} marked ${status.toLowerCase()}`, {
+    const to = status === "Escalated" ? ((await res.json().catch(() => null))?.escalatedTo as string | null | undefined) : null;
+    toast(status === "Escalated" ? `${e.unit} escalated${to ? ` to ${to}` : ""}` : `${e.unit} marked ${status.toLowerCase()}`, {
+        description: status === "Escalated" && !to ? "Nobody is set to receive escalations yet. An administrator can choose someone in Settings." : undefined,
         action: { label: "Undo", onClick: async () => { await send("Open"); after(); } },
     });
 }
 
 function SevPill({ e }: { e: FuelException }) {
+    if (e.status === "Escalated") return <span className="sev md !whitespace-normal">Escalated{e.escalatedTo ? ` to ${e.escalatedTo}` : ""}</span>;
     if (e.status !== "Open") return <span className="sev ok">{e.status}</span>;
     return <span className={`sev ${e.sev}`}>{{ hi: "High", md: "Medium", lo: "Low" }[e.sev]}</span>;
 }

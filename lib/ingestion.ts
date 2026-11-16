@@ -116,7 +116,7 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
     // returns early rather than being forced into FuelTransaction, where it
     // would double-count the FRE receipts describing the same deliveries.
     if (hr640Rows.length > 0) {
-        const result = await importHr640Rows(hr640Rows, hr640Errors, deliveryFormat);
+        const result = await importHr640Rows(hr640Rows, hr640Errors, deliveryFormat, uploadId);
         await (prisma as any).uploadedFile.create({
             data: {
                 id: uploadId,
@@ -263,13 +263,13 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
             INSERT OR IGNORE INTO FuelTransaction (
                 id, storeNo, pumpNo, transDate, transRefNo, issueTime, transVoteNo,
                 transQty, transAmt, vehicleId, fleetUnit, fleetEI, fleetReading,
-                jobNo, activity, itemCat, transType, fuelType, isIssue, createdAt
+                jobNo, activity, itemCat, transType, fuelType, isIssue, createdAt, uploadId
             ) VALUES (
                 ${randomUUID()}, ${tx.storeNo}, ${tx.pumpNo}, ${isoDate}, ${tx.transRefNo},
                 ${tx.issueTime}, ${tx.transVoteNo}, ${tx.transQty}, ${tx.transAmt},
                 ${tx.vehicleId}, ${tx.fleetUnit}, ${tx.fleetEI}, ${tx.fleetReading},
                 ${tx.jobNo}, ${tx.activity}, ${tx.itemCat}, ${tx.transType},
-                ${tx.fuelType}, ${tx.isIssue ? 1 : 0}, ${new Date().toISOString()}
+                ${tx.fuelType}, ${tx.isIssue ? 1 : 0}, ${new Date().toISOString()}, ${uploadId}
             )`;
         // INSERT OR IGNORE reports 0 affected rows when the unique index skipped a duplicate.
         const inserted = affected > 0;

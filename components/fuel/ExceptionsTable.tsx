@@ -18,6 +18,7 @@ const PAGE = 25;
 export function ExceptionsTable({ rows }: { rows: FuelException[] }) {
     const [filter, setFilter] = useState<"all" | Severity>("all");
     const [showDone, setShowDone] = useState(false);
+    const [onlyEscalated, setOnlyEscalated] = useState(false);
     const [limit, setLimit] = useState(PAGE);
     const router = useRouter();
     const { open } = useVehiclePanel();
@@ -25,7 +26,8 @@ export function ExceptionsTable({ rows }: { rows: FuelException[] }) {
 
     const openRows = useMemo(() => rows.filter(r => r.status === "Open"), [rows]);
     const count = (s: "all" | Severity) => openRows.filter(r => s === "all" || r.sev === s).length;
-    const pool = showDone ? rows : openRows;
+    const escalated = useMemo(() => rows.filter(r => r.status === "Escalated"), [rows]);
+    const pool = onlyEscalated ? escalated : showDone ? rows : openRows;
     const shown = pool.filter(r => filter === "all" || r.sev === filter);
     const done = rows.length - openRows.length;
     const act = (e: FuelException, status: "Explained" | "Escalated") => reviewException(e, status, () => { refresh(); router.refresh(); });
@@ -35,11 +37,16 @@ export function ExceptionsTable({ rows }: { rows: FuelException[] }) {
             <div className="flex flex-wrap items-center gap-2">
                 {([["all", "All"], ["hi", "High"], ["md", "Medium"], ["lo", "Low"]] as const).map(([k, l]) => (
                     <button key={k} type="button" className="tab" aria-pressed={filter === k} onClick={() => { setFilter(k); setLimit(PAGE); }}>
-                        {l}<span className="ct">{count(k)}</span>
+                        {l}{!onlyEscalated && <span className="ct">{count(k)}</span>}
                     </button>
                 ))}
-                {done > 0 && (
-                    <button type="button" className="tab ml-auto" aria-pressed={showDone} onClick={() => setShowDone(v => !v)}>
+                {escalated.length > 0 && (
+                    <button type="button" className="tab ml-auto" aria-pressed={onlyEscalated} onClick={() => { setOnlyEscalated(v => !v); setLimit(PAGE); }}>
+                        Escalated<span className="ct">{escalated.length}</span>
+                    </button>
+                )}
+                {done > 0 && !onlyEscalated && (
+                    <button type="button" className={`tab ${escalated.length > 0 ? "" : "ml-auto"}`} aria-pressed={showDone} onClick={() => setShowDone(v => !v)}>
                         Show reviewed<span className="ct">{done}</span>
                     </button>
                 )}

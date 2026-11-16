@@ -86,8 +86,11 @@ model FuelTransaction {
   fuelType     String
   isIssue      Boolean
   createdAt    DateTime @default(now())
+  /// The upload that added this row; null for rows loaded before uploads were tracked.
+  uploadId     String?
 
   @@unique([transDate, transRefNo, vehicleId, issueTime])
+  @@index([uploadId])
   @@index([transDate])
   @@index([vehicleId])
   @@index([fuelType])
@@ -121,6 +124,8 @@ model SystemSettings {
   reportFooter   String?
   /// 1 = January. Drives "year to date" and the financial-year presets.
   financialYearStartMonth Int @default(1)
+  /// The user escalated exceptions are handed to.
+  escalationUserId String?
   updatedAt      DateTime @updatedAt
 }
 
@@ -131,6 +136,9 @@ model UploadedFile {
   fileSize   Int
   rowCount   Int
   uploadedAt DateTime @default(now())
+  /// Set when an administrator removed the rows this upload added.
+  rolledBackAt DateTime?
+  rolledBackBy String?
 }
 
 /// Fuel purchase orders and goods-received notes, imported from the HR640
@@ -167,6 +175,8 @@ model FuelDelivery {
   /// Quantity invoiced by the supplier, and any returned to them.
   invQty     Float?
   returnQty  Float?
+  /// The upload that first created this order; null for earlier rows.
+  uploadId   String?
 
   createdAt  DateTime @default(now())
 
@@ -186,6 +196,8 @@ model ExceptionReview {
   status     String
   reviewedBy String?
   reviewedAt DateTime @default(now())
+  /// Who an escalated exception was handed to, as named at the time.
+  escalatedTo String?
 }
 
 /// Thresholds for the exception rules. One row ("global"); defaults match the

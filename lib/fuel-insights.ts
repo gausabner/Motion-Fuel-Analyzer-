@@ -63,6 +63,8 @@ export type FuelException = {
     /** Litres the rule puts in question; null where no volume is implied. */
     risk: number | null;
     status: ReviewStatus;
+    /** For an escalated exception, who it was handed to (null when nobody was set at the time). */
+    escalatedTo?: string | null;
 };
 
 const isRealUnit = (u: string | null | undefined) => !!u && u.trim() !== "" && u.toUpperCase() !== "UNKNOWN";
@@ -270,12 +272,12 @@ export async function getExceptions(fromDay?: string, toDay?: string): Promise<F
 
     // Attach human reviews.
     try {
-        const reviews = (await (prisma as any).exceptionReview.findMany()) as { key: string; status: string }[];
-        const map = new Map(reviews.map(r => [r.key, r.status]));
+        const reviews = (await (prisma as any).exceptionReview.findMany()) as { key: string; status: string; escalatedTo?: string | null }[];
+        const map = new Map(reviews.map(r => [r.key, r]));
         for (const e of out) {
-            const s = map.get(e.key);
-            if (s === "EXPLAINED") e.status = "Explained";
-            else if (s === "ESCALATED") e.status = "Escalated";
+            const r = map.get(e.key);
+            if (r?.status === "EXPLAINED") e.status = "Explained";
+            else if (r?.status === "ESCALATED") { e.status = "Escalated"; e.escalatedTo = r.escalatedTo ?? null; }
         }
     } catch { /* table missing on an un-migrated database: everything stays Open */ }
 

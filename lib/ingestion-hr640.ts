@@ -157,7 +157,9 @@ export type Hr640Result = {
 export async function importHr640Rows(
     rows: Hr640Row[],
     errors: string[] = [],
-    format: DeliveryFormat = "hr640"
+    format: DeliveryFormat = "hr640",
+    /** The upload these rows came from; stamped on orders it creates so the upload can be rolled back. */
+    uploadId?: string
 ): Promise<Hr640Result> {
     let created = 0, updated = 0;
     for (const row of rows) {
@@ -175,7 +177,7 @@ export async function importHr640Rows(
                 canOrd: row.canOrd, canItem: row.canItem,
                 invQty: row.invQty, returnQty: row.returnQty,
             },
-            create: row,
+            create: uploadId ? { ...row, uploadId } : row,
         });
         existing ? updated++ : created++;
     }
