@@ -1,26 +1,81 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+
+type SheetPreview = {
+    name: string;
+    isEligible: boolean;
+    missingColumns: string[];
+    formatLabel?: string;
+    note?: string | null;
+};
 
 export function FileUpload() {
     const [uploading, setUploading] = useState(false);
     const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
+    const [showModal, setShowModal] = useState(false);
+    const [previewSheets, setPreviewSheets] = useState<SheetPreview[]>([]);
+    const [selectedSheets, setSelectedSheets] = useState<string[]>([]);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const router = useRouter();
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        setSelectedFile(file);
         setUploading(true);
         setStatus('idle');
 
         const formData = new FormData();
         formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/ingest/preview', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                setPreviewSheets(data.sheets);
+                // Pre-select all eligible sheets
+                const eligibleSheets = data.sheets.filter((s: SheetPreview) => s.isEligible).map((s: SheetPreview) => s.name);
+                setSelectedSheets(eligibleSheets);
+                setShowModal(true);
+            } else {
+                setStatus('error');
+                setMessage(data.error || 'Failed to preview file');
+            }
+        } catch (error) {
+            setStatus('error');
+            setMessage('Network error occurred during preview');
+        } finally {
+            setUploading(false);
+            // Reset input so the same file can be selected again
+            e.target.value = '';
+        }
+    };
+
+    const handleImport = async () => {
+        if (!selectedFile || selectedSheets.length === 0) return;
+
+        setShowModal(false);
+        setUploading(true);
+        setStatus('idle');
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('selectedSheets', JSON.stringify(selectedSheets));
 
         try {
             const response = await fetch('/api/ingest', {
@@ -31,22 +86,43 @@ export function FileUpload() {
             const data = await response.json();
 
             if (response.ok) {
-                setStatus('success');
-                setMessage(`Successfully imported ${data.count} transactions!`);
-                // Refresh the page to show new data
+                // An upload that adds nothing is not a success: say which of the two reasons it was.
+                const added = Number(data.count ?? 0), read = Number(data.totalProcessed ?? 0), dup = Number(data.duplicates ?? 0);
+                const n = (v: number, word: string) => `${v.toLocaleString('en-GB')} ${word}${v === 1 ? '' : 's'}`;
+                const oil = Number(data.oilAdded ?? 0) > 0 ? ` ${n(Number(data.oilAdded), 'row')} of oil from the oil stores ${Number(data.oilAdded) === 1 ? 'is' : 'are'} kept out of fuel totals.` : '';
+                const stock = Number(data.stockReadings ?? 0) > 0 ? ` Stock on hand read for ${n(Number(data.stockReadings), 'tank-day')}.` : '';
+                if (added === 0 && read === 0) {
+                    setStatus('error');
+                    setMessage('Nothing was added. No row in the selected sheets could be read: check that the sheet has the report headings and one transaction per row.');
+                } else if (added === 0) {
+                    setStatus('success');
+                    setMessage(`Nothing new was added. All ${n(read, 'row')} in this file are already on record, so the figures are unchanged.${stock}`);
+                } else {
+                    setStatus('success');
+                    setMessage(`${n(added, 'row')} added.${dup > 0 ? ` ${n(dup, 'row')} already on record ${dup === 1 ? 'was' : 'were'} skipped.` : ''}${oil}${stock}`);
+                }
                 setTimeout(() => {
                     router.refresh();
                 }, 1500);
             } else {
                 setStatus('error');
-                setMessage(data.error || 'Upload failed');
+                setMessage(data.error || 'The file was not imported. Try again.');
             }
         } catch (error) {
             setStatus('error');
-            setMessage('Network error occurred');
+            setMessage('The file was not imported. Check your connection and try again.');
         } finally {
             setUploading(false);
+            setSelectedFile(null);
         }
+    };
+
+    const toggleSheetSelection = (sheetName: string) => {
+        setSelectedSheets(prev => 
+            prev.includes(sheetName) 
+                ? prev.filter(name => name !== sheetName)
+                : [...prev, sheetName]
+        );
     };
 
     return (
@@ -55,39 +131,98 @@ export function FileUpload() {
                 type="file"
                 id="file-upload"
                 className="hidden"
-                accept=".xlsx,.xls"
-                onChange={handleFileUpload}
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileSelect}
                 disabled={uploading}
             />
             <label htmlFor="file-upload">
                 <Button
                     asChild
-                    className="bg-black hover:bg-yellow-400 hover:text-black hover:border-black text-white shadow-sm rounded-none border border-zinc-800 font-extrabold uppercase tracking-widest pl-6 pr-6 h-12 transition-all duration-300"
+                    className="h-11 px-6 font-semibold"
                     disabled={uploading}
                 >
-                    <span className="cursor-pointer flex items-center gap-3">
+                    <span className="cursor-pointer flex items-center gap-2">
                         <Upload className="h-4 w-4" />
-                        {uploading ? 'PROCESSING...' : 'UPLOAD EXCEL'}
+                        {uploading && !showModal ? 'Processing…' : 'Upload data'}
                     </span>
                 </Button>
             </label>
 
             {status !== 'idle' && (
-                <Card className={`absolute top-12 right-0 p-3 min-w-[250px] shadow-lg z-50 ${status === 'success' ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'
-                    }`}>
+                <Card className={`absolute top-12 right-0 p-3 min-w-[250px] z-50 ${status === 'success' ? 'border-ok/30 bg-ok-soft' : 'border-crit/30 bg-crit-soft'
+ }`}>
                     <div className="flex items-center gap-2">
                         {status === 'success' ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            <CheckCircle2 className="h-5 w-5 text-ok" />
                         ) : (
-                            <AlertCircle className="h-5 w-5 text-red-600" />
+                            <AlertCircle className="h-5 w-5 text-crit" />
                         )}
-                        <p className={`text-sm font-medium ${status === 'success' ? 'text-green-800' : 'text-red-800'
-                            }`}>
+                        <p className={`text-sm font-medium ${status === 'success' ? 'text-ok' : 'text-crit'
+ }`}>
                             {message}
                         </p>
                     </div>
                 </Card>
             )}
+
+            <Dialog open={showModal} onOpenChange={setShowModal}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Select Sheets to Import</DialogTitle>
+                        <DialogDescription>
+                            {previewSheets.length === 1
+                                ? 'Review the sheet found in your file before importing. Sheets missing required columns cannot be imported.'
+                                : 'We found multiple sheets in your file. Select the ones you want to import. Sheets missing required columns cannot be imported.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                        {previewSheets.map((sheet, index) => (
+                            <div key={index} className={`flex items-start space-x-3 p-3 rounded-[12px] border ${sheet.isEligible ? 'bg-muted/40 border-border' : 'bg-crit-soft border-crit/30 opacity-70'}`}>
+                                <div className="mt-1">
+                                    <Checkbox 
+                                        id={`sheet-${index}`} 
+                                        checked={selectedSheets.includes(sheet.name)}
+                                        onCheckedChange={() => toggleSheetSelection(sheet.name)}
+                                        disabled={!sheet.isEligible}
+                                    />
+                                </div>
+                                <div className="flex-1">
+                                    <Label 
+                                        htmlFor={`sheet-${index}`}
+                                        className="text-sm font-semibold flex items-center gap-2 cursor-pointer"
+                                    >
+                                        <FileSpreadsheet className="h-4 w-4" />
+                                        {sheet.name}
+                                    </Label>
+                                    {sheet.isEligible && sheet.formatLabel && (
+                                        <p className="mt-0.5 text-xs text-muted-foreground">{sheet.formatLabel}{sheet.note ? ` · ${sheet.note}` : ''}</p>
+                                    )}
+                                    {!sheet.isEligible && (
+                                        <div className="mt-1 flex items-center gap-1 text-xs text-crit font-medium">
+                                            <XCircle className="h-3 w-3" />
+                                            Missing: {sheet.missingColumns.join(', ')}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowModal(false)} disabled={uploading}>
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleImport} 
+                            disabled={uploading || selectedSheets.length === 0}
+                            className="font-semibold"
+                        >
+                            {uploading ? 'Importing...' : `Import ${selectedSheets.length} Sheet(s)`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

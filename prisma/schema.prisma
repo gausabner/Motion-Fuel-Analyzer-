@@ -12,6 +12,10 @@ model User {
   email     String   @unique
   name      String?
   role      String   @default("EMPLOYEE")
+  // bcrypt hash; null only for legacy rows until a password is set.
+  password  String?
+  // ACTIVE = can sign in · PENDING = awaiting admin approval · DISABLED = blocked
+  status    String   @default("ACTIVE")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -19,12 +23,61 @@ model User {
 model TankDefinition {
   tankNo   String @id
   fuelType String
+  /// What people call the tank, e.g. "Main depot diesel".
+  name           String?
+  capacityLitres Float?
+  /// Stock at or below this is flagged for reorder.
+  reorderLitres  Float?
+}
+
+/// A physical dip reading: litres in a tank at the end of a day. The level on
+/// any later day is the latest dip plus receipts less issues since.
+/// Closing stock on hand per tank and day, as the stores report (HR440) states it. A book figure, not a dip.
+model StockReading {
+  id        String   @id @default(cuid())
+  tankNo    String
+  day       String
+  litres    Float
+  /// The stores system's maximum stock level for the item ("Qty Max").
+  reportMax Float?
+  uploadId  String?
+  createdAt DateTime @default(now())
+
+  @@unique([tankNo, day])
+  @@index([uploadId])
+}
+
+model TankDip {
+  id        String   @id @default(cuid())
+  tankNo    String
+  day       String
+  litres    Float
+  createdAt DateTime @default(now())
+  createdBy String?
+
+  @@unique([tankNo, day])
+  @@index([tankNo, day])
 }
 
 model CostCentre {
   voteNo     String @id
   division   String
   department String
+  // Set when this entry was auto-created by prefix resolution (holds the
+  // registered vote it was derived from). NULL for seeded/manual entries.
+  // Makes auto-resolution auditable and reversible.
+  derivedFrom String?
+}
+
+model Department {
+  name      String   @id
+  createdAt DateTime @default(now())
+}
+
+model FleetUnit {
+  unitNo      String   @id
+  description String?
+  createdAt   DateTime @default(now())
 }
 
 model FuelTransaction {
@@ -48,12 +101,80 @@ model FuelTransaction {
   fuelType     String
   isIssue      Boolean
   createdAt    DateTime @default(now())
+  /// The upload that added this row; null for rows loaded before uploads were tracked.
+  uploadId     String?
 
   @@unique([transDate, transRefNo, vehicleId, issueTime])
+  @@index([uploadId])
   @@index([transDate])
   @@index([vehicleId])
   @@index([fuelType])
   @@index([transVoteNo])
+}
+
+/// Oil (lubricants) issued from or received into the oil stores, kept apart so
+/// that every fuel total stays fuel. Same columns as FuelTransaction; fuelType is "Oil".
+model OilTransaction {
+  id           String   @id @default(cuid())
+  storeNo      String
+  pumpNo       String?
+  transDate    DateTime
+  transRefNo   String?
+  issueTime    String?
+  transVoteNo  String?
+  transQty     Float
+  transAmt     Float?
+  vehicleId    String?
+  fleetUnit    String?
+  fleetEI      String?
+  fleetReading String?
+  jobNo        String?
+  activity     String?
+  itemCat      String?
+  transType    String?
+  fuelType     String
+  isIssue      Boolean
+  createdAt    DateTime @default(now())
+  uploadId     String?
+
+  @@unique([transDate, transRefNo, vehicleId, issueTime])
+  @@index([uploadId])
+  @@index([storeNo])
+}
+
+/// Fuel rows taken out of every total because they duplicate another record,
+/// kept whole so they can be put back. Same columns as FuelTransaction.
+model SetAsideTransaction {
+  id           String   @id
+  storeNo      String
+  pumpNo       String?
+  transDate    DateTime
+  transRefNo   String?
+  issueTime    String?
+  transVoteNo  String?
+  transQty     Float
+  transAmt     Float?
+  vehicleId    String?
+  fleetUnit    String?
+  fleetEI      String?
+  fleetReading String?
+  jobNo        String?
+  activity     String?
+  itemCat      String?
+  transType    String?
+  fuelType     String
+  isIssue      Boolean
+  createdAt    DateTime @default(now())
+  uploadId     String?
+  /// Why it was set aside; "duplicate" = the same issue is on the pump report.
+  reason       String
+  /// The FuelTransaction row it duplicates, and that row's vehicle.
+  twinId       String?
+  twinUnit     String?
+  setAsideAt   DateTime @default(now())
+  setAsideBy   String?
+
+  @@index([uploadId])
 }
 
 model DailyFuelStats {
@@ -74,6 +195,17 @@ model SystemSettings {
   currencySymbol String   @default("N$")
   petrolPrice    Float    @default(0)
   dieselPrice    Float    @default(0)
+  /// Organisation details, printed on PDF reports.
+  orgName        String?
+  /// PNG or JPEG as a data URL (kept small; validated on save).
+  orgLogo        String?
+  signatoryName  String?
+  signatoryTitle String?
+  reportFooter   String?
+  /// 1 = January. Drives "year to date" and the financial-year presets.
+  financialYearStartMonth Int @default(1)
+  /// The user escalated exceptions are handed to.
+  escalationUserId String?
   updatedAt      DateTime @updatedAt
 }
 
@@ -84,4 +216,115 @@ model UploadedFile {
   fileSize   Int
   rowCount   Int
   uploadedAt DateTime @default(now())
+  /// Set when an administrator removed the rows this upload added.
+  rolledBackAt DateTime?
+  rolledBackBy String?
+}
+
+/// Fuel purchase orders and goods-received notes, imported from the HR640
+/// procurement report. One row is an ORDER, not a tank receipt: it carries a
+/// supplier and cost but no tank, vehicle or vote.
+///
+/// Deliberately separate from FuelTransaction. HR640 and the HR580 FRE receipts
+/// describe the SAME physical deliveries at two stages — an order is raised,
+/// then the fuel lands in a tank a median of 10 days later — so the two overlap
+/// wherever both exist and must never be summed.
+///
+/// Unlike FuelTransaction.transDate (ISO text, filtered by raw string SQL),
+/// orderDate is a real DateTime and this table is queried ONLY through Prisma.
+model FuelDelivery {
+  id         String   @id @default(cuid())
+  orderNo    String
+  orderDate  DateTime
+  suppRef    String?
+  suppName   String
+  itemCode   String
+  itemDesc   String
+  /// Normalised from itemDesc: Diesel / Petrol / Unknown.
+  fuelType   String
+  orderQty   Float
+  orderCost  Float
+  /// Goods actually received. 0 = ordered but not yet delivered.
+  grnQty     Float
+  grnCost    Float
+
+  /// HR940 only — absent on HR640, which does not carry these columns.
+  /// Cancellation flags at order (header) and line-item level; null = not cancelled.
+  canOrd     String?
+  canItem    String?
+  /// Quantity invoiced by the supplier, and any returned to them.
+  invQty     Float?
+  returnQty  Float?
+  /// The upload that first created this order; null for earlier rows.
+  uploadId   String?
+
+  createdAt  DateTime @default(now())
+
+  @@unique([orderNo, itemCode])
+  @@index([orderDate])
+  @@index([fuelType])
+}
+
+/// A human decision recorded against a computed fuel exception.
+///
+/// Exceptions themselves are never stored: they are recomputed from the fills
+/// by fixed rules (lib/fuel-insights.ts), so they cannot drift from the data.
+/// Only the review — "explained" or "escalated", by whom and when — persists,
+/// keyed by the exception's stable key (rule:unit:date:ref).
+model ExceptionReview {
+  key        String   @id
+  status     String
+  reviewedBy String?
+  reviewedAt DateTime @default(now())
+  /// Who an escalated exception was handed to, as named at the time.
+  escalatedTo String?
+}
+
+/// Thresholds for the exception rules. One row ("global"); defaults match the
+/// values the rules shipped with, so an untouched install behaves as before.
+model ExceptionRuleSettings {
+  id                     String   @id @default("global")
+  repeatFillEnabled      Boolean  @default(true)
+  repeatFillMaxKm        Float    @default(15)
+  overCapacityEnabled    Boolean  @default(true)
+  overCapacityFactor     Float    @default(1.5)
+  overCapacityMinLitres  Float    @default(20)
+  noDistanceEnabled      Boolean  @default(true)
+  odometerBackEnabled    Boolean  @default(true)
+  odometerMissingEnabled Boolean  @default(true)
+  odometerMissingMinFills Int     @default(3)
+  classOutlierEnabled    Boolean  @default(true)
+  classOutlierMultiple   Float    @default(2)
+  odometerUnitsPerKm     Float    @default(10)
+  noVehicleEnabled       Boolean  @default(true)
+  updatedAt              DateTime @updatedAt
+  updatedBy              String?
+}
+
+/// Reference price per litre, by fuel, from a date onwards. The price in
+/// effect on a day is the latest row whose effectiveFrom is on or before it.
+model ReferencePrice {
+  id            String   @id @default(cuid())
+  fuel          String
+  price         Float
+  effectiveFrom String
+  createdAt     DateTime @default(now())
+  createdBy     String?
+
+  @@unique([fuel, effectiveFrom])
+  @@index([fuel, effectiveFrom])
+}
+
+/// Who changed what, and when. Written by the server on every change to
+/// settings, the registry, users, exception reviews and uploads. Never edited.
+model AuditEvent {
+  id      String   @id @default(cuid())
+  at      DateTime @default(now())
+  actor   String
+  /// "Settings" | "Registry" | "Users" | "Exceptions" | "Uploads"
+  area    String
+  summary String
+
+  @@index([at])
+  @@index([area, at])
 }

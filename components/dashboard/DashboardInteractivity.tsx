@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IndustrialKPI } from "./IndustrialKPI";
+import { fmtMoneyCompact, fmtLitres, fmtPricePerLitre } from "@/lib/format";
 import { StatusProgressWidget } from "./StatusProgressWidget";
 import { FocusedChart } from "./Charts";
 import {
@@ -41,56 +42,53 @@ export function DashboardInteractivity({
 
     return (
         <div className="space-y-8">
-            <div className="industrial-grid">
+            <div className="industrial-grid stagger-tiles">
                 {/* 1. Total Sales (Spend) */}
-                <div onClick={() => setShowTotalSpendModal(true)} className="cursor-pointer">
-                    <IndustrialKPI
-                        label="TOTAL SPEND"
-                        value={`${currencySymbol}${data.kpi.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-                        icon={Wallet}
-                        trend={{ value: 12, direction: 'up' }}
-                        accent={true}
-                    />
-                </div>
+                <IndustrialKPI
+                    label="Total spend"
+                    value={fmtMoneyCompact(data.kpi.totalCost, currencySymbol)}
+                    icon={Wallet}
+                    accent={true}
+                    onClick={() => setShowTotalSpendModal(true)}
+                />
 
                 {/* 2. Units Sold (Volume) */}
-                <div onClick={() => setShowTotalVolumeModal(true)} className="cursor-pointer">
-                    <IndustrialKPI
-                        label="TOTAL VOLUME"
-                        value={`${totalVol.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-                        subValue="Liters Dispensed"
-                        icon={Droplets}
-                    />
-                </div>
+                <IndustrialKPI
+                    label="Total volume"
+                    value={fmtLitres(totalVol)}
+                    subValue="Dispensed to fleet"
+                    icon={Droplets}
+                    onClick={() => setShowTotalVolumeModal(true)}
+                />
 
                 {/* 3. Avg Price (Implied) */}
-                <div onClick={() => setShowAvgPriceModal(true)} className="cursor-pointer">
-                    <IndustrialKPI
-                        label="AVG PRICE / L"
-                        value={`${currencySymbol}${(data.kpi.actualAvgPrice || 0).toFixed(2)}`}
-                        icon={Activity}
-                        trend={{
-                            value: Math.abs(data.kpi.priceDeviation || 0),
-                            direction: (data.kpi.priceDeviation || 0) >= 0 ? 'up' : 'down'
-                        }}
-                        bottomTrend={true}
-                    />
-                </div>
+                <IndustrialKPI
+                    label="Avg price / L"
+                    value={fmtPricePerLitre(data.kpi.actualAvgPrice || 0, currencySymbol)}
+                    icon={Activity}
+                    trend={{
+                        value: Math.abs(data.kpi.priceDeviation || 0),
+                        direction: (data.kpi.priceDeviation || 0) >= 0 ? 'up' : 'down',
+                        sentiment: (data.kpi.priceDeviation || 0) >= 0 ? 'bad' : 'good',
+                        label: 'vs set rate'
+                    }}
+                    bottomTrend={true}
+                    onClick={() => setShowAvgPriceModal(true)}
+                />
 
                 {/* 4. Active Vehicles */}
-                <div onClick={() => setShowActiveUnitsModal(true)} className="cursor-pointer">
-                    <IndustrialKPI
-                        label="ACTIVE UNITS"
-                        value={(data.kpi.activeUnitsCount || 0).toLocaleString()}
-                        subValue="Fleet Vehicles"
-                        icon={Fuel}
-                        accent={true}
-                    />
-                </div>
+                <IndustrialKPI
+                    label="Active units"
+                    value={(data.kpi.activeUnitsCount || 0).toLocaleString()}
+                    subValue="Fleet vehicles"
+                    icon={Fuel}
+                    accent={true}
+                    onClick={() => setShowActiveUnitsModal(true)}
+                />
             </div>
 
             {/* Status Widget Row */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
                 <StatusProgressWidget
                     petrolPercentage={petrolPct}
                     dieselPercentage={dieselPct}
@@ -100,14 +98,14 @@ export function DashboardInteractivity({
             </div>
 
             <Dialog open={!!selectedFuel} onOpenChange={(open) => !open && setSelectedFuel(null)}>
-                <DialogContent className="w-[95vw] max-w-[95vw] rounded-3xl p-4 md:p-8 bg-white/95 backdrop-blur-xl border-white/20">
+                <DialogContent className="w-[95vw] max-w-[95vw] rounded-card p-4 md:p-8 bg-card/95 border-white/20">
                     <DialogHeader>
                         <div className="flex items-center gap-3 mb-2">
                             <div className={`p-2 rounded-xl bg-black/5`}>
                                 <Activity className="h-6 w-6 text-black" />
                             </div>
                             <div>
-                                <DialogTitle className="text-2xl font-bold text-foreground">
+                                <DialogTitle className="text-2xl font-semibold text-foreground">
                                     Analysis Mode: {selectedFuel}
                                 </DialogTitle>
                                 <DialogDescription className="text-muted-foreground">
@@ -146,9 +144,6 @@ export function DashboardInteractivity({
                 onOpenChange={setShowTotalSpendModal}
                 data={data.dailySpendData || []}
                 currencySymbol={currencySymbol}
-                totalSpend={data.kpi.totalCost}
-                maxSpend={data.kpi.maxDailySpend || 0}
-                avgSpend={data.kpi.avgDailySpend || 0}
             />
 
             <TotalVolumeModal

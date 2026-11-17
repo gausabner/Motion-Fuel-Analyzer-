@@ -1,0 +1,45 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Fail the build on high/critical CVEs in code that actually ships.
+      # Dev-only tooling (test runner, bundler) is audited separately below and
+      # does not gate merges: a CVE in a test runner is not a production risk.
+      - name: npm audit — production dependencies (blocking)
+        run: npm audit --omit=dev --audit-level=high
+      # Informational: surfaces dev-tooling advisories without blocking.
+      - name: npm audit — dev dependencies (informational)
+        continue-on-error: true
+        run: npm audit --audit-level=high
+      # Informational: surface any raw-SQL usage for reviewer scrutiny.
+      - name: Flag raw SQL ($queryRawUnsafe / $executeRawUnsafe)
+        run: |
+          echo "Raw-SQL call sites (review each for interpolated user input):"
+          grep -rn "queryRawUnsafe\|executeRawUnsafe" app lib --include="*.ts" || echo "  none"
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history so historical commits are scanned
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

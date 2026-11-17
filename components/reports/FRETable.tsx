@@ -12,15 +12,15 @@ import { format } from "date-fns";
 
 export function FRETable({ data }: { data: any[] }) {
     return (
-        <div className="rounded-sm border border-border">
+        <div className="">
             <Table>
-                <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Date</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Ref No</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px]">Tank</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Volume (L)</TableHead>
-                        <TableHead className="font-bold uppercase tracking-wider text-[10px] text-right">Value</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Ref No</TableHead>
+                        <TableHead>Tank</TableHead>
+                        <TableHead className="text-right">Volume (L)</TableHead>
+                        <TableHead className="text-right">Value</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -29,7 +29,7 @@ export function FRETable({ data }: { data: any[] }) {
                             <TableCell className="font-medium text-xs">
                                 {format(new Date(tx.transDate), 'dd MMM yyyy')}
                             </TableCell>
-                            <TableCell className="font-bold text-xs">{tx.transRefNo || '—'}</TableCell>
+                            <TableCell className="font-semibold text-xs">{tx.transRefNo || '—'}</TableCell>
                             <TableCell className="text-xs">{tx.storeNo}</TableCell>
                             <TableCell className="text-xs text-right font-mono">{tx.transQty.toFixed(2)}</TableCell>
                             <TableCell className="text-xs text-right font-mono">{tx.transAmt?.toFixed(2)}</TableCell>

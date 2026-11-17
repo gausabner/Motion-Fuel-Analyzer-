@@ -55,3 +55,10 @@ dev.db-journal
 
 # Uploads
 /public/uploads
+
+# Non-public uploaded-file storage
+/storage
+
+# Claude Code local state (machine-specific settings and scratch worktrees)
+.claude/settings.local.json
+.claude/worktrees/

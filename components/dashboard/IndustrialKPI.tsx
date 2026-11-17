@@ -6,63 +6,40 @@ interface IndustrialKPIProps {
     value: string | number;
     icon: LucideIcon;
     subValue?: string;
-    trend?: { value: number; direction: 'up' | 'down' };
+    /** Percentage change. `sentiment` decides colour: consumption/cost rising is usually 'bad'. */
+    trend?: { value: number; direction: 'up' | 'down'; sentiment?: 'good' | 'bad' | 'neutral'; label?: string };
     accent?: boolean;
     className?: string;
     onClick?: () => void;
     bottomTrend?: boolean;
 }
 
-export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, accent, className, onClick, bottomTrend }: IndustrialKPIProps) {
+/**
+ * KPI tile: label and an ink icon disc, the figure, then a delta pill that
+ * says whether the change is good or bad and against what. When the tile opens
+ * a breakdown it is a real button, so it takes focus and Enter.
+ */
+export function IndustrialKPI({ label, value, icon: Icon, subValue, trend, className, onClick }: IndustrialKPIProps) {
+    const Root = onClick ? "button" : "div";
+    const interactive = onClick
+        ? { type: "button" as const, onClick, "aria-label": `${label}: ${value}. View breakdown` }
+        : {};
+    const tone = trend ? ({ good: "good", bad: "bad", neutral: "flat" } as const)[trend.sentiment ?? "neutral"] : null;
+
     return (
-        <div
-            onClick={onClick}
-            className={cn(
-                "monumental-card group hover:border-black transition-colors duration-300 relative overflow-hidden",
-                accent && "border-yellow-400 border-2",
-                onClick && "cursor-pointer",
-                className
-            )}>
-            <div className="flex flex-col h-full justify-between relative z-10">
-                <div className="flex items-start justify-between mb-2">
-                    <span className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest truncate pr-2">{label}</span>
-                    <Icon className={cn(
-                        "w-4 h-4 md:w-5 md:h-5 group-hover:text-yellow-500 transition-colors shrink-0",
-                        accent ? "text-black" : "text-black"
-                    )} />
-                </div>
-
-                <div>
-                    <div className="flex items-baseline gap-2 flex-wrap max-w-full">
-                        <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight text-black mt-1 break-all">
-                            {value}
-                        </div>
-                        {trend && !bottomTrend && (
-                            <div className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm flex items-center whitespace-nowrap",
-                                trend.direction === 'up' ? "bg-black text-white" : "bg-zinc-100 text-zinc-500"
-                            )}>
-                                {trend.direction === 'up' ? '+' : ''}{trend.value}%
-                            </div>
-                        )}
-                    </div>
-
-                    {trend && bottomTrend && (
-                        <div className="mt-2">
-                            <div className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm inline-flex items-center whitespace-nowrap",
-                                trend.direction === 'up' ? "bg-black text-white" : "bg-zinc-100 text-zinc-500"
-                            )}>
-                                {trend.direction === 'up' ? '+' : ''}{trend.value}%
-                            </div>
-                        </div>
-                    )}
-
-                    {subValue && (
-                        <div className="mt-1 text-[10px] md:text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                            {subValue}
-                        </div>
-                    )}
-                </div>
+        <Root {...interactive} className={cn("kpi", className)}>
+            <div className="kpi-h">
+                <span className="text-balance">{label}</span>
+                <span className="disc"><Icon aria-hidden="true" /></span>
             </div>
-        </div>
+            <div className="kpi-v">{value}</div>
+            {subValue && <p className="ctx line-clamp-2">{subValue}</p>}
+            {trend && tone && (
+                <div className="kpi-f">
+                    <span className={`delta ${tone}`}>{trend.direction === "up" ? "+" : "−"}{trend.value}%</span>
+                    {trend.label && <span className="ctx">{trend.label}</span>}
+                </div>
+            )}
+        </Root>
     );
 }

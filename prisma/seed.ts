@@ -131,18 +131,21 @@ async function main() {
             create: cc,
         });
     }
+    // Demo seed passwords (hashed). CHANGE THESE before any real deployment.
+    const bcrypt = require('bcryptjs') as typeof import('bcryptjs');
+    const hash = (pw: string) => bcrypt.hashSync(pw, 10);
     const users = [
-        { email: 'admin@motion.com', name: 'Super Admin', role: 'SUPER_ADMIN' },
-        { email: 'sysadmin@motion.com', name: 'System Admin', role: 'SYSTEM_ADMIN' },
-        { email: 'head@motion.com', name: 'System Head', role: 'SYSTEM_HEAD' },
-        { email: 'employee@motion.com', name: 'Field Employee', role: 'EMPLOYEE' },
+        { email: 'admin@motion.com', name: 'Super Admin', role: 'SUPER_ADMIN', password: hash('admin') },
+        { email: 'sysadmin@motion.com', name: 'System Admin', role: 'SYSTEM_ADMIN', password: hash('admin') },
+        { email: 'head@motion.com', name: 'System Head', role: 'SYSTEM_HEAD', password: hash('admin') },
+        { email: 'employee@motion.com', name: 'Field Employee', role: 'EMPLOYEE', password: hash('admin') },
     ]
 
     for (const user of users) {
         await prisma.user.upsert({
             where: { email: user.email },
-            update: {},
-            create: user,
+            update: { password: user.password, status: 'ACTIVE' },
+            create: { ...user, status: 'ACTIVE' },
         })
     }
 
@@ -154,7 +157,8 @@ async function main() {
             id: 'global',
             currencyCode: 'NAD',
             currencySymbol: 'N$',
-            fuelRate: 19.95
+            petrolPrice: 0,
+            dieselPrice: 0
         }
     })
 

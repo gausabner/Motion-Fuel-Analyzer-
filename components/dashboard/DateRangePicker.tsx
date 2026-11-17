@@ -32,7 +32,7 @@ export function DateRangePicker({
                         id="date"
                         variant={"outline"}
                         className={cn(
-                            "w-[260px] justify-start text-left font-normal bg-background/80 border-input rounded-xl h-11 shadow-sm hover:bg-accent hover:text-accent-foreground",
+ "w-[250px] justify-start text-left font-normal",
                             !dateRange && "text-muted-foreground"
                         )}
                     >
@@ -40,18 +40,18 @@ export function DateRangePicker({
                         {dateRange?.from ? (
                             dateRange.to ? (
                                 <>
-                                    {format(dateRange.from, "LLL dd, y")} -{" "}
-                                    {format(dateRange.to, "LLL dd, y")}
+                                    {format(dateRange.from, "d LLL y")} –{" "}
+                                    {format(dateRange.to, "d LLL y")}
                                 </>
                             ) : (
-                                format(dateRange.from, "LLL dd, y")
+                                format(dateRange.from, "d LLL y")
                             )
                         ) : (
                             <span>Pick a date range</span>
                         )}
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto max-w-none p-0 rounded-3xl" align="start">
+                <PopoverContent className="w-auto max-w-none p-0 rounded-2xl" align="start">
                     <Calendar
                         initialFocus
                         mode="range"
