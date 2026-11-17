@@ -112,6 +112,36 @@ model FuelTransaction {
   @@index([transVoteNo])
 }
 
+/// Oil (lubricants) issued from or received into the oil stores, kept apart so
+/// that every fuel total stays fuel. Same columns as FuelTransaction; fuelType is "Oil".
+model OilTransaction {
+  id           String   @id @default(cuid())
+  storeNo      String
+  pumpNo       String?
+  transDate    DateTime
+  transRefNo   String?
+  issueTime    String?
+  transVoteNo  String?
+  transQty     Float
+  transAmt     Float?
+  vehicleId    String?
+  fleetUnit    String?
+  fleetEI      String?
+  fleetReading String?
+  jobNo        String?
+  activity     String?
+  itemCat      String?
+  transType    String?
+  fuelType     String
+  isIssue      Boolean
+  createdAt    DateTime @default(now())
+  uploadId     String?
+
+  @@unique([transDate, transRefNo, vehicleId, issueTime])
+  @@index([uploadId])
+  @@index([storeNo])
+}
+
 model DailyFuelStats {
   id               String   @id @default(cuid())
   date             DateTime

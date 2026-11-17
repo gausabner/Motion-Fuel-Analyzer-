@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Seg } from "@/components/ui/Seg";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Section } from "./parts";
-import type { TankDip, TankLevel } from "@/lib/tanks";
+import type { Tank, TankDip, TankLevel } from "@/lib/tanks";
 
-type Payload = { asOfDay: string; tanks: TankLevel[]; dips: TankDip[]; unregistered: { storeNo: string; issues: number; litres: number }[]; reclassified?: number };
+type Moved = { rows: number; litres: number };
+type Payload = { asOfDay: string; tanks: TankLevel[]; oilStores?: Tank[]; dips: TankDip[]; unregistered: { storeNo: string; issues: number; litres: number }[]; reclassified?: number; toOil?: Moved; fromOil?: Moved };
 type Form = { tankNo: string; isNew: boolean; fuelType: string; name: string; capacity: string; reorder: string; focus?: "name" | "capacity" };
 
 const litres = (n: number) => `${Math.round(n).toLocaleString("en-GB")}\u00A0L`;
@@ -64,7 +65,7 @@ export function TanksSection() {
         } finally { setBusy(false); }
     };
 
-    const edit = (t: TankLevel, over: Partial<Form> = {}) => setForm({ tankNo: t.tankNo, isNew: false, fuelType: t.fuelType, name: t.name ?? "", capacity: t.capacityLitres ? String(t.capacityLitres) : "", reorder: t.reorderLitres != null ? String(t.reorderLitres) : "", ...over });
+    const edit = (t: Tank, over: Partial<Form> = {}) => setForm({ tankNo: t.tankNo, isNew: false, fuelType: t.fuelType, name: t.name ?? "", capacity: t.capacityLitres ? String(t.capacityLitres) : "", reorder: t.reorderLitres != null ? String(t.reorderLitres) : "", ...over });
     const add = (storeNo = "") => setForm({ tankNo: storeNo, isNew: true, fuelType: "Diesel", name: "", capacity: "", reorder: "" });
 
     const cap = form?.capacity === "" ? null : Number(form?.capacity);
@@ -82,7 +83,12 @@ export function TanksSection() {
         if (!form || formError) return;
         const d = await send("POST", "/api/settings/tanks", { tankNo: form.tankNo.trim(), fuelType: form.fuelType, name: form.name.trim() || null, capacityLitres: cap, reorderLitres: reo });
         if (!d) return;
-        toast(`Tank ${form.tankNo.trim()} saved`, d.reclassified ? { description: `${d.reclassified} ${d.reclassified === 1 ? "record" : "records"} from this tank had no fuel type and ${d.reclassified === 1 ? "is" : "are"} now counted as ${form.fuelType.toLowerCase()}.` } : undefined);
+        const said = [
+            d.toOil?.rows ? `${d.toOil.rows.toLocaleString("en-GB")} records (${litres(d.toOil.litres)}) are now kept out of fuel totals as oil.` : "",
+            d.fromOil?.rows ? `${d.fromOil.rows.toLocaleString("en-GB")} records (${litres(d.fromOil.litres)}) are back in fuel totals as ${form.fuelType.toLowerCase()}.` : "",
+            d.reclassified ? `${d.reclassified} ${d.reclassified === 1 ? "record" : "records"} from this tank had no fuel type and ${d.reclassified === 1 ? "is" : "are"} now counted as ${form.fuelType.toLowerCase()}.` : "",
+        ].filter(Boolean).join(" ");
+        toast(`${form.fuelType === "Oil" ? "Oil store" : "Tank"} ${form.tankNo.trim()} saved`, said ? { description: said } : undefined);
         setForm(null);
     };
 
@@ -178,6 +184,23 @@ export function TanksSection() {
                 })}
             </div>
 
+            {(data.oilStores?.length ?? 0) > 0 && (
+                <div className="mt-2 border-t border-grid pt-4">
+                    <p className="text-sm font-medium">Oil stores</p>
+                    <p className="mt-0.5 max-w-[78ch] text-[13px] text-muted-foreground">Lubricants, not fuel: no level is drawn, and their records are kept out of every fuel total.</p>
+                    <ul className="mt-2.5 flex flex-wrap gap-2">
+                        {data.oilStores!.map(t => (
+                            <li key={t.tankNo} className="flex items-center gap-2 rounded-full bg-surface-2 py-1 pl-3 pr-1 text-[13px]">
+                                <span className="mono font-medium">{t.tankNo}</span>
+                                {t.name ? <span>{t.name}</span> : <span className="text-muted-foreground">Oil</span>}
+                                <Button size="sm" variant="ghost" className="h-7 rounded-full px-2.5" disabled={busy} onClick={() => edit(t)}
+                                    aria-label={`Edit oil store ${t.tankNo}`}>{t.name ? "Edit" : "Name"}</Button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
             {data.unregistered.length > 0 && (
                 <div className="mt-4 rounded-tile bg-warn-soft p-4">
                     <p className="text-sm font-medium">{data.unregistered.length === 1 ? "One store on the fuel reports is" : `${data.unregistered.length} stores on the fuel reports are`} not in the register</p>
@@ -217,7 +240,8 @@ export function TanksSection() {
                                         <Input id="tank-no" className="mono" maxLength={20} autoComplete="off" value={form.tankNo} onChange={e => setForm({ ...form, tankNo: e.target.value })} /></div>
                                 )}
                                 <div className="flex flex-col gap-1.5"><span className="text-[13px] font-medium">Fuel</span>
-                                    <Seg light label="Fuel held in this tank" value={form.fuelType} onChange={k => setForm({ ...form, fuelType: k })} items={[{ key: "Diesel", label: "Diesel" }, { key: "Petrol", label: "Petrol" }]} /></div>
+                                    <Seg light label="Fuel held in this tank" value={form.fuelType} onChange={k => setForm({ ...form, fuelType: k })} items={[{ key: "Diesel", label: "Diesel" }, { key: "Petrol", label: "Petrol" }, { key: "Oil", label: "Oil store" }]} />
+                                    {form.fuelType === "Oil" && <span className="text-xs text-muted-foreground">Every record from an oil store is kept out of fuel totals, charts and exceptions. Choosing a fuel again brings them back.</span>}</div>
                                 <div className="flex flex-col gap-1.5"><label htmlFor="tank-name" className="text-[13px] font-medium">Name</label>
                                     <Input id="tank-name" maxLength={60} autoComplete="off" autoFocus={form.focus === "name"} placeholder="For example Main depot diesel" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                                     <span className="text-xs text-muted-foreground">Shown with the tank number on the dashboard, receipts and fuel logs.</span></div>

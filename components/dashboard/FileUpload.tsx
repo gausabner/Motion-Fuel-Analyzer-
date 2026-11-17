@@ -89,6 +89,7 @@ export function FileUpload() {
                 // An upload that adds nothing is not a success: say which of the two reasons it was.
                 const added = Number(data.count ?? 0), read = Number(data.totalProcessed ?? 0), dup = Number(data.duplicates ?? 0);
                 const n = (v: number, word: string) => `${v.toLocaleString('en-GB')} ${word}${v === 1 ? '' : 's'}`;
+                const oil = Number(data.oilAdded ?? 0) > 0 ? ` ${n(Number(data.oilAdded), 'row')} of oil from the oil stores ${Number(data.oilAdded) === 1 ? 'is' : 'are'} kept out of fuel totals.` : '';
                 const stock = Number(data.stockReadings ?? 0) > 0 ? ` Stock on hand read for ${n(Number(data.stockReadings), 'tank-day')}.` : '';
                 if (added === 0 && read === 0) {
                     setStatus('error');
@@ -98,7 +99,7 @@ export function FileUpload() {
                     setMessage(`Nothing new was added. All ${n(read, 'row')} in this file are already on record, so the figures are unchanged.${stock}`);
                 } else {
                     setStatus('success');
-                    setMessage(`${n(added, 'row')} added.${dup > 0 ? ` ${n(dup, 'row')} already on record ${dup === 1 ? 'was' : 'were'} skipped.` : ''}${stock}`);
+                    setMessage(`${n(added, 'row')} added.${dup > 0 ? ` ${n(dup, 'row')} already on record ${dup === 1 ? 'was' : 'were'} skipped.` : ''}${oil}${stock}`);
                 }
                 setTimeout(() => {
                     router.refresh();

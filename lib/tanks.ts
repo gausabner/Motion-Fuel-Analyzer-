@@ -110,7 +110,8 @@ export async function getTankLevels(asOfDay?: string): Promise<{ asOfDay: string
     const asOf = asOfDay ?? String((await q(`SELECT date(MAX(transDate), 'localtime') AS d FROM FuelTransaction WHERE transType IN ('FIS','FRE')`))[0]?.d ?? new Date().toISOString().slice(0, 10));
 
     const out: TankLevel[] = [];
-    for (const tank of tanks) {
+    // Oil stores hold lubricants in drums and dispensers, not a fuel level.
+    for (const tank of tanks.filter(t => t.fuelType !== "Oil")) {
         const dip = dips.find(d => d.tankNo === tank.tankNo && d.day <= asOf) ?? null;   // dips are newest first
         const mine = stock.filter(r => r.tankNo === tank.tankNo);                         // also newest first
         const reading = mine.find(r => r.day <= asOf) ?? null;

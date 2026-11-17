@@ -3,7 +3,7 @@ import { audit } from "@/lib/audit";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
-import { getDips, getTankLevels, getUnregisteredStores } from "@/lib/tanks";
+import { getDips, getTankLevels, getTanks, getUnregisteredStores } from "@/lib/tanks";
 
 const schema = z.object({
     tankNo: z.string().trim().min(1).max(20),
@@ -12,8 +12,8 @@ const schema = z.object({
 });
 
 async function payload() {
-    const [levels, dips, unregistered] = await Promise.all([getTankLevels(), getDips(), getUnregisteredStores()]);
-    return { asOfDay: levels.asOfDay, tanks: levels.tanks, dips, unregistered };
+    const [levels, dips, unregistered, all] = await Promise.all([getTankLevels(), getDips(), getUnregisteredStores(), getTanks()]);
+    return { asOfDay: levels.asOfDay, tanks: levels.tanks, oilStores: all.filter(t => t.fuelType === "Oil"), dips, unregistered };
 }
 
 /** Record a dip reading, or correct the one already recorded for that tank and day. */

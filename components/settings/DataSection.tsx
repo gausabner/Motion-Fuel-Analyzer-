@@ -70,6 +70,17 @@ export function DataSection() {
                         <span className="text-muted-foreground">({Math.round(data.unknownFuelIssues.litres).toLocaleString("en-GB")} L). They come from stores that are not in the tank register. <Link href="#tanks" className="lnk">Add those stores as tanks</Link> to classify them.</span>
                     </li>
                 )}
+                {data.oil.issues + data.oil.receipts > 0 && (
+                    <li className="max-w-[80ch]">
+                        <strong className="font-medium">{(data.oil.issues + data.oil.receipts).toLocaleString("en-GB")} oil records are kept apart from fuel.</strong>{" "}
+                        <span className="text-muted-foreground">
+                            {data.oil.issues.toLocaleString("en-GB")} issues ({Math.round(data.oil.issuedLitres).toLocaleString("en-GB")} L)
+                            {data.oil.receipts > 0 ? ` and ${data.oil.receipts.toLocaleString("en-GB")} receipts (${Math.round(data.oil.receivedLitres).toLocaleString("en-GB")} L)` : ""}
+                            {data.oil.stores.length ? ` from ${data.oil.stores.length === 1 ? "store" : "stores"} ${data.oil.stores.join(", ")}` : ""}.
+                            They are lubricants, so no fuel total, chart or exception counts them. <Link href="#tanks" className="lnk">Oil stores are set in the tank register.</Link>
+                        </span>
+                    </li>
+                )}
                 {otherTotal > 0 && (
                     <li className="max-w-[80ch]">
                         <strong className="font-medium">{otherTotal.toLocaleString("en-GB")} rows are stores movements, not fuel.</strong>{" "}

@@ -11,6 +11,8 @@ export type Hr580Result = {
     votesResolved: number;
     /** Tank-days of stock on hand read from stores-report (HR440) sheets. */
     stockReadings: number;
+    /** Of `count`, rows that were oil and went to OilTransaction, out of every fuel total. */
+    oilAdded: number;
 };
 
 /** Either shape; discriminate on `format`. */
@@ -19,6 +21,7 @@ import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
 import { normaliseSheet } from "@/lib/pipe-sheet";
 import { saveStockReadings, stockReadingsFromWorkbook } from "@/lib/stock-readings";
+import { OIL, isOilRow } from "@/lib/oil";
 import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
@@ -160,7 +163,10 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
             const tankNo = String(rowData["Tank"] || rowData["Store No"] || rowData["Store"] || "").trim();
             if (!tankNo || tankNo.toLowerCase() === 'undefined') continue;
 
-            const fuelType = fuelMap[tankNo] || "Unknown";
+            const itemCat = String(rowData["Category"] || rowData["Item Cat"] || "").trim();
+            // Oil from an oil store, or anything in the oil category, is kept out of fuel (lib/oil.ts).
+            const isOil = isOilRow(fuelMap[tankNo], itemCat);
+            const fuelType = isOil ? OIL : (fuelMap[tankNo] || "Unknown");
 
             // Date Parsing - Extremely robust
             const rawDate = rowData["Issue Date"] ?? rowData["Trans Date"] ?? rowData["Date"] ?? rowData["date"];
@@ -238,8 +244,9 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
                 fleetReading: String(rowData["Fleet Reading"] || rowData["Odometer"] || ""),
                 jobNo: String(rowData["Job No"] || ""),
                 activity: String(rowData["Activity"] || ""),
-                itemCat: String(rowData["Category"] || rowData["Item Cat"] || ""),
+                itemCat,
                 fuelType: fuelType,
+                isOil,
                 isIssue: isIssue, // Strict determination
                 transType: transTypeRaw, // Store actual code (FIS/FRE)
             };
@@ -268,9 +275,21 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
     //    INSERT OR IGNORE lets the @@unique index on
     //    (transDate, transRefNo, vehicleId, issueTime) skip duplicates, matching
     //    the original behaviour.
+    let oilAdded = 0;
     for (const tx of transactions) {
         const isoDate = tx.transDate.toISOString();
-        const affected = await prisma.$executeRaw`
+        const affected = tx.isOil ? await prisma.$executeRaw`
+            INSERT OR IGNORE INTO OilTransaction (
+                id, storeNo, pumpNo, transDate, transRefNo, issueTime, transVoteNo,
+                transQty, transAmt, vehicleId, fleetUnit, fleetEI, fleetReading,
+                jobNo, activity, itemCat, transType, fuelType, isIssue, createdAt, uploadId
+            ) VALUES (
+                ${randomUUID()}, ${tx.storeNo}, ${tx.pumpNo}, ${isoDate}, ${tx.transRefNo},
+                ${tx.issueTime}, ${tx.transVoteNo}, ${tx.transQty}, ${tx.transAmt},
+                ${tx.vehicleId}, ${tx.fleetUnit}, ${tx.fleetEI}, ${tx.fleetReading},
+                ${tx.jobNo}, ${tx.activity}, ${tx.itemCat}, ${tx.transType},
+                ${tx.fuelType}, ${tx.isIssue ? 1 : 0}, ${new Date().toISOString()}, ${uploadId}
+            )` : await prisma.$executeRaw`
             INSERT OR IGNORE INTO FuelTransaction (
                 id, storeNo, pumpNo, transDate, transRefNo, issueTime, transVoteNo,
                 transQty, transAmt, vehicleId, fleetUnit, fleetEI, fleetReading,
@@ -285,6 +304,7 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
         // INSERT OR IGNORE reports 0 affected rows when the unique index skipped a duplicate.
         const inserted = affected > 0;
 
+        if (inserted && tx.isOil) { insertedCount++; oilAdded++; continue; }
         if (inserted) {
             insertedCount++;
             // Daily consumption stats track FIS (issues) only — FRE and other
@@ -366,5 +386,6 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
         errors: errors.length,
         votesResolved,
         stockReadings,
+        oilAdded,
     };
 }
