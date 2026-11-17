@@ -3,7 +3,13 @@ import * as XLSX from "xlsx";
 import { requireRole } from "@/lib/auth";
 import { validateUploadFile } from "@/lib/upload-validation";
 import { detectDeliveryFormat } from "@/lib/ingestion-hr640";
-import { unpipeSheet } from "@/lib/pipe-sheet";
+import { normaliseSheet, type SheetLayout } from "@/lib/pipe-sheet";
+
+const LAYOUT_NOTE: Record<SheetLayout, string> = {
+    "pipe-delimited": "Raw export, split into columns",
+    "split-headings": "Headings split across cells, rebuilt",
+    "headings-lower-down": "Headings found below the first row",
+};
 
 export async function POST(req: NextRequest) {
     const _auth = await requireRole(); if (_auth instanceof NextResponse) return _auth;
@@ -20,8 +26,9 @@ export async function POST(req: NextRequest) {
         const workbook = XLSX.read(buffer, { type: "buffer" });
         
         const sheetsPreview = workbook.SheetNames.map(sheetName => {
-            // Same rebuild the importer applies, so a pipe-delimited export is judged by its real headings.
-            const sheet = unpipeSheet(workbook.Sheets[sheetName]) ?? workbook.Sheets[sheetName];
+            // Same rebuild the importer applies, so every known layout is judged by its real headings.
+            const { sheet, layout } = normaliseSheet(workbook.Sheets[sheetName]);
+            const note = layout ? LAYOUT_NOTE[layout] : null;
             const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
             
             if (!jsonData || jsonData.length === 0) {
@@ -49,6 +56,7 @@ export async function POST(req: NextRequest) {
                         ? "Fuel deliveries, extended (HR940)"
                         : "Fuel deliveries (HR640)",
                     missingColumns: [],
+                    note,
                 };
             }
 
@@ -61,12 +69,14 @@ export async function POST(req: NextRequest) {
             if (!hasDate) missingColumns.push("Date");
             if (!hasQty) missingColumns.push("Quantity");
 
+            const stores = headerRow.includes("tot on hand qty");
             return {
                 name: sheetName,
                 isEligible: missingColumns.length === 0,
-                format: "hr580",
-                formatLabel: "Fuel transactions (HR580)",
-                missingColumns
+                format: stores ? "hr440" : "hr580",
+                formatLabel: stores ? "Stores report (HR440), with stock on hand" : "Fuel transactions (HR580)",
+                missingColumns,
+                note,
             };
         });
 

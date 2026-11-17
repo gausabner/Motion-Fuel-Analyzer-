@@ -32,6 +32,21 @@ model TankDefinition {
 
 /// A physical dip reading: litres in a tank at the end of a day. The level on
 /// any later day is the latest dip plus receipts less issues since.
+/// Closing stock on hand per tank and day, as the stores report (HR440) states it. A book figure, not a dip.
+model StockReading {
+  id        String   @id @default(cuid())
+  tankNo    String
+  day       String
+  litres    Float
+  /// The stores system's maximum stock level for the item ("Qty Max").
+  reportMax Float?
+  uploadId  String?
+  createdAt DateTime @default(now())
+
+  @@unique([tankNo, day])
+  @@index([uploadId])
+}
+
 model TankDip {
   id        String   @id @default(cuid())
   tankNo    String

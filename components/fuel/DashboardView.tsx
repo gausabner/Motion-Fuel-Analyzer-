@@ -35,6 +35,8 @@ export function DashboardView({ data, currency, periods, period }: {
     const { range } = data;
     const measured = data.tanks.some(t => t.level.status === "ok");
     const allMeasured = data.tanks.length > 0 && data.tanks.every(t => t.level.status === "ok");
+    const kinds = new Set(data.tanks.filter(t => t.level.status === "ok").map(t => t.level.basis));
+    const basisWords = kinds.size > 1 ? "dip readings and the stores report" : kinds.has("stores-report") ? "the stores report" : "dip readings";
     const spendD = delta(data.spend, data.prevSpend, range.prevLabel);
     const litresD = delta(data.litres, data.prevLitres, range.prevLabel);
     const totalFuel = data.petrol + data.diesel;
@@ -149,7 +151,7 @@ export function DashboardView({ data, currency, periods, period }: {
 
             <div className="grid gap-3 lg:grid-cols-2">
                 <section className="monumental-card flex min-w-0 flex-col gap-3">
-                    <div className="card-h"><h2>Bulk tanks</h2><span className="sub">{measured ? `Levels from dip readings, to the end of ${range.label}` : `Book position · receipts less issues, ${range.label}`}</span></div>
+                    <div className="card-h"><h2>Bulk tanks</h2><span className="sub">{measured ? `Levels from ${basisWords}, to the end of ${range.label}` : `Book position · receipts less issues, ${range.label}`}</span></div>
                     {data.tanks.some(t => t.received > 0 || t.level.status === "ok") ? (
                         <>
                             <div className="grid gap-2.5 sm:grid-cols-3">
@@ -161,11 +163,11 @@ export function DashboardView({ data, currency, periods, period }: {
                                         return (
                                             <div key={t.store} className="flex min-w-0 flex-col items-start gap-2 rounded-2xl bg-surface-2 p-3 max-lg:flex-row max-lg:items-center max-lg:gap-3.5">
                                                 <TankGauge level={lv.fill ?? 0} tone={lv.belowReorder ? "warn" : petrol ? "sky" : "brand"}
-                                                    label={`Tank ${t.store}: ${pct}% full, ${compact(lv.litres ?? 0)} litres`} />
+                                                    label={`Tank ${t.store}: ${pct}% full, ${compact(lv.litres ?? 0)} litres${lv.basis === "stores-report" ? " by the stores report" : ""}`} />
                                                 <div className="min-w-0">
                                                     <div className="text-xs leading-snug text-muted-foreground">{t.name ?? `Tank ${t.store}`} · {t.fuel}</div>
                                                     <div className="num text-[22px] font-semibold leading-tight tracking-[-0.02em]">{pct}%</div>
-                                                    <div className="mono text-[11.5px] text-muted-foreground">{compact(lv.litres ?? 0)} of {compact(lv.capacityLitres ?? 0)} L</div>
+                                                    <div className="mono text-[11.5px] text-muted-foreground">{compact(lv.litres ?? 0)} of {compact(lv.capacityLitres ?? 0)} L{kinds.size > 1 ? (lv.basis === "dip" ? " · dip" : " · stores") : ""}</div>
                                                     <span className={`delta mt-1 !whitespace-normal ${lv.belowReorder ? "warn" : "flat"}`}>
                                                         {lv.belowReorder ? "at or below the reorder level" : lv.daysOfCover != null ? `about ${Math.round(lv.daysOfCover)} days at the recent rate` : "no recent issues"}
                                                     </span>
@@ -184,7 +186,7 @@ export function DashboardView({ data, currency, periods, period }: {
                                                 <div className="num text-[22px] font-semibold leading-tight tracking-[-0.02em]">{t.received > 0 ? `${Math.round(left * 100)}%` : "—"}</div>
                                                 <div className="mono text-[11.5px] text-muted-foreground">{compact(t.received)} in · {compact(t.issued)} out</div>
                                                 <span className={`delta mt-1 !whitespace-normal ${lv.status === "short" || lv.status === "over" || net < 0 ? "warn" : "flat"}`}>
-                                                    {lv.status === "short" ? `level cannot be stated: ${compact(lv.gapLitres ?? 0)} L of receipts missing since the dip`
+                                                    {lv.status === "short" ? `level cannot be stated: ${compact(lv.gapLitres ?? 0)} L of receipts missing since the ${lv.basis === "stores-report" ? "last stores report" : "dip"}`
                                                         : lv.status === "over" ? "level cannot be stated: the sum is above capacity"
                                                             : t.received === 0 ? "no receipt recorded" : net < 0 ? `drew ${compact(-net)} L of earlier stock` : `${compact(net)} L added to stock`}
                                                 </span>
@@ -195,16 +197,16 @@ export function DashboardView({ data, currency, periods, period }: {
                             </div>
                             <p className="text-xs text-muted-foreground">
                                 {measured && allMeasured
-                                    ? "Each level is the latest dip reading plus receipts less issues since."
+                                    ? `Each level is the latest ${kinds.has("stores-report") ? (kinds.size > 1 ? "dip reading or stores-report stock" : "stores-report stock") : "dip reading"} plus receipts less issues since.${kinds.has("stores-report") ? " Stores-report stock is a book figure; its postings run a few days behind the pumps." : ""}`
                                     : measured
-                                        ? "Tanks with a dip reading show a real level. The others show the share of this period's receipts not yet issued, which is a book figure."
+                                        ? "Tanks with a dip reading or stores-report stock show a level. The others show the share of this period's receipts not yet issued, which is a book figure."
                                         : "The level is the share of this period's receipts not yet issued, a book figure, not the litres physically in the tank."}{" "}
-                                {!allMeasured && <Link href="/dashboard/settings#tanks" className="lnk">Set capacities and record a dip</Link>}
+                                {!allMeasured && <Link href="/dashboard/settings#tanks" className="lnk">Set capacities or record a dip</Link>}
                             </p>
                         </>
                     ) : (
                         <Empty icon title="No tank receipts in this period"
-                            body="A level needs a capacity and a dip reading; a book position needs the tank receipts for the same dates as the issues."
+                            body="A level needs a capacity and either a dip reading or the stores report (HR440); a book position needs the tank receipts for the same dates as the issues."
                             action={<Link href="/dashboard/settings#tanks" className="tab" aria-current="page">Set up tanks</Link>} />
                     )}
                 </section>

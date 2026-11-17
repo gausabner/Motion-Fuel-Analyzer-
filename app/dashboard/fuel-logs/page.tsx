@@ -3,6 +3,8 @@ import { fmtMoney } from "@/lib/format";
 import { Plate } from "@/components/fuel/VehiclePanel";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { prisma } from "@/lib/prisma";
+import { getTankNames } from "@/lib/tanks";
+import { TankLabel } from "@/components/fuel/TankLabel";
 import {
     Table,
     TableBody,
@@ -73,7 +75,10 @@ export default async function FuelLogsPage({
     const currentPage = Number(params.page) || 1;
 
     // Pass page to query
-    const { data: transactions, total } = await getRecentTransactions({ ...params, page: currentPage });
+    const [{ data: transactions, total }, tankNames] = await Promise.all([
+        getRecentTransactions({ ...params, page: currentPage }),
+        getTankNames(),
+    ]);
 
     // 5. System Settings for Currency with safety fallback
     let settings = null;
@@ -131,7 +136,7 @@ export default async function FuelLogsPage({
                                                 {format(new Date(tx.transDate), 'dd MMM yyyy')}
                                             </TableCell>
                                             <TableCell className="mono text-muted-foreground">{tx.issueTime || '—'}</TableCell>
-                                            <TableCell className="mono">{tx.storeNo}</TableCell>
+                                            <TableCell><TankLabel tankNo={tx.storeNo} names={tankNames} /></TableCell>
                                             <TableCell className="mono">{tx.pumpNo || '—'}</TableCell>
                                             <TableCell>
                                                 {tx.fuelType === "Unknown" ? <span className="text-muted-foreground">Not recorded</span> : tx.fuelType}

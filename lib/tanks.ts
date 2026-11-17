@@ -1,13 +1,16 @@
 import { prisma } from "@/lib/prisma";
+import { getStockReadings, type StockReading } from "@/lib/stock-readings";
 
 /**
  * The tank register and the level in each tank.
  *
- * A level is only ever stated from a physical dip reading: litres in the tank
- * at the end of a day. From there it is the dip, plus receipts booked into the
- * tank, less issues drawn from it. If that sum goes below zero or above the
- * tank's capacity, the records cannot be right — usually a receipt that was
- * never uploaded — and the page says so instead of drawing a level.
+ * A level starts from a known stock at the end of a day: a physical dip
+ * reading, or the closing stock on the stores report (HR440), whichever is
+ * later (the dip wins a tie, being physical). From there it is that stock,
+ * plus receipts booked into the tank, less issues drawn from it. If that sum
+ * goes below zero or above the tank's capacity, the records cannot be right —
+ * usually a receipt that was never uploaded — and the page says so instead of
+ * drawing a level.
  */
 
 export type Tank = {
@@ -20,9 +23,18 @@ export type Tank = {
 
 export type TankDip = { id: string; tankNo: string; day: string; litres: number; createdBy: string | null };
 
+/** Where the starting stock came from. */
+export type LevelBasis = { kind: "dip" | "stores-report"; day: string; litres: number };
+
 export type TankLevel = Tank & {
     /** Latest dip on or before the as-of day. */
     dip: TankDip | null;
+    /** Latest stores-report closing stock on or before the as-of day. */
+    stock: StockReading | null;
+    /** The stock the level is counted from: the later of the dip and the stores-report figure. */
+    basis: LevelBasis | null;
+    /** The stores system's maximum stock level for this tank, when the report gives one. */
+    reportMax: number | null;
     receivedSince: number;
     issuedSince: number;
     /** Local day of the last receipt booked into this tank, if any. */
@@ -40,8 +52,15 @@ export type TankLevel = Tank & {
     gapLitres: number | null;
 };
 
-/** Pure: turn a dip and the movements since into a level, or say why it cannot be stated. */
-export function computeLevel(tank: Tank, dip: TankDip | null, receivedSince: number, issuedSince: number, dailyIssue: number): Pick<TankLevel, "status" | "litres" | "fill" | "daysOfCover" | "belowReorder" | "gapLitres"> {
+/** Pure: the later of a dip and a stores-report figure; the dip wins a tie because it was measured. */
+export function chooseBasis(dip: { day: string; litres: number } | null, stock: { day: string; litres: number } | null): LevelBasis | null {
+    if (dip && (!stock || dip.day >= stock.day)) return { kind: "dip", day: dip.day, litres: dip.litres };
+    if (stock) return { kind: "stores-report", day: stock.day, litres: stock.litres };
+    return null;
+}
+
+/** Pure: turn a starting stock and the movements since into a level, or say why it cannot be stated. */
+export function computeLevel(tank: Tank, dip: { litres: number } | null, receivedSince: number, issuedSince: number, dailyIssue: number): Pick<TankLevel, "status" | "litres" | "fill" | "daysOfCover" | "belowReorder" | "gapLitres"> {
     const none = { litres: null, fill: null, daysOfCover: null, belowReorder: false, gapLitres: null };
     if (!tank.capacityLitres || tank.capacityLitres <= 0) return { status: "no-capacity", ...none };
     if (!dip) return { status: "no-dip", ...none };
@@ -87,13 +106,16 @@ export async function getUnregisteredStores(): Promise<{ storeNo: string; issues
 
 /** The level in every registered tank as of a local day (default: the latest day with any movement). */
 export async function getTankLevels(asOfDay?: string): Promise<{ asOfDay: string; tanks: TankLevel[] }> {
-    const [tanks, dips] = await Promise.all([getTanks(), getDips()]);
+    const [tanks, dips, stock] = await Promise.all([getTanks(), getDips(), getStockReadings()]);
     const asOf = asOfDay ?? String((await q(`SELECT date(MAX(transDate), 'localtime') AS d FROM FuelTransaction WHERE transType IN ('FIS','FRE')`))[0]?.d ?? new Date().toISOString().slice(0, 10));
 
     const out: TankLevel[] = [];
     for (const tank of tanks) {
         const dip = dips.find(d => d.tankNo === tank.tankNo && d.day <= asOf) ?? null;   // dips are newest first
-        const since = dip?.day ?? "0000-00-00";
+        const mine = stock.filter(r => r.tankNo === tank.tankNo);                         // also newest first
+        const reading = mine.find(r => r.day <= asOf) ?? null;
+        const basis = chooseBasis(dip, reading);
+        const since = basis?.day ?? "0000-00-00";
         const [moves, last, recent] = await Promise.all([
             q(`SELECT transType AS type, SUM(transQty) AS litres FROM FuelTransaction
                WHERE trim(storeNo) = ? AND transType IN ('FIS','FRE')
@@ -103,14 +125,16 @@ export async function getTankLevels(asOfDay?: string): Promise<{ asOfDay: string
                WHERE trim(storeNo) = ? AND transType = 'FIS'
                  AND date(transDate, 'localtime') > date(?, '-30 day') AND date(transDate, 'localtime') <= ?`, tank.tankNo, asOf, asOf),
         ]);
-        const receivedSince = dip ? Number(moves.find(m => m.type === "FRE")?.litres || 0) : 0;
-        const issuedSince = dip ? Number(moves.find(m => m.type === "FIS")?.litres || 0) : 0;
+        const receivedSince = basis ? Number(moves.find(m => m.type === "FRE")?.litres || 0) : 0;
+        const issuedSince = basis ? Number(moves.find(m => m.type === "FIS")?.litres || 0) : 0;
         const dailyIssue = Number(recent[0]?.litres || 0) / 30;
         out.push({
-            ...tank, dip, receivedSince, issuedSince,
+            ...tank, dip, stock: reading ? { tankNo: reading.tankNo, day: reading.day, litres: reading.litres, reportMax: reading.reportMax } : null,
+            basis, reportMax: (reading ?? mine[0])?.reportMax ?? null,
+            receivedSince, issuedSince,
             lastReceiptDay: (last[0]?.d as string | null) ?? null,
             dailyIssue,
-            ...computeLevel(tank, dip, receivedSince, issuedSince, dailyIssue),
+            ...computeLevel(tank, basis, receivedSince, issuedSince, dailyIssue),
         });
     }
     return { asOfDay: asOf, tanks: out };
@@ -125,4 +149,11 @@ export async function classifyUnknownFuel(tankNo: string, fuelType: string): Pro
     const n = await prisma.$executeRawUnsafe(
         `UPDATE FuelTransaction SET fuelType = ? WHERE trim(storeNo) = ? AND fuelType = 'Unknown'`, fuelType, tankNo);
     return Number(n);
+}
+
+/** Tank number to the name given in the register, for showing next to the number. */
+export async function getTankNames(): Promise<Record<string, string>> {
+    const names: Record<string, string> = {};
+    for (const t of await getTanks()) if (t.name) names[t.tankNo] = t.name;
+    return names;
 }

@@ -42,7 +42,7 @@ export const NAV_GROUPS: NavGroup[] = [
             { name: "Vote registry", href: "/dashboard/registry", icon: Table2, roles: STAFF, badge: "registry" },
             { name: "Reports", href: "/dashboard/reports", icon: FileText, roles: STAFF },
             { name: "Users", href: "/dashboard/users", icon: UserCog, roles: ADMIN },
-            { name: "Settings", href: "/dashboard/settings", icon: Settings, roles: ["SUPER_ADMIN"] },
+            { name: "Settings", href: "/dashboard/settings", icon: Settings, roles: ADMIN },
         ],
     },
 ];

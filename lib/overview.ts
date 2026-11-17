@@ -16,8 +16,8 @@ export type BriefPart = string | { b: string } | { unit: string };
 export type TankBook = {
     store: string; fuel: string; received: number; issued: number;
     name: string | null;
-    /** The level from a dip reading, when the register can state one; otherwise why it cannot. */
-    level: Pick<TankLevel, "status" | "litres" | "fill" | "daysOfCover" | "belowReorder" | "gapLitres" | "capacityLitres"> & { dipDay: string | null };
+    /** The level from a dip reading or the stores report, when the register can state one; otherwise why it cannot. */
+    level: Pick<TankLevel, "status" | "litres" | "fill" | "daysOfCover" | "belowReorder" | "gapLitres" | "capacityLitres"> & { dipDay: string | null; basis: "dip" | "stores-report" | null; basisDay: string | null };
 };
 
 export type Overview = {
@@ -153,6 +153,7 @@ export async function getOverview(fromDay: string, toDay: string, currency: stri
             level: {
                 status: lv?.status ?? "no-capacity", litres: lv?.litres ?? null, fill: lv?.fill ?? null, daysOfCover: lv?.daysOfCover ?? null,
                 belowReorder: lv?.belowReorder ?? false, gapLitres: lv?.gapLitres ?? null, capacityLitres: lv?.capacityLitres ?? null, dipDay: lv?.dip?.day ?? null,
+                basis: lv?.basis?.kind ?? null, basisDay: lv?.basis?.day ?? null,
             },
         };
         if (r.type === "FRE") t.received += Number(r.litres || 0); else t.issued += Number(r.litres || 0);

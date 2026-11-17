@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { getTankNames } from "@/lib/tanks";
+import { TankLabel } from "@/components/fuel/TankLabel";
 import Link from "next/link";
 import { scopeRange } from "@/lib/periods";
 import { getFlowSeries } from "@/lib/fuel-flow";
@@ -49,7 +51,10 @@ async function getFreData(filters: TxFilterOpts) {
         `, ...params),
     ]);
 
-    const settings = await (prisma as any).systemSettings.findFirst({ where: { id: 'global' } });
+    const [settings, tankNames] = await Promise.all([
+        (prisma as any).systemSettings.findFirst({ where: { id: 'global' } }),
+        getTankNames(),
+    ]);
 
     return {
         kpi: {
@@ -66,6 +71,7 @@ async function getFreData(filters: TxFilterOpts) {
             totalCost: d.totalCost || 0,
         })),
         byTank,
+        tankNames,
         recent,
     };
 }
@@ -175,7 +181,7 @@ export default async function FREPage({
                                 <TableBody>
                                     {data.byTank.map((t: any, i: number) => (
                                         <TableRow key={i}>
-                                            <TableCell className="mono">{t.storeNo}</TableCell>
+                                            <TableCell><TankLabel tankNo={t.storeNo} names={data.tankNames} /></TableCell>
                                             <TableCell className="text-xs">{t.fuelType}</TableCell>
                                             <TableCell className="mono text-right">{Number(t.deliveries)}</TableCell>
                                             <TableCell className="mono text-right">{Math.round(t.vol || 0).toLocaleString("en-GB")}</TableCell>
@@ -213,7 +219,7 @@ export default async function FREPage({
                                         <TableRow key={i}>
                                             <TableCell className="mono">{format(new Date(t.transDate), 'dd MMM yyyy')}</TableCell>
                                             <TableCell className="mono">{t.transRefNo || '—'}</TableCell>
-                                            <TableCell className="mono">{t.storeNo}</TableCell>
+                                            <TableCell><TankLabel tankNo={t.storeNo} names={data.tankNames} /></TableCell>
                                             <TableCell className="mono text-right">{(t.transQty || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                                         </TableRow>
                                     ))}

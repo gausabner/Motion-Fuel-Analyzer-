@@ -12,7 +12,7 @@ import { Section } from "./parts";
 import type { TankDip, TankLevel } from "@/lib/tanks";
 
 type Payload = { asOfDay: string; tanks: TankLevel[]; dips: TankDip[]; unregistered: { storeNo: string; issues: number; litres: number }[]; reclassified?: number };
-type Form = { tankNo: string; isNew: boolean; fuelType: string; name: string; capacity: string; reorder: string };
+type Form = { tankNo: string; isNew: boolean; fuelType: string; name: string; capacity: string; reorder: string; focus?: "name" | "capacity" };
 
 const litres = (n: number) => `${Math.round(n).toLocaleString("en-GB")}\u00A0L`;
 const dayLabel = (ymd: string) => { const [y, m, d] = ymd.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); };
@@ -21,12 +21,12 @@ const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(
 /** What the register can say about a tank right now, in one line. */
 function position(t: TankLevel): { text: string; tone: "ok" | "md" | "hi" | "lo" } {
     switch (t.status) {
-        case "no-capacity": return { text: "Add a capacity to show a level", tone: "lo" };
-        case "no-dip": return { text: "Record a dip reading to show a level", tone: "lo" };
-        case "short": return { text: `Cannot be stated: issues since the dip exceed stock and receipts by ${litres(t.gapLitres ?? 0)}`, tone: "hi" };
+        case "no-capacity": return { text: t.stock ? "Add a capacity to draw a level" : "Add a capacity to show a level", tone: "lo" };
+        case "no-dip": return { text: "Record a dip, or upload the stores report (HR440), to show a level", tone: "lo" };
+        case "short": return { text: `Cannot be stated: issues since the ${t.basis?.kind === "stores-report" ? "stores-report stock" : "dip"} exceed stock and receipts by ${litres(t.gapLitres ?? 0)}`, tone: "hi" };
         case "over": return { text: `Cannot be stated: the sum is ${litres(t.gapLitres ?? 0)} above capacity`, tone: "hi" };
         default: return {
-            text: `${litres(t.litres ?? 0)}, ${Math.round((t.fill ?? 0) * 100)}% full${t.daysOfCover != null ? `, about ${Math.round(t.daysOfCover)} days at the recent rate` : ""}`,
+            text: `${litres(t.litres ?? 0)}, ${Math.round((t.fill ?? 0) * 100)}% full${t.basis?.kind === "stores-report" ? " by the stores report" : ""}${t.daysOfCover != null ? `, about ${Math.round(t.daysOfCover)} days at the recent rate` : ""}`,
             tone: t.belowReorder ? "md" : "ok",
         };
     }
@@ -53,7 +53,7 @@ export function TanksSection() {
             const res = await fetch(url, { method, headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
             const d = await res.json().catch(() => ({}));
             if (!res.ok) {
-                toast.error(res.status === 403 ? "Only an administrator can change the tank register." : d.error || "That change was not saved. Try again.");
+                toast.error(res.status === 403 ? "Only a Super admin or System admin can change the tank register." : d.error || "That change was not saved. Try again.");
                 return null;
             }
             setData(d); router.refresh();
@@ -64,7 +64,7 @@ export function TanksSection() {
         } finally { setBusy(false); }
     };
 
-    const edit = (t: TankLevel) => setForm({ tankNo: t.tankNo, isNew: false, fuelType: t.fuelType, name: t.name ?? "", capacity: t.capacityLitres ? String(t.capacityLitres) : "", reorder: t.reorderLitres != null ? String(t.reorderLitres) : "" });
+    const edit = (t: TankLevel, over: Partial<Form> = {}) => setForm({ tankNo: t.tankNo, isNew: false, fuelType: t.fuelType, name: t.name ?? "", capacity: t.capacityLitres ? String(t.capacityLitres) : "", reorder: t.reorderLitres != null ? String(t.reorderLitres) : "", ...over });
     const add = (storeNo = "") => setForm({ tankNo: storeNo, isNew: true, fuelType: "Diesel", name: "", capacity: "", reorder: "" });
 
     const cap = form?.capacity === "" ? null : Number(form?.capacity);
@@ -114,7 +114,7 @@ export function TanksSection() {
 
     return (
         <Section id="tanks" title="Tanks and stock"
-            sub="A level is only stated from a physical dip reading. From the dip, it is receipts booked into the tank less issues drawn from it. Capacity and a reorder level set the gauge and the warning.">
+            sub="A level starts from the latest known stock: a dip reading, or the closing stock on the stores report (HR440) when that is more recent. From there it is receipts booked into the tank less issues drawn from it. Capacity and a reorder level set the gauge and the warning. Super admins and System admins can name and change tanks.">
             <div className="mt-3 flex flex-col">
                 {data.tanks.map(t => {
                     const p = position(t);
@@ -125,13 +125,23 @@ export function TanksSection() {
                                 <div className="min-w-[200px] flex-1">
                                     <div className="flex flex-wrap items-baseline gap-x-2.5">
                                         <span className="mono text-sm font-medium">{t.tankNo}</span>
-                                        <span className="text-sm font-medium">{t.name || `${t.fuelType} tank`}</span>
+                                        {t.name
+                                            ? <span className="text-sm font-medium">{t.name}</span>
+                                            : <button type="button" className="lnk text-sm" disabled={busy} onClick={() => edit(t, { focus: "name" })}>Name this tank</button>}
                                         <span className="text-[13px] text-muted-foreground">{t.fuelType}</span>
                                     </div>
                                     <p className="mono mt-0.5 text-[12.5px] text-muted-foreground">
                                         {t.capacityLitres ? `Holds ${litres(t.capacityLitres)}` : "No capacity set"}
                                         {t.reorderLitres != null ? ` · reorder at ${litres(t.reorderLitres)}` : ""}
                                     </p>
+                                    {t.stock && (
+                                        <p className="mt-0.5 text-[12.5px] text-muted-foreground">
+                                            Stores report: <span className="mono">{litres(t.stock.litres)}</span> on hand at the end of {dayLabel(t.stock.day)}
+                                            {t.reportMax ? <> · maximum stock <span className="mono">{litres(t.reportMax)}</span></> : null}
+                                            {!t.capacityLitres && t.reportMax ? <>{" "}<button type="button" className="lnk" disabled={busy}
+                                                onClick={() => edit(t, { capacity: String(t.reportMax), focus: "capacity" })}>Use it as the capacity</button></> : null}
+                                        </p>
+                                    )}
                                 </div>
                                 <span className={`sev ${p.tone} !whitespace-normal`}>{p.text}</span>
                                 <span className="flex gap-2">
@@ -139,16 +149,16 @@ export function TanksSection() {
                                     <Button size="sm" variant="outline" disabled={busy} onClick={() => { setDipFor(t); setDip({ day: today(), litres: "" }); }}>Record dip</Button>
                                 </span>
                             </div>
-                            {t.status === "short" && (
+                            {t.status === "short" && t.basis && (
                                 <p className="mt-2 max-w-[78ch] text-[13px] text-muted-foreground">
-                                    Since the dip on {dayLabel(t.dip!.day)}, {litres(t.issuedSince)} was issued and {litres(t.receivedSince)} received.
+                                    Since the {t.basis.kind === "dip" ? "dip" : "stores-report stock"} of {litres(t.basis.litres)} on {dayLabel(t.basis.day)}, {litres(t.issuedSince)} was issued and {litres(t.receivedSince)} received.
                                     {t.lastReceiptDay ? ` The last receipt on record for this tank is ${dayLabel(t.lastReceiptDay)}, so later deliveries have probably not been uploaded.` : " No receipt is on record for this tank at all."}
-                                    {" "}Upload the missing tank receipts or record a more recent dip.
+                                    {" "}Upload the stores report (HR440) for the months since, or record a more recent dip.
                                 </p>
                             )}
-                            {t.status === "over" && (
+                            {t.status === "over" && t.basis && (
                                 <p className="mt-2 max-w-[78ch] text-[13px] text-muted-foreground">
-                                    Since the dip on {dayLabel(t.dip!.day)}, {litres(t.receivedSince)} was received and {litres(t.issuedSince)} issued, which is more than the tank holds. Check the capacity, the dip, or for a receipt booked to the wrong tank.
+                                    Since the {t.basis.kind === "dip" ? "dip" : "stores-report stock"} of {litres(t.basis.litres)} on {dayLabel(t.basis.day)}, {litres(t.receivedSince)} was received and {litres(t.issuedSince)} issued, which is more than the tank holds. Check the capacity, the {t.basis.kind === "dip" ? "dip" : "stores report"}, or for a receipt booked to the wrong tank.
                                 </p>
                             )}
                             {dips.length > 0 && (
@@ -194,7 +204,7 @@ export function TanksSection() {
                     <DialogContent className="max-w-[460px]">
                         <form onSubmit={saveTank}>
                             <DialogHeader>
-                                <DialogTitle>{form.isNew ? "Add a tank" : `Tank ${form.tankNo}`}</DialogTitle>
+                                <DialogTitle>{form.isNew ? "Add a tank" : `Tank ${form.tankNo}${form.name.trim() ? `, ${form.name.trim()}` : ""}`}</DialogTitle>
                                 <DialogDescription>
                                     {form.isNew
                                         ? "Use the store number exactly as it appears on the fuel reports. Records from that store with no fuel type will take the fuel you choose here."
@@ -209,10 +219,11 @@ export function TanksSection() {
                                 <div className="flex flex-col gap-1.5"><span className="text-[13px] font-medium">Fuel</span>
                                     <Seg light label="Fuel held in this tank" value={form.fuelType} onChange={k => setForm({ ...form, fuelType: k })} items={[{ key: "Diesel", label: "Diesel" }, { key: "Petrol", label: "Petrol" }]} /></div>
                                 <div className="flex flex-col gap-1.5"><label htmlFor="tank-name" className="text-[13px] font-medium">Name</label>
-                                    <Input id="tank-name" maxLength={60} autoComplete="off" placeholder="Optional, for example Main depot diesel" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+                                    <Input id="tank-name" maxLength={60} autoComplete="off" autoFocus={form.focus === "name"} placeholder="For example Main depot diesel" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                                    <span className="text-xs text-muted-foreground">Shown with the tank number on the dashboard, receipts and fuel logs.</span></div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="flex flex-col gap-1.5"><label htmlFor="tank-cap" className="text-[13px] font-medium">Capacity, litres</label>
-                                        <Input id="tank-cap" type="number" inputMode="decimal" min={0} className="mono" value={form.capacity} onChange={e => setForm({ ...form, capacity: e.target.value })} /></div>
+                                        <Input id="tank-cap" type="number" inputMode="decimal" min={0} className="mono" autoFocus={form.focus === "capacity"} value={form.capacity} onChange={e => setForm({ ...form, capacity: e.target.value })} /></div>
                                     <div className="flex flex-col gap-1.5"><label htmlFor="tank-reorder" className="text-[13px] font-medium">Reorder at, litres</label>
                                         <Input id="tank-reorder" type="number" inputMode="decimal" min={0} className="mono" value={form.reorder} onChange={e => setForm({ ...form, reorder: e.target.value })} /></div>
                                 </div>

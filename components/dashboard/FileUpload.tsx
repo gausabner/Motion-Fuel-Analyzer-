@@ -13,6 +13,8 @@ type SheetPreview = {
     name: string;
     isEligible: boolean;
     missingColumns: string[];
+    formatLabel?: string;
+    note?: string | null;
 };
 
 export function FileUpload() {
@@ -87,15 +89,16 @@ export function FileUpload() {
                 // An upload that adds nothing is not a success: say which of the two reasons it was.
                 const added = Number(data.count ?? 0), read = Number(data.totalProcessed ?? 0), dup = Number(data.duplicates ?? 0);
                 const n = (v: number, word: string) => `${v.toLocaleString('en-GB')} ${word}${v === 1 ? '' : 's'}`;
+                const stock = Number(data.stockReadings ?? 0) > 0 ? ` Stock on hand read for ${n(Number(data.stockReadings), 'tank-day')}.` : '';
                 if (added === 0 && read === 0) {
                     setStatus('error');
-                    setMessage('Nothing was added. No row in the selected sheets could be read: check that the sheet has the report headings on its first row and one transaction per row.');
+                    setMessage('Nothing was added. No row in the selected sheets could be read: check that the sheet has the report headings and one transaction per row.');
                 } else if (added === 0) {
                     setStatus('success');
-                    setMessage(`Nothing new was added. All ${n(read, 'row')} in this file are already on record, so the figures are unchanged.`);
+                    setMessage(`Nothing new was added. All ${n(read, 'row')} in this file are already on record, so the figures are unchanged.${stock}`);
                 } else {
                     setStatus('success');
-                    setMessage(`${n(added, 'row')} added.${dup > 0 ? ` ${n(dup, 'row')} already on record ${dup === 1 ? 'was' : 'were'} skipped.` : ''}`);
+                    setMessage(`${n(added, 'row')} added.${dup > 0 ? ` ${n(dup, 'row')} already on record ${dup === 1 ? 'was' : 'were'} skipped.` : ''}${stock}`);
                 }
                 setTimeout(() => {
                     router.refresh();
@@ -191,6 +194,9 @@ export function FileUpload() {
                                         <FileSpreadsheet className="h-4 w-4" />
                                         {sheet.name}
                                     </Label>
+                                    {sheet.isEligible && sheet.formatLabel && (
+                                        <p className="mt-0.5 text-xs text-muted-foreground">{sheet.formatLabel}{sheet.note ? ` · ${sheet.note}` : ''}</p>
+                                    )}
                                     {!sheet.isEligible && (
                                         <div className="mt-1 flex items-center gap-1 text-xs text-crit font-medium">
                                             <XCircle className="h-3 w-3" />

@@ -47,7 +47,7 @@ export function UserMenu({ onDark = false }: { onDark?: boolean }) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href="/dashboard/account"><UserRound /> My account</Link></DropdownMenuItem>
-                {role === "SUPER_ADMIN" && (
+                {(role === "SUPER_ADMIN" || role === "SYSTEM_ADMIN") && (
                     <DropdownMenuItem asChild><Link href="/dashboard/settings"><Settings /> Settings</Link></DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}><LogOut /> Sign out</DropdownMenuItem>

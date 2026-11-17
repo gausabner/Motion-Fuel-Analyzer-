@@ -9,13 +9,16 @@ export type Hr580Result = {
     duplicates: number;
     errors: number;
     votesResolved: number;
+    /** Tank-days of stock on hand read from stores-report (HR440) sheets. */
+    stockReadings: number;
 };
 
 /** Either shape; discriminate on `format`. */
 export type IngestResult = Hr580Result | Hr640Result;
 import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
-import { unpipeSheet } from "@/lib/pipe-sheet";
+import { normaliseSheet } from "@/lib/pipe-sheet";
+import { saveStockReadings, stockReadingsFromWorkbook } from "@/lib/stock-readings";
 import fs from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
@@ -85,10 +88,11 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
         ? selectedSheets 
         : [workbook.SheetNames[0]];
 
-    // A raw pipe-delimited export is rebuilt into columns first, so every later step sees an ordinary sheet.
+    // Known layouts (raw pipe-delimited export, headings split across cells,
+    // headings below a blank first row) are rebuilt first, so every later step
+    // sees headings on row one and one column per field.
     for (const name of sheetsToProcess) {
-        const fixed = workbook.Sheets[name] ? unpipeSheet(workbook.Sheets[name]) : null;
-        if (fixed) workbook.Sheets[name] = fixed;
+        if (workbook.Sheets[name]) workbook.Sheets[name] = normaliseSheet(workbook.Sheets[name]).sheet;
     }
 
     const fuelMap = await getFuelTypeMap();
@@ -344,12 +348,23 @@ export async function processExcelFile(buffer: Buffer, originalFileName: string 
         }
     });
 
+    // Stock on hand is read from every stores-report sheet in the workbook,
+    // selected or not: it is a balance, not a transaction, so it cannot double
+    // count anything, and a tank level is better for having it.
+    let stockReadings = 0;
+    try {
+        stockReadings = await saveStockReadings(stockReadingsFromWorkbook(workbook), uploadId);
+    } catch (e: any) {
+        console.warn(`[Ingestion] Stock on hand not read: ${e.message}`);
+    }
+
     return {
         format: "hr580" as const,
         count: insertedCount,
         totalProcessed: transactions.length,
         duplicates: transactions.length - insertedCount,
         errors: errors.length,
-        votesResolved
+        votesResolved,
+        stockReadings,
     };
 }

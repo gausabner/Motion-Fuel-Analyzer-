@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { invalidateFillCache } from "@/lib/fuel-insights";
+import { rebuildStockReadings } from "@/lib/stock-readings";
 
 /**
  * Undo an upload: remove exactly the rows it added.
@@ -40,5 +41,8 @@ export async function rollbackUpload(uploadId: string, by: string | null): Promi
         await (tx as any).uploadedFile.update({ where: { id: uploadId }, data: { rolledBackAt: new Date(), rolledBackBy: by } });
     });
     invalidateFillCache();
+    // A day's stock may also be on an earlier upload of the same report, so rebuild rather than only delete.
+    const stock = await (prisma as any).stockReading.count({ where: { uploadId } }).catch(() => 0);
+    if (stock > 0) await rebuildStockReadings().catch(e => console.warn(`[Rollback] Stock readings not rebuilt: ${e.message}`));
     return before;
 }
