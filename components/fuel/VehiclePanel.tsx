@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 import { TankGauge } from "./TankGauge";
 import { fmtLitres } from "@/lib/format";
 import { useNavBadges } from "@/components/dashboard/NavBadges";
@@ -11,6 +12,39 @@ import type { VehicleDetail, FuelException, ReviewStatus } from "@/lib/fuel-insi
 
 const Ctx = createContext<{ open: (unit: string) => void }>({ open: () => {} });
 export const useVehiclePanel = () => useContext(Ctx);
+
+/** True for the roles the server lets change totals (Super admin, System admin). */
+export function useIsAdmin(): boolean {
+    const { data } = useSession();
+    const role = (data?.user as { role?: string } | undefined)?.role;
+    return role === "SUPER_ADMIN" || role === "SYSTEM_ADMIN";
+}
+
+const litres = (n: number) => `${Math.round(n).toLocaleString("en-GB")} L`;
+
+/**
+ * Take stores-report copies out of the totals, or put them back, with an Undo
+ * for five seconds. The pump-report issue always stays. Shared by the panel and the worklist.
+ */
+export async function changeDuplicates(keys: string[], restore: boolean, after: () => void) {
+    const send = (r: boolean) => fetch("/api/exceptions/duplicates", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ keys, restore: r }),
+    });
+    const res = await send(restore);
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        toast(res.status === 403 ? "Only a Super admin or System admin can change the totals" : "That change was not saved", { description: res.status === 403 ? undefined : "Try again." });
+        return;
+    }
+    after();
+    if (!d.rows) { toast("Nothing changed", { description: "These issues are no longer duplicates on record. Reload the page." }); return; }
+    const n = `${d.rows} ${d.rows === 1 ? "duplicate" : "duplicates"}`;
+    toast(restore ? `${n} put back` : `${n} removed from the totals`, {
+        description: restore ? `${litres(d.litres)} is counted twice again.` : `${litres(d.litres)} is now counted once; the pump-report ${d.rows === 1 ? "issue stays" : "issues stay"}.${d.skipped ? ` ${d.skipped} skipped: no longer a duplicate.` : ""}`,
+        duration: 5000,
+        action: { label: "Undo", onClick: async () => { await send(!restore); after(); } },
+    });
+}
 
 /** Record a review, with an Undo that puts it back. Shared by the panel and the worklist. */
 export async function reviewException(e: Pick<FuelException, "key" | "unit">, status: ReviewStatus, after: () => void) {
@@ -77,6 +111,9 @@ export function VehiclePanelProvider({ children }: { children: ReactNode }) {
 
     const act = (e: FuelException, status: ReviewStatus) =>
         reviewException(e, status, () => { if (unit) load(unit); refreshBadges(); router.refresh(); });
+    const admin = useIsAdmin();
+    const dup = (e: FuelException, restore: boolean) =>
+        changeDuplicates([e.key], restore, () => { if (unit) load(unit); refreshBadges(); router.refresh(); });
 
     const v = data;
     const last = v?.lastFill;
@@ -170,7 +207,11 @@ export function VehiclePanelProvider({ children }: { children: ReactNode }) {
                                                 <div className="flex flex-wrap gap-2">
                                                     <button type="button" className="tab !border-primary !bg-primary !px-3 !py-1.5 !text-xs !text-primary-foreground" onClick={() => act(e, "Explained")}>Mark explained</button>
                                                     <button type="button" className="tab !px-3 !py-1.5 !text-xs" onClick={() => act(e, "Escalated")}>Escalate to manager</button>
+                                                    {admin && e.duplicate && <button type="button" className="tab !px-3 !py-1.5 !text-xs" onClick={() => dup(e, false)}>Remove duplicate</button>}
                                                 </div>
+                                            )}
+                                            {admin && e.duplicate && e.status === "Resolved" && (
+                                                <div><button type="button" className="tab !px-3 !py-1.5 !text-xs" onClick={() => dup(e, true)}>Put back</button></div>
                                             )}
                                         </div>
                                     ))}

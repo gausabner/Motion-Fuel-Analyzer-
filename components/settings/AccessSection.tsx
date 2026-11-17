@@ -19,6 +19,7 @@ const EVERYONE = ROLES.map(r => r.key);
  */
 const ACTIONS: { name: string; roles: string[] }[] = [
     { name: "Mark an exception explained or escalated", roles: EVERYONE },
+    { name: "Remove a duplicate issue from the totals, or put it back", roles: ADMINS },
     { name: "Export tables to CSV and reports to PDF", roles: EVERYONE },
     { name: "Upload fuel reports", roles: ADMINS },
     { name: "Assign vote codes and edit the registry", roles: ADMINS },

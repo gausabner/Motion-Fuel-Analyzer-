@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getOilSummary, type OilSummary } from "@/lib/oil";
+import { getSetAsideSummary } from "@/lib/duplicates";
 
 /**
  * What is on record, by source, and how far each source reaches. Every figure
@@ -25,18 +26,21 @@ export type DataCoverage = {
     unknownFuelIssues: { rows: number; litres: number };
     /** Oil kept out of every fuel total. */
     oil: OilSummary;
+    /** Stores-report copies of pump-report issues, taken out of the totals. */
+    duplicatesRemoved: { rows: number; litres: number };
 };
 
 const q = (sql: string) => prisma.$queryRawUnsafe(sql) as Promise<Record<string, unknown>[]>;
 const gap = (a: string | null, b: string | null) => (!a || !b || a >= b ? 0 : Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000));
 
 export async function getDataCoverage(): Promise<DataCoverage> {
-    const [types, deliveries, uploads, unknown, oil] = await Promise.all([
+    const [types, deliveries, uploads, unknown, oil, duplicatesRemoved] = await Promise.all([
         q(`SELECT transType AS type, COUNT(*) AS n, date(MIN(transDate), 'localtime') AS a, date(MAX(transDate), 'localtime') AS b FROM FuelTransaction GROUP BY transType`),
         q(`SELECT COUNT(*) AS n, date(MIN(orderDate) / 1000, 'unixepoch', 'localtime') AS a, date(MAX(orderDate) / 1000, 'unixepoch', 'localtime') AS b FROM FuelDelivery`),
         (prisma as any).uploadedFile.findMany({ orderBy: { uploadedAt: "desc" }, select: { fileName: true, rowCount: true, uploadedAt: true } }) as Promise<{ fileName: string; rowCount: number; uploadedAt: Date }[]>,
         q(`SELECT COUNT(*) AS n, SUM(transQty) AS litres FROM FuelTransaction WHERE transType = 'FIS' AND fuelType = 'Unknown'`),
         getOilSummary(),
+        getSetAsideSummary(),
     ]);
     const of = (t: string) => types.find(r => r.type === t);
     const fis = of("FIS"), fre = of("FRE"), del = deliveries[0];
@@ -59,5 +63,6 @@ export async function getDataCoverage(): Promise<DataCoverage> {
         },
         unknownFuelIssues: { rows: Number(unknown[0]?.n || 0), litres: Number(unknown[0]?.litres || 0) },
         oil,
+        duplicatesRemoved,
     };
 }

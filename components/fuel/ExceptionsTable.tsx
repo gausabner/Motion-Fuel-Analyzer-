@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plate, SevPill, reviewException, useVehiclePanel } from "./VehiclePanel";
+import { Plate, SevPill, changeDuplicates, reviewException, useIsAdmin, useVehiclePanel } from "./VehiclePanel";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavBadges } from "@/components/dashboard/NavBadges";
 import { Empty } from "./DashboardView";
 import { fmtLitres } from "@/lib/format";
@@ -31,6 +33,11 @@ export function ExceptionsTable({ rows }: { rows: FuelException[] }) {
     const shown = pool.filter(r => filter === "all" || r.sev === filter);
     const done = rows.length - openRows.length;
     const act = (e: FuelException, status: "Explained" | "Escalated") => reviewException(e, status, () => { refresh(); router.refresh(); });
+    const admin = useIsAdmin();
+    const [confirmAll, setConfirmAll] = useState(false);
+    const dup = (keys: string[], restore: boolean) => changeDuplicates(keys, restore, () => { refresh(); router.refresh(); });
+    const openDups = shown.filter(r => r.duplicate && r.status === "Open");
+    const dupLitres = openDups.reduce((s, r) => s + (r.risk ?? 0), 0);
 
     return (
         <>
@@ -40,6 +47,11 @@ export function ExceptionsTable({ rows }: { rows: FuelException[] }) {
                         {l}{!onlyEscalated && <span className="ct">{count(k)}</span>}
                     </button>
                 ))}
+                {admin && openDups.length > 1 && (
+                    <button type="button" className="tab" onClick={() => setConfirmAll(true)}>
+                        Remove {openDups.length} duplicates<span className="ct">{fmtLitres(dupLitres)}</span>
+                    </button>
+                )}
                 {escalated.length > 0 && (
                     <button type="button" className="tab ml-auto" aria-pressed={onlyEscalated} onClick={() => { setOnlyEscalated(v => !v); setLimit(PAGE); }}>
                         Escalated<span className="ct">{escalated.length}</span>
@@ -81,8 +93,14 @@ export function ExceptionsTable({ rows }: { rows: FuelException[] }) {
                                         <td className="whitespace-nowrap border-b border-grid px-2.5 py-[11px] text-right align-middle">
                                             {e.status === "Open" && (
                                                 <span className="inline-flex gap-1.5" onClick={ev => ev.stopPropagation()}>
+                                                    {admin && e.duplicate && <button type="button" className="tab !px-3 !py-1 !text-xs" onClick={() => dup([e.key], false)}>Remove duplicate</button>}
                                                     <button type="button" className="tab !px-3 !py-1 !text-xs" onClick={() => act(e, "Explained")}>Explained</button>
                                                     <button type="button" className="tab !px-3 !py-1 !text-xs" onClick={() => act(e, "Escalated")}>Escalate</button>
+                                                </span>
+                                            )}
+                                            {admin && e.duplicate && e.status === "Resolved" && (
+                                                <span className="inline-flex" onClick={ev => ev.stopPropagation()}>
+                                                    <button type="button" className="tab !px-3 !py-1 !text-xs" onClick={() => dup([e.key], true)}>Put back</button>
                                                 </span>
                                             )}
                                         </td>
@@ -99,6 +117,21 @@ export function ExceptionsTable({ rows }: { rows: FuelException[] }) {
                     </div>
                 )}
             </section>
+
+            <Dialog open={confirmAll} onOpenChange={setConfirmAll}>
+                <DialogContent className="max-w-[460px]">
+                    <DialogHeader>
+                        <DialogTitle>Remove {openDups.length} duplicate issues?</DialogTitle>
+                        <DialogDescription>
+                            Each is on the pump report with a vehicle and again on the stores report with none. The stores-report copies come out of every total ({fmtLitres(dupLitres)}); the pump-report issues stay. Each is listed as resolved and can be put back, and Undo reverses all of them for five seconds.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-4 gap-2">
+                        <Button variant="outline" onClick={() => setConfirmAll(false)}>Cancel</Button>
+                        <Button onClick={() => { setConfirmAll(false); dup(openDups.map(r => r.key), false); }}>Remove {openDups.length} duplicates</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

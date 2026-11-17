@@ -142,6 +142,41 @@ model OilTransaction {
   @@index([storeNo])
 }
 
+/// Fuel rows taken out of every total because they duplicate another record,
+/// kept whole so they can be put back. Same columns as FuelTransaction.
+model SetAsideTransaction {
+  id           String   @id
+  storeNo      String
+  pumpNo       String?
+  transDate    DateTime
+  transRefNo   String?
+  issueTime    String?
+  transVoteNo  String?
+  transQty     Float
+  transAmt     Float?
+  vehicleId    String?
+  fleetUnit    String?
+  fleetEI      String?
+  fleetReading String?
+  jobNo        String?
+  activity     String?
+  itemCat      String?
+  transType    String?
+  fuelType     String
+  isIssue      Boolean
+  createdAt    DateTime @default(now())
+  uploadId     String?
+  /// Why it was set aside; "duplicate" = the same issue is on the pump report.
+  reason       String
+  /// The FuelTransaction row it duplicates, and that row's vehicle.
+  twinId       String?
+  twinUnit     String?
+  setAsideAt   DateTime @default(now())
+  setAsideBy   String?
+
+  @@index([uploadId])
+}
+
 model DailyFuelStats {
   id               String   @id @default(cuid())
   date             DateTime

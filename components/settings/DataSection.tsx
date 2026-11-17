@@ -70,6 +70,14 @@ export function DataSection() {
                         <span className="text-muted-foreground">({Math.round(data.unknownFuelIssues.litres).toLocaleString("en-GB")} L). They come from stores that are not in the tank register. <Link href="#tanks" className="lnk">Add those stores as tanks</Link> to classify them.</span>
                     </li>
                 )}
+                {data.duplicatesRemoved.rows > 0 && (
+                    <li className="max-w-[80ch]">
+                        <strong className="font-medium">{data.duplicatesRemoved.rows.toLocaleString("en-GB")} duplicate {data.duplicatesRemoved.rows === 1 ? "issue has" : "issues have"} been removed from the totals</strong>{" "}
+                        <span className="text-muted-foreground">
+                            ({Math.round(data.duplicatesRemoved.litres).toLocaleString("en-GB")} L). Each was on the stores report with no vehicle and on the pump report with one; the pump-report issue stays. They are listed as resolved on <Link href="/dashboard/exceptions" className="lnk">Exceptions</Link>, where each can be put back.
+                        </span>
+                    </li>
+                )}
                 {data.oil.issues + data.oil.receipts > 0 && (
                     <li className="max-w-[80ch]">
                         <strong className="font-medium">{(data.oil.issues + data.oil.receipts).toLocaleString("en-GB")} oil records are kept apart from fuel.</strong>{" "}

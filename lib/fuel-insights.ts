@@ -49,6 +49,8 @@ export type Fill = {
 
 export type Severity = "hi" | "md" | "lo";
 export type ReviewStatus = "Open" | "Explained" | "Escalated";
+/** Resolved is set by an action on the data (a duplicate removed), never by the review buttons. */
+export type ExceptionStatus = ReviewStatus | "Resolved";
 
 export type FuelException = {
     key: string;
@@ -62,7 +64,9 @@ export type FuelException = {
     department: string | null;
     /** Litres the rule puts in question; null where no volume is implied. */
     risk: number | null;
-    status: ReviewStatus;
+    status: ExceptionStatus;
+    /** A no-vehicle issue that duplicates a pump-report issue; it can be removed from the totals. */
+    duplicate?: boolean;
     /** For an escalated exception, who it was handed to (null when nobody was set at the time). */
     escalatedTo?: string | null;
 };
@@ -190,6 +194,43 @@ export async function getFleetEfficiency(fromDay?: string, toDay?: string, rules
     return { units, medians };
 }
 
+/** A stores-report reference is the issue date and the pump slip: "20260210F01563". */
+export function splitStoresRef(ref: string | null | undefined, postedAt: string | Date): { day: string; slip: string | null } {
+    const m = /^(\d{4})(\d{2})(\d{2})(\S+)$/.exec(String(ref ?? "").trim());
+    return m ? { day: `${m[1]}-${m[2]}-${m[3]}`, slip: m[4] } : { day: toLocalYmd(postedAt), slip: null };
+}
+
+export type BareIssue = { id: string; store: string; day: string; qty: number; ref: string | null; slip: string | null; department: string | null; twin: Fill | null };
+
+/**
+ * Fuel issued with no vehicle. The stores report (HR440) carries no vehicle;
+ * when the pump report has the same slip on the same issue day, from the same
+ * tank, for the same litres, the issue is on record twice and the twin names
+ * the vehicle.
+ */
+export async function getBareIssues(fills?: Fill[], ids?: string[]): Promise<BareIssue[]> {
+    const all = fills ?? (await loadFills()).fills;
+    const where = ids?.length ? ` AND t.id IN (${ids.map(() => "?").join(",")})` : "";
+    const bare = (await (prisma as any).$queryRawUnsafe(`
+        SELECT t.id, trim(t.storeNo) AS store, t.transDate, t.transQty AS qty, trim(t.transRefNo) AS ref, c.department
+        FROM FuelTransaction t LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
+        WHERE t.transType = 'FIS' AND (t.fleetUnit IS NULL OR trim(t.fleetUnit) = '' OR upper(trim(t.fleetUnit)) = 'UNKNOWN')${where}
+    `, ...(ids ?? []))) as { id: string; store: string; transDate: string; qty: number; ref: string | null; department: string | null }[];
+    const bySlip = new Map<string, Fill[]>();
+    for (const f of all) {
+        const k = f.ref.trim();
+        if (!k) continue;
+        const list = bySlip.get(k);
+        if (list) list.push(f); else bySlip.set(k, [f]);
+    }
+    return bare.map(r => {
+        const { day, slip } = splitStoresRef(r.ref, r.transDate);
+        const qty = Number(r.qty) || 0;
+        const twin = slip ? (bySlip.get(slip) ?? []).find(f => f.day === day && String(f.store).trim() === r.store && Math.abs(f.qty - qty) < 0.01) ?? null : null;
+        return { id: r.id, store: r.store, day, qty, ref: r.ref, slip, department: r.department ? fmtDept(r.department) : twin?.dept ?? null, twin };
+    });
+}
+
 /** Every exception whose day falls in [fromDay, toDay], highest severity and volume first. */
 export async function getExceptions(fromDay?: string, toDay?: string): Promise<FuelException[]> {
     const { fills, byUnit } = await loadFills();
@@ -270,38 +311,30 @@ export async function getExceptions(fromDay?: string, toDay?: string): Promise<F
         }
     }
 
-    // Fuel issued with no vehicle. The stores report (HR440) carries no vehicle;
-    // its reference is the issue date and the pump slip ("20260210F01563"), so
-    // when the pump report has that slip on that day, from that tank, for the
-    // same litres, the issue is on record twice and the twin names the vehicle.
+    // Fuel issued with no vehicle (see getBareIssues). A twin on the pump report
+    // means the issue is counted twice; removing the copy resolves it.
     if (cfg.noVehicleEnabled) {
-        const bare = (await (prisma as any).$queryRawUnsafe(`
-            SELECT t.id, trim(t.storeNo) AS store, t.transDate, t.transQty AS qty, trim(t.transRefNo) AS ref, c.department
-            FROM FuelTransaction t LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
-            WHERE t.transType = 'FIS' AND (t.fleetUnit IS NULL OR trim(t.fleetUnit) = '' OR upper(trim(t.fleetUnit)) = 'UNKNOWN')
-        `)) as { id: string; store: string; transDate: string; qty: number; ref: string | null; department: string | null }[];
-        const bySlip = new Map<string, Fill[]>();
-        for (const f of fills) {
-            const k = f.ref.trim();
-            if (!k) continue;
-            const list = bySlip.get(k);
-            if (list) list.push(f); else bySlip.set(k, [f]);
-        }
-        for (const r of bare) {
-            const m = /^(\d{4})(\d{2})(\d{2})(\S+)$/.exec(r.ref ?? "");
-            const issueDay = m ? `${m[1]}-${m[2]}-${m[3]}` : null;
-            const day = issueDay ?? toLocalYmd(r.transDate);
-            if (!inRange(day)) continue;
-            const qty = Number(r.qty) || 0;
-            const twin = m ? (bySlip.get(m[4]) ?? []).find(f => f.day === issueDay && String(f.store).trim() === r.store && Math.abs(f.qty - qty) < 0.01) : undefined;
-            const dept = r.department ? fmtDept(r.department) : twin?.dept ?? null;
-            push(twin
-                ? { key: `no-vehicle:${r.id}`, rule: "no-vehicle", sev: "md", unit: twin.unit,
-                    what: `Counted twice: slip ${m![4]} (${fmtLitres(qty)}, tank ${r.store}) is on the pump report for this vehicle and again on the stores report with no vehicle`,
-                    day, whenLabel: dayLabel(day), department: dept, risk: qty }
+        for (const r of await getBareIssues(fills)) {
+            if (!inRange(r.day)) continue;
+            push(r.twin
+                ? { key: `no-vehicle:${r.id}`, rule: "no-vehicle", sev: "md", unit: r.twin.unit, duplicate: true,
+                    what: `Counted twice: slip ${r.slip} (${fmtLitres(r.qty)}, tank ${r.store}) is on the pump report for this vehicle and again on the stores report with no vehicle`,
+                    day: r.day, whenLabel: dayLabel(r.day), department: r.department, risk: r.qty }
                 : { key: `no-vehicle:${r.id}`, rule: "no-vehicle", sev: "md", unit: "UNKNOWN",
-                    what: `${fmtLitres(qty)} issued from tank ${r.store} with no vehicle recorded${m ? ` (slip ${m[4]})` : r.ref ? ` (reference ${r.ref})` : ""}`,
-                    day, whenLabel: dayLabel(day), department: dept, risk: qty });
+                    what: `${fmtLitres(r.qty)} issued from tank ${r.store} with no vehicle recorded${r.slip ? ` (slip ${r.slip})` : r.ref ? ` (reference ${r.ref})` : ""}`,
+                    day: r.day, whenLabel: dayLabel(r.day), department: r.department, risk: r.qty });
+        }
+        // Copies already removed stay on the worklist as resolved, so the decision can be seen and reversed.
+        const removed = (await (prisma as any).$queryRawUnsafe(`
+            SELECT s.id, trim(s.storeNo) AS store, s.transDate, s.transQty AS qty, trim(s.transRefNo) AS ref, s.twinUnit, s.setAsideBy, c.department
+            FROM SetAsideTransaction s LEFT JOIN CostCentre c ON s.transVoteNo = c.voteNo WHERE s.reason = 'duplicate'
+        `).catch(() => [])) as { id: string; store: string; transDate: string; qty: number; ref: string | null; twinUnit: string | null; setAsideBy: string | null; department: string | null }[];
+        for (const r of removed) {
+            const { day, slip } = splitStoresRef(r.ref, r.transDate);
+            if (!inRange(day)) continue;
+            out.push({ key: `no-vehicle:${r.id}`, rule: "no-vehicle", sev: "md", unit: r.twinUnit ?? "UNKNOWN", duplicate: true, status: "Resolved",
+                what: `Duplicate removed: slip ${slip ?? r.ref ?? ""} (${fmtLitres(Number(r.qty) || 0)}, tank ${r.store}) is now counted once${r.setAsideBy ? `, by ${r.setAsideBy}` : ""}`,
+                day, whenLabel: dayLabel(day), department: r.department ? fmtDept(r.department) : null, risk: Number(r.qty) || 0 });
         }
     }
 

@@ -17,7 +17,7 @@ export type RollbackCount = { transactions: number; deliveries: number };
 
 export async function countLinkedRows(uploadId: string): Promise<RollbackCount> {
     const [t, d] = await Promise.all([
-        prisma.$queryRawUnsafe(`SELECT (SELECT COUNT(*) FROM FuelTransaction WHERE uploadId = ?) + (SELECT COUNT(*) FROM OilTransaction WHERE uploadId = ?) AS n`, uploadId, uploadId) as Promise<{ n: number | bigint }[]>,
+        prisma.$queryRawUnsafe(`SELECT (SELECT COUNT(*) FROM FuelTransaction WHERE uploadId = ?) + (SELECT COUNT(*) FROM OilTransaction WHERE uploadId = ?) + (SELECT COUNT(*) FROM SetAsideTransaction WHERE uploadId = ?) AS n`, uploadId, uploadId, uploadId) as Promise<{ n: number | bigint }[]>,
         prisma.$queryRawUnsafe(`SELECT COUNT(*) AS n FROM FuelDelivery WHERE uploadId = ?`, uploadId) as Promise<{ n: number | bigint }[]>,
     ]);
     return { transactions: Number(t[0]?.n || 0), deliveries: Number(d[0]?.n || 0) };
@@ -38,6 +38,7 @@ export async function rollbackUpload(uploadId: string, by: string | null): Promi
         }
         await tx.$executeRawUnsafe(`DELETE FROM FuelTransaction WHERE uploadId = ?`, uploadId);
         await tx.$executeRawUnsafe(`DELETE FROM OilTransaction WHERE uploadId = ?`, uploadId);
+        await tx.$executeRawUnsafe(`DELETE FROM SetAsideTransaction WHERE uploadId = ?`, uploadId);
         await tx.$executeRawUnsafe(`DELETE FROM FuelDelivery WHERE uploadId = ?`, uploadId);
         await (tx as any).uploadedFile.update({ where: { id: uploadId }, data: { rolledBackAt: new Date(), rolledBackBy: by } });
     });
