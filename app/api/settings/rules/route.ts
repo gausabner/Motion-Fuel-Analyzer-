@@ -3,6 +3,7 @@ import { audit, describeChanges } from "@/lib/audit";
 import { z } from "zod";
 import { requireRole, requireSession } from "@/lib/auth";
 import { getRuleSettings, saveRuleSettings, RULE_DEFAULTS } from "@/lib/rule-settings";
+import { getFleetEfficiency } from "@/lib/fuel-insights";
 
 const schema = z.object({
     repeatFillEnabled: z.boolean(),
@@ -17,6 +18,7 @@ const schema = z.object({
     classOutlierEnabled: z.boolean(),
     classOutlierMultiple: z.coerce.number().finite().min(1.1).max(10),
     odometerUnitsPerKm: z.coerce.number().refine(v => v === 1 || v === 10, "Odometer scale must be 1 or 10"),
+    noVehicleEnabled: z.boolean().default(true),
 });
 
 const RULE_LABELS: Record<string, string> = {
@@ -24,13 +26,29 @@ const RULE_LABELS: Record<string, string> = {
     overCapacityEnabled: "Larger than ever", overCapacityFactor: "Larger-than-ever factor", overCapacityMinLitres: "Larger-than-ever minimum litres",
     noDistanceEnabled: "Fuel with no distance", odometerBackEnabled: "Odometer runs backwards",
     odometerMissingEnabled: "Odometer not captured", odometerMissingMinFills: "Odometer not captured, minimum fills",
-    classOutlierEnabled: "Consumption outlier", classOutlierMultiple: "Consumption outlier multiple", odometerUnitsPerKm: "Odometer units per km",
+    classOutlierEnabled: "Consumption outlier", classOutlierMultiple: "Consumption outlier multiple", odometerUnitsPerKm: "Odometer units per km", noVehicleEnabled: "No vehicle recorded",
 };
+
+/**
+ * What each odometer reading would make of the fleet's own records: the median
+ * litres per 100 km by fuel. A wrong choice shows at once as consumption no
+ * vehicle could achieve, so the page puts the evidence beside the choice.
+ */
+async function odometerCheck(rules: Awaited<ReturnType<typeof getRuleSettings>>) {
+    const out: Record<string, Record<string, number>> = {};
+    for (const scale of [10, 1]) {
+        const { medians } = await getFleetEfficiency(undefined, undefined, { ...rules, odometerUnitsPerKm: scale });
+        out[String(scale)] = medians;
+    }
+    return out;
+}
 
 export async function GET() {
     const user = await requireSession();
     if (user instanceof NextResponse) return user;
-    return NextResponse.json({ rules: await getRuleSettings(), defaults: RULE_DEFAULTS });
+    const rules = await getRuleSettings();
+    const check = await odometerCheck(rules).catch(() => null);
+    return NextResponse.json({ rules, defaults: RULE_DEFAULTS, odometerCheck: check });
 }
 
 export async function POST(req: Request) {

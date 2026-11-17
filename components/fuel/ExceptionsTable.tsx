@@ -70,7 +70,7 @@ export function ExceptionsTable({ rows }: { rows: FuelException[] }) {
                             </thead>
                             <tbody>
                                 {shown.slice(0, limit).map(e => (
-                                    <tr key={e.key} onClick={() => open(e.unit)}
+                                    <tr key={e.key} onClick={() => { if (e.unit && e.unit.toUpperCase() !== "UNKNOWN") open(e.unit); }}
                                         className={`cursor-pointer transition-[background-color,opacity] duration-200 [@media(hover:hover)]:hover:bg-surface-2 ${e.status === "Open" ? "" : "opacity-55"}`}>
                                         <td className="border-b border-grid px-2.5 py-[11px] align-middle"><Plate unit={e.unit} /></td>
                                         <td className="border-b border-grid px-2.5 py-[11px] align-middle">{e.what}</td>

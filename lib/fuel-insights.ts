@@ -52,7 +52,7 @@ export type ReviewStatus = "Open" | "Explained" | "Escalated";
 
 export type FuelException = {
     key: string;
-    rule: "repeat-fill" | "over-capacity" | "class-outlier" | "no-distance" | "odometer-back" | "odometer-missing";
+    rule: "repeat-fill" | "over-capacity" | "class-outlier" | "no-distance" | "odometer-back" | "odometer-missing" | "no-vehicle";
     sev: Severity;
     unit: string;
     what: string;
@@ -192,7 +192,7 @@ export async function getFleetEfficiency(fromDay?: string, toDay?: string, rules
 
 /** Every exception whose day falls in [fromDay, toDay], highest severity and volume first. */
 export async function getExceptions(fromDay?: string, toDay?: string): Promise<FuelException[]> {
-    const { byUnit } = await loadFills();
+    const { fills, byUnit } = await loadFills();
     const cfg = await getRuleSettings();
     const inRange = (d: string) => (!fromDay || d >= fromDay) && (!toDay || d <= toDay);
     const out: FuelException[] = [];
@@ -267,6 +267,41 @@ export async function getExceptions(fromDay?: string, toDay?: string): Promise<F
                 what: `${u.l100!.toFixed(1)} L/100 km; the ${u.fuel.toLowerCase()} median is ${u.classMedian.toFixed(1)}`,
                 day, whenLabel: "Period total", department: u.department,
                 risk: Math.max(0, u.legLitres - (u.km * u.classMedian) / 100) });
+        }
+    }
+
+    // Fuel issued with no vehicle. The stores report (HR440) carries no vehicle;
+    // its reference is the issue date and the pump slip ("20260210F01563"), so
+    // when the pump report has that slip on that day, from that tank, for the
+    // same litres, the issue is on record twice and the twin names the vehicle.
+    if (cfg.noVehicleEnabled) {
+        const bare = (await (prisma as any).$queryRawUnsafe(`
+            SELECT t.id, trim(t.storeNo) AS store, t.transDate, t.transQty AS qty, trim(t.transRefNo) AS ref, c.department
+            FROM FuelTransaction t LEFT JOIN CostCentre c ON t.transVoteNo = c.voteNo
+            WHERE t.transType = 'FIS' AND (t.fleetUnit IS NULL OR trim(t.fleetUnit) = '' OR upper(trim(t.fleetUnit)) = 'UNKNOWN')
+        `)) as { id: string; store: string; transDate: string; qty: number; ref: string | null; department: string | null }[];
+        const bySlip = new Map<string, Fill[]>();
+        for (const f of fills) {
+            const k = f.ref.trim();
+            if (!k) continue;
+            const list = bySlip.get(k);
+            if (list) list.push(f); else bySlip.set(k, [f]);
+        }
+        for (const r of bare) {
+            const m = /^(\d{4})(\d{2})(\d{2})(\S+)$/.exec(r.ref ?? "");
+            const issueDay = m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+            const day = issueDay ?? toLocalYmd(r.transDate);
+            if (!inRange(day)) continue;
+            const qty = Number(r.qty) || 0;
+            const twin = m ? (bySlip.get(m[4]) ?? []).find(f => f.day === issueDay && String(f.store).trim() === r.store && Math.abs(f.qty - qty) < 0.01) : undefined;
+            const dept = r.department ? fmtDept(r.department) : twin?.dept ?? null;
+            push(twin
+                ? { key: `no-vehicle:${r.id}`, rule: "no-vehicle", sev: "md", unit: twin.unit,
+                    what: `Counted twice: slip ${m![4]} (${fmtLitres(qty)}, tank ${r.store}) is on the pump report for this vehicle and again on the stores report with no vehicle`,
+                    day, whenLabel: dayLabel(day), department: dept, risk: qty }
+                : { key: `no-vehicle:${r.id}`, rule: "no-vehicle", sev: "md", unit: "UNKNOWN",
+                    what: `${fmtLitres(qty)} issued from tank ${r.store} with no vehicle recorded${m ? ` (slip ${m[4]})` : r.ref ? ` (reference ${r.ref})` : ""}`,
+                    day, whenLabel: dayLabel(day), department: dept, risk: qty });
         }
     }
 

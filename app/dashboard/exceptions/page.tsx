@@ -25,6 +25,7 @@ export default async function ExceptionsPage({ searchParams }: { searchParams: P
         r.classOutlierEnabled && `consumption above ${multipleLabel(r.classOutlierMultiple)} the median for its fuel type`,
         r.odometerBackEnabled && "an odometer that runs backwards",
         r.odometerMissingEnabled && `an odometer missing on ${r.odometerMissingMinFills} or more fills`,
+        r.noVehicleEnabled && "fuel issued with no vehicle recorded, or recorded twice",
     ].filter(Boolean) as string[];
 
     return (

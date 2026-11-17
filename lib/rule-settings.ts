@@ -20,8 +20,14 @@ export type RuleSettings = {
     classOutlierEnabled: boolean;
     /** Consumption above this multiple of the fuel-type median is flagged. */
     classOutlierMultiple: number;
-    /** Odometer units per kilometre: 10 when readings carry one implied decimal, 1 for whole km. */
+    /**
+     * Odometer units per kilometre: 10 when readings carry one implied decimal
+     * (the fuel system's export: every reading ends in 0, 2476010 = 247,601.0 km),
+     * 1 for whole km.
+     */
     odometerUnitsPerKm: number;
+    /** Raise fuel issued with no vehicle recorded, including stores-report issues the pump report also carries. */
+    noVehicleEnabled: boolean;
 };
 
 export const RULE_DEFAULTS: RuleSettings = {
@@ -37,6 +43,7 @@ export const RULE_DEFAULTS: RuleSettings = {
     classOutlierEnabled: true,
     classOutlierMultiple: 2,
     odometerUnitsPerKm: 10,
+    noVehicleEnabled: true,
 };
 
 export type RuleSettingsMeta = { updatedAt: string | null; updatedBy: string | null };

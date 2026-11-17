@@ -15,7 +15,7 @@ type Loaded = RuleSettings & { updatedAt: string | null; updatedBy: string | nul
 const KEYS: (keyof RuleSettings)[] = [
     "repeatFillEnabled", "repeatFillMaxKm", "overCapacityEnabled", "overCapacityFactor", "overCapacityMinLitres",
     "noDistanceEnabled", "odometerBackEnabled", "odometerMissingEnabled", "odometerMissingMinFills",
-    "classOutlierEnabled", "classOutlierMultiple", "odometerUnitsPerKm",
+    "classOutlierEnabled", "classOutlierMultiple", "odometerUnitsPerKm", "noVehicleEnabled",
 ];
 const pick = (r: Loaded | RuleSettings): RuleSettings => Object.fromEntries(KEYS.map(k => [k, r[k]])) as RuleSettings;
 
@@ -60,10 +60,11 @@ export function RulesSection() {
     const [defaults, setDefaults] = useState<RuleSettings | null>(null);
     const [draft, setDraft] = useState<RuleSettings | null>(null);
     const [saving, setSaving] = useState(false);
+    const [odoCheck, setOdoCheck] = useState<Record<string, Record<string, number>> | null>(null);
 
     useEffect(() => {
         fetch("/api/settings/rules").then(r => r.json()).then(d => {
-            if (d.rules) { setSaved(d.rules); setDraft(pick(d.rules)); setDefaults(d.defaults); }
+            if (d.rules) { setSaved(d.rules); setDraft(pick(d.rules)); setDefaults(d.defaults); setOdoCheck(d.odometerCheck ?? null); }
         }).catch(() => toast.error("The exception rules could not be loaded. Reload the page to try again."));
     }, []);
 
@@ -113,6 +114,8 @@ export function RulesSection() {
                 hint="A unit's litres per 100 km over the period, against the median for petrol or diesel units. Also sets the diamonds on the Fleet page.">
                 <Num id="outlier-x" label="Consumption outlier: multiple of the median" value={draft.classOutlierMultiple} onChange={v => set("classOutlierMultiple", v)} unit="× the median" min={1.1} max={10} step={0.1} disabled={!draft.classOutlierEnabled} />
             </Rule>
+            <Rule id="rule-novehicle" name="No vehicle recorded" severity="md" on={draft.noVehicleEnabled} onToggle={v => set("noVehicleEnabled", v)}
+                hint="An issue on the stores report has no vehicle. When the pump report has the same slip, day, tank and litres, the issue is counted twice and the row says which vehicle it was." />
             <Rule id="rule-nodistance" name="Fuel with no distance" severity="md" on={draft.noDistanceEnabled} onToggle={v => set("noDistanceEnabled", v)}
                 hint="Fuel is issued on a later day with the odometer unchanged since the previous fill." />
             <Rule id="rule-back" name="Odometer runs backwards" severity="lo" on={draft.odometerBackEnabled} onToggle={v => set("odometerBackEnabled", v)}
@@ -124,13 +127,26 @@ export function RulesSection() {
 
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-border pt-4 mt-4">
                 <div className="min-w-[240px] flex-1">
-                    <div className="text-sm font-medium">Odometer readings are recorded in</div>
-                    <p className="mt-0.5 max-w-[56ch] text-[13px] leading-normal text-muted-foreground">
-                        Every distance and every litres-per-100-km figure depends on this. Tenths of a kilometre gives medians near 10 for petrol and 12 for diesel on the current data; whole kilometres would make them ten times smaller.
+                    <div className="text-sm font-medium">How the fuel system writes odometer readings</div>
+                    <p className="mt-0.5 max-w-[60ch] text-[13px] leading-normal text-muted-foreground">
+                        Both choices are kilometres; they differ in whether the last digit is a decimal. Every distance and every litres-per-100-km figure depends on this.
                     </p>
+                    {odoCheck && (
+                        <ul className="mt-2 flex flex-col gap-0.5 text-[13px]">
+                            {[["10", "With one decimal"], ["1", "As whole km"]].map(([k, label]) => {
+                                const m = odoCheck[k] ?? {};
+                                const parts = (["Petrol", "Diesel"] as const).filter(f => m[f] != null).map(f => `${f.toLowerCase()} ${m[f].toFixed(1)}`);
+                                return (
+                                    <li key={k} className={String(draft.odometerUnitsPerKm) === k ? "" : "text-muted-foreground"}>
+                                        {label}, your records give a median of <span className="mono">{parts.length ? parts.join(", ") : "too few readings"}</span> L/100 km
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
                 </div>
-                <Seg light label="Odometer unit" value={String(draft.odometerUnitsPerKm)} onChange={k => set("odometerUnitsPerKm", Number(k))}
-                    items={[{ key: "10", label: "Tenths of a km" }, { key: "1", label: "Whole km" }]} />
+                <Seg light label="Odometer reading format" value={String(draft.odometerUnitsPerKm)} onChange={k => set("odometerUnitsPerKm", Number(k))}
+                    items={[{ key: "10", label: "km, one decimal (2476010 = 247,601.0)" }, { key: "1", label: "Whole km (2476010 = 2,476,010)" }]} />
             </div>
 
             <EscalationRow />

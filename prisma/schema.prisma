@@ -261,6 +261,7 @@ model ExceptionRuleSettings {
   classOutlierEnabled    Boolean  @default(true)
   classOutlierMultiple   Float    @default(2)
   odometerUnitsPerKm     Float    @default(10)
+  noVehicleEnabled       Boolean  @default(true)
   updatedAt              DateTime @updatedAt
   updatedBy              String?
 }
